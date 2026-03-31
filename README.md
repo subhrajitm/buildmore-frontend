@@ -1,7 +1,3 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
 # BuildMore - Enterprise Procurement Frontend
 
 BuildMore is a high-density, professional-grade procurement platform designed for industrial and infrastructure projects. It features a modern "Research Command Center" aesthetic with focus on information density, technical clarity, and streamlined procurement workflows.
