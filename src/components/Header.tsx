@@ -47,10 +47,10 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
 
         <div className="flex items-center gap-6 text-sm font-bold">
           <div className="hidden xl:flex items-center gap-6 text-slate-400">
-            <a href="#" className={`hover:text-yellow-400 transition-colors flex items-center gap-2 text-[10px] uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            {/* <a href="#" className={`hover:text-yellow-400 transition-colors flex items-center gap-2 text-[10px] uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               <Award className="w-3.5 h-3.5" />
               Certifications
-            </a>
+            </a> */}
             <button
               onClick={() => setIsDark(!isDark)}
               className={`p-2 rounded-lg transition-all ${isDark ? 'bg-zinc-800 text-yellow-400 hover:bg-zinc-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}

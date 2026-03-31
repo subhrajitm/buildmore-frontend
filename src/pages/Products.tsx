@@ -1,13 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Filter, ChevronDown, X } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
-import { PRODUCTS } from '../data/mockData';
+import { PRODUCTS, CATEGORIES } from '../data/mockData';
 
 interface ProductsProps {
   isDark: boolean;
 }
 
-const VERTICALS = ['Pneumatic Tools', 'Heavy Machinery', 'Safety Protocol', 'Raw Materials', 'Fasteners'];
+const VERTICALS = CATEGORIES.map(c => c.name);
 const TIERS = ['Standard Export', 'Bulk Distribution', 'LTL Freight Only', 'Custom Fab'];
 const SORT_OPTIONS = [
   { label: 'Featured', value: 'featured' },
@@ -17,12 +18,25 @@ const SORT_OPTIONS = [
 ];
 
 export const Products: React.FC<ProductsProps> = ({ isDark }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
-  const [selectedVerticals, setSelectedVerticals] = useState<string[]>([]);
+  const [selectedVerticals, setSelectedVerticals] = useState<string[]>(() => {
+    const cat = searchParams.get('category');
+    return cat ? [cat] : [];
+  });
   const [selectedTiers, setSelectedTiers] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('featured');
   const [sortOpen, setSortOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(8);
+
+  // Sync category from URL param when it changes (e.g. clicking category cards)
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat) {
+      setSelectedVerticals([cat]);
+      setSearchParams({}, { replace: true }); // clear param after applying
+    }
+  }, [searchParams]);
 
   const toggleVertical = (cat: string) => {
     setSelectedVerticals(prev =>

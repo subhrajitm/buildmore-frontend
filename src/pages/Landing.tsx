@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight, Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Hero } from '../components/Hero';
 import { CategoryGrid } from '../components/CategoryGrid';
 import { ProductCard } from '../components/ProductCard';
@@ -31,9 +32,9 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Window Closes:</span>
               <span className={`text-base font-mono font-black ${isDark ? 'text-yellow-400' : 'text-slate-900'}`}>08:42:12</span>
             </div>
-            <a href="#" className={`text-[10px] font-black hover:text-yellow-400 transition-all flex items-center gap-2 uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            <Link to="/products" className={`text-[10px] font-black hover:text-yellow-400 transition-all flex items-center gap-2 uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>
               Inventory <ArrowRight className="w-3.5 h-3.5" />
-            </a>
+            </Link>
           </div>
         </div>
         
