@@ -8,10 +8,9 @@ export const Hero: React.FC<HeroProps> = ({ isDark }) => (
   <section className={`relative h-[420px] w-full rounded-xl overflow-hidden group border ${isDark ? 'border-white/5' : 'border-slate-100'} transition-all duration-300 shadow-xl`}>
     <div className={`absolute inset-0 bg-gradient-to-r ${isDark ? 'from-zinc-900 via-zinc-900/40' : 'from-slate-900 via-slate-900/40'} to-transparent z-10`}></div>
     <img 
-      src="https://images.unsplash.com/photo-1684497404598-6e844dff9cde?q=80&w=1738&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+      src="/images/buildhero.jpg" 
       alt="Enterprise Infrastructure"
       className={`absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ${isDark ? 'grayscale opacity-60' : 'grayscale-0 opacity-80'}`}
-      referrerPolicy="no-referrer"
     />
     <div className="relative z-20 flex flex-col justify-center h-full px-10 max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
