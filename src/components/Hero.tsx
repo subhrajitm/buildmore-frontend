@@ -14,36 +14,36 @@ export const Hero: React.FC<HeroProps> = ({ isDark }) => (
     />
     <div className="relative z-20 flex flex-col justify-center h-full px-10 max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
-        <span className="bg-yellow-400 text-black px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] rounded-sm">
-          Infrastructure v4.1
+        <span className="bg-yellow-400 text-black px-4 py-1.5 text-xs font-bold rounded-full">
+          Quality Construction Guaranteed
         </span>
       </div>
-      <h1 className="text-5xl font-black text-white leading-[0.9] tracking-tighter">
-        Build <span className="text-yellow-400">Faster.</span> <br />
-        Procure <span className="text-yellow-400">Smarter.</span>
+      <h1 className="text-6xl font-black text-white leading-tight tracking-tight">
+        Build <span className="text-yellow-400">Better.</span> <br />
+        Buy <span className="text-yellow-400">Smarter.</span>
       </h1>
-      <p className="text-slate-300 text-base leading-snug font-medium max-w-xl">
-        The unified operating system for global procurement. 
-        Real-time supply chain intelligence for ambitious industrial projects.
+      <p className="text-slate-200 text-lg leading-relaxed font-medium max-w-xl">
+        Your one-stop destination for high-quality construction materials. 
+        Reliable delivery and competitive pricing for projects of any size.
       </p>
-      <div className="flex items-center gap-3 pt-2">
-        <button className="bg-yellow-400 text-black px-8 py-3.5 font-black text-[10px] uppercase tracking-widest rounded-sm hover:bg-yellow-300 transition-all shadow-xl">
-          Launch Workspace
+      <div className="flex items-center gap-4 pt-4">
+        <button className="bg-yellow-400 text-black px-10 py-4 font-bold text-sm rounded-lg hover:bg-yellow-300 transition-all shadow-lg hover:scale-105 active:scale-95">
+          Start Shopping
         </button>
-        <button className="bg-white/5 backdrop-blur-xl text-white px-8 py-3.5 font-black text-[10px] uppercase tracking-widest rounded-sm border border-white/20 hover:bg-white/10 transition-all">
-          View Catalog
+        <button className="bg-white/10 backdrop-blur-md text-white px-10 py-4 font-bold text-sm rounded-lg border border-white/30 hover:bg-white/20 transition-all">
+          Learn More
         </button>
       </div>
     </div>
-    <div className="absolute bottom-6 right-8 z-20 hidden lg:flex items-center gap-8">
+    <div className="absolute bottom-8 right-10 z-20 hidden lg:flex items-center gap-10">
       <div className="flex flex-col items-end text-white">
-        <span className="text-[9px] text-slate-300 uppercase tracking-widest font-black">Active Projects</span>
-        <span className="text-2xl font-black">1,240<span className="text-yellow-400">+</span></span>
+        <span className="text-xs text-slate-300 font-bold mb-1">Projects Served</span>
+        <span className="text-3xl font-black">1,240<span className="text-yellow-400">+</span></span>
       </div>
-      <div className="w-px h-8 bg-white/20"></div>
+      <div className="w-px h-10 bg-white/20"></div>
       <div className="flex flex-col items-end text-white">
-        <span className="text-[9px] text-slate-300 uppercase tracking-widest font-black">Global Suppliers</span>
-        <span className="text-2xl font-black">45,000<span className="text-yellow-400">+</span></span>
+        <span className="text-xs text-slate-300 font-bold mb-1">Global Partners</span>
+        <span className="text-3xl font-black">45,000<span className="text-yellow-400">+</span></span>
       </div>
     </div>
   </section>

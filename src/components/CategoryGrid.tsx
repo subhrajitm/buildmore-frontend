@@ -17,11 +17,11 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ isDark }) => (
       <div className={`absolute top-0 right-0 w-64 h-64 ${isDark ? 'bg-yellow-400/5' : 'bg-yellow-400/10'} rounded-full blur-3xl -mr-20 -mt-20`}></div>
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-4">
-          <span className="w-6 h-[1.5px] bg-yellow-400"></span>
-          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-yellow-400">Featured Vertical</span>
+          <span className="w-6 h-[2px] bg-yellow-400"></span>
+          <span className="text-xs font-bold text-yellow-400">Featured Collection</span>
         </div>
-        <h3 className={`text-3xl font-black tracking-tighter mb-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>Structural <br />Components</h3>
-        <p className="text-slate-500 text-[11px] leading-relaxed max-w-xs font-medium">High-performance structural binders and reinforced materials.</p>
+        <h3 className={`text-4xl font-black tracking-tight mb-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>Structural <br />Materials</h3>
+        <p className="text-slate-500 text-sm leading-relaxed max-w-xs font-medium">High-performance steel, concrete, and reinforced materials for your project.</p>
       </div>
       <div className="relative z-10 mt-6 flex justify-center">
         <img
@@ -31,8 +31,8 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ isDark }) => (
           referrerPolicy="no-referrer"
         />
       </div>
-      <span className={`relative z-10 ${isDark ? 'text-white' : 'text-slate-900'} text-[9px] font-black mt-6 flex items-center gap-2 uppercase tracking-widest group-hover:text-yellow-400 transition-all`}>
-        Explore All <ArrowRight className="w-3.5 h-3.5" />
+      <span className={`relative z-10 ${isDark ? 'text-white' : 'text-slate-900'} text-xs font-bold mt-6 flex items-center gap-2 group-hover:text-yellow-400 transition-all`}>
+        Explore All Products <ArrowRight className="w-4 h-4" />
       </span>
     </Link>
 
@@ -46,8 +46,8 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ isDark }) => (
         <div className={`p-3 rounded-lg mb-4 transition-all duration-300 ${isDark ? 'bg-white/5 group-hover:bg-yellow-400 group-hover:text-black text-white' : 'bg-slate-50 group-hover:bg-yellow-400 group-hover:text-black text-slate-700'}`}>
           <cat.icon className="w-5 h-5" />
         </div>
-        <h4 className={`font-black text-[11px] uppercase tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{cat.name}</h4>
-        <p className="text-[9px] text-slate-500 mt-2 font-black uppercase tracking-widest">{cat.desc}</p>
+        <h4 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{cat.name}</h4>
+        <p className="text-[11px] text-slate-500 mt-2 font-medium leading-tight">{cat.desc}</p>
       </Link>
     ))}
   </section>

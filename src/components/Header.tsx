@@ -24,10 +24,10 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
             <span className={`text-xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'} uppercase`}>Build<span className="text-yellow-400">More</span></span>
           </Link>
           <div className={`hidden lg:flex items-center gap-2 group cursor-pointer ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'} p-1.5 rounded-md transition-colors`}>
-            <MapPin className="w-4 h-4 text-yellow-400" />
+            <MapPin className="w-5 h-5 text-yellow-400" />
             <div className="flex flex-col">
-              <span className="text-[9px] leading-tight text-slate-500 uppercase font-black tracking-widest">Global Logistics</span>
-              <span className={`text-[11px] font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>London Hub SE1</span>
+              <span className="text-[10px] leading-tight text-slate-500 font-bold">Deliver to</span>
+              <span className={`text-xs font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>London Hub SE1</span>
             </div>
           </div>
         </div>
@@ -39,8 +39,8 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
             </div>
             <input
               type="text"
-              placeholder="Search enterprise inventory..."
-              className={`w-full ${isDark ? 'bg-zinc-800 border-white/5 text-white focus:bg-zinc-700' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white'} border rounded-md pl-10 pr-4 py-2 text-sm transition-all outline-none focus:ring-1 focus:ring-yellow-400`}
+              placeholder="Search for materials, tools, and more..."
+              className={`w-full ${isDark ? 'bg-zinc-800 border-white/5 text-white focus:bg-zinc-700' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white'} border rounded-lg pl-10 pr-4 py-2.5 text-sm transition-all outline-none focus:ring-2 focus:ring-yellow-400`}
             />
           </div>
         </div>
@@ -65,10 +65,10 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <Link to="/profile" className="flex flex-col cursor-pointer group text-right">
-                  <span className="text-[9px] leading-tight text-slate-500 uppercase tracking-widest">Enterprise ID</span>
+                  <span className="text-[10px] leading-tight text-slate-500 font-bold">Account</span>
                   <div className="flex items-center gap-1.5 justify-end">
-                    <span className={`text-[11px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.name}</span>
-                    <ChevronDown className="w-3 h-3 text-slate-500 group-hover:text-yellow-400 transition-colors" />
+                    <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.name}</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-500 group-hover:text-yellow-400 transition-colors" />
                   </div>
                 </Link>
                 <button
@@ -81,28 +81,28 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
               </div>
             ) : (
               <Link to="/auth" className="flex flex-col cursor-pointer group text-right">
-                <span className="text-[9px] leading-tight text-slate-500 uppercase tracking-widest">Enterprise ID</span>
+                <span className="text-[10px] leading-tight text-slate-500 font-bold">Account</span>
                 <div className="flex items-center gap-1.5 justify-end">
-                  <span className={`text-[11px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Sign In</span>
-                  <ChevronDown className="w-3 h-3 text-slate-500 group-hover:text-yellow-400 transition-colors" />
+                  <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Sign In</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-500 group-hover:text-yellow-400 transition-colors" />
                 </div>
               </Link>
             )}
 
             <Link to="/cart" className="relative flex items-center gap-2 cursor-pointer group">
               <div className="relative">
-                <div className="p-1.5 bg-yellow-400 rounded-sm group-hover:bg-yellow-300 transition-colors">
+                <div className="p-2 bg-yellow-400 rounded-lg group-hover:bg-yellow-300 transition-colors shadow-sm">
                   <ShoppingCart className="w-5 h-5 text-black" />
                 </div>
                 {totalItems > 0 && (
-                  <span className={`absolute -top-1.5 -right-1.5 ${isDark ? 'bg-white text-black' : 'bg-slate-900 text-white'} text-[9px] font-black px-1 rounded-full ring-2 ${isDark ? 'ring-black' : 'ring-white'}`}>
+                  <span className={`absolute -top-1.5 -right-1.5 ${isDark ? 'bg-white text-black' : 'bg-slate-900 text-white'} text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ${isDark ? 'ring-black' : 'ring-white'}`}>
                     {totalItems > 99 ? '99+' : totalItems}
                   </span>
                 )}
               </div>
               <div className="hidden sm:flex flex-col">
-                <span className="text-[9px] text-slate-500 uppercase tracking-widest">Total Value</span>
-                <span className="text-[11px] font-black text-yellow-400">${totalValue.toFixed(2)}</span>
+                <span className="text-[10px] text-slate-500 font-bold">Cart Total</span>
+                <span className="text-xs font-bold text-yellow-400">${totalValue.toFixed(2)}</span>
               </div>
             </Link>
           </div>
