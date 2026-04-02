@@ -5,7 +5,7 @@ import { Hero } from '../components/Hero';
 import { CategoryGrid } from '../components/CategoryGrid';
 import { ProductCard } from '../components/ProductCard';
 import { TrustSignals } from '../components/TrustSignals';
-import { PRODUCTS, TESTIMONIALS } from '../data/mockData';
+import { PRODUCTS, TESTIMONIALS, FLASH_OFFERS } from '../data/mockData';
 
 interface LandingProps {
   isDark: boolean;
@@ -47,32 +47,134 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
 
       <TrustSignals isDark={isDark} />
 
-      <section className="space-y-10 pb-10">
-        <div className="text-center space-y-3">
-          <span className="text-xs font-bold text-yellow-400">Our Reputation</span>
-          <h2 className={`text-4xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Trusted by Builders Worldwide</h2>
+      <BumperSlider isDark={isDark} />
+    </>
+  );
+};
+
+const BumperSlider: React.FC<{ isDark: boolean }> = ({ isDark }) => {
+  const [activeSlide, setActiveSlide] = React.useState(0);
+  const [progress, setProgress] = React.useState(0);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % FLASH_OFFERS.length);
+      setProgress(0);
+    }, 6000);
+    
+    const progressTimer = setInterval(() => {
+      setProgress((prev) => Math.min(prev + (100 / 60), 100));
+    }, 100);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(progressTimer);
+    };
+  }, [activeSlide]);
+
+  return (
+    <section className="pb-12 relative overflow-hidden font-primary">
+      <div className="flex items-end justify-between mb-6 px-2">
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="w-10 h-[2.5px] bg-yellow-400 rounded-full"></span>
+            <span className="text-[10px] font-black text-yellow-400 uppercase tracking-[0.4em]">Exclusive Deals</span>
+          </div>
+          <h2 className={`text-4xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>Bumper <span className="text-yellow-400 italic">Offers</span></h2>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((t, idx) => (
-            <div key={idx} className={`p-8 rounded-xl border group shadow-sm transition-colors duration-300 ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-100'}`}>
-              <div className="flex text-yellow-400 mb-6">
-                {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+        <div className="flex items-center gap-3 mb-1">
+          {FLASH_OFFERS.map((_, idx) => (
+            <button 
+              key={idx}
+              onClick={() => { setActiveSlide(idx); setProgress(0); }}
+              className="group relative h-8 w-8 flex items-center justify-center underline-offset-4"
+            >
+              <span className={`absolute inset-0 rounded-full border transition-all duration-500 ${activeSlide === idx ? 'border-yellow-400 scale-110' : 'border-slate-300 dark:border-white/10 opacity-50'}`} />
+              <span className={`text-[9px] font-black transition-colors ${activeSlide === idx ? 'text-yellow-400' : 'text-slate-400'}`}>0{idx + 1}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="relative h-[430px] w-full rounded-[32px] overflow-hidden shadow-2xl group">
+        {/* Progress bar */}
+        <div className="absolute top-0 left-0 right-0 h-1 z-40 bg-white/10">
+          <div 
+            className="h-full bg-yellow-400 transition-all duration-100 ease-linear"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        {FLASH_OFFERS.map((offer, idx) => (
+          <div 
+            key={offer.id}
+            className={`absolute inset-0 transition-all duration-[1000ms] ${activeSlide === idx ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'}`}
+          >
+            {/* Background elements */}
+            <div className={`absolute inset-0 bg-gradient-to-tr ${offer.color} opacity-70 z-10`} />
+            <div className="absolute inset-0 bg-black/40 z-[5]" />
+            <img 
+              src={offer.image} 
+              className={`absolute inset-0 w-full h-full object-cover transition-transform duration-[6000ms] ease-linear brightness-110 contrast-[1.1] ${activeSlide === idx ? 'scale-110' : 'scale-100'}`}
+              alt={offer.title}
+            />
+            
+            <div className="relative z-30 h-full flex flex-col justify-center px-10 md:px-16 max-w-4xl text-white">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="bg-yellow-400 text-black px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-md">
+                  {offer.tag}
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-widest text-white/70">Flash active</span>
               </div>
-              <p className={`text-sm font-medium leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>"{t.quote}"</p>
-              <div className="mt-8 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-yellow-400 flex items-center justify-center">
-                  <span className="text-sm font-black text-black">{t.author.charAt(0)}</span>
-                </div>
-                <div>
-                  <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t.author}</p>
-                  <p className="text-[10px] text-slate-500 font-bold mt-1">{t.role}</p>
+
+              <h3 className="text-3xl md:text-4xl font-black mb-2 leading-[1.1] tracking-tighter">
+                {offer.title.split(' ').map((word, i) => (
+                  <span key={i} className={i === 1 ? 'text-yellow-400 italic' : ''}>{word}{' '}</span>
+                ))}
+              </h3>
+
+              <div className="relative mb-3">
+                <p className="text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-100 to-yellow-400 drop-shadow-xl italic -ml-1">
+                  {offer.discount}
+                </p>
+              </div>
+
+              <p className="text-sm md:text-base font-medium text-white/90 mb-6 max-w-xl leading-relaxed border-l-2 border-yellow-400/50 pl-4">
+                {offer.desc}
+              </p>
+
+              <div className="flex items-center gap-6">
+                <button className="bg-white text-black px-8 py-3.5 rounded-xl font-black text-[11px] transition-all shadow-xl hover:bg-yellow-400 hover:scale-105 active:scale-95">
+                  Claim Offer
+                </button>
+                
+                <div className="flex items-center gap-3 px-5 py-2.5 bg-white/5 backdrop-blur-xl rounded-xl border border-white/10">
+                  <div className="flex flex-col">
+                    <span className="text-[8px] text-white/50 uppercase font-black tracking-widest">Time left</span>
+                    <span className="text-lg font-mono font-black text-yellow-400">02:14:45</span>
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
+          </div>
+        ))}
+        
+        {/* Navigation buttons */}
+        <div className="absolute inset-y-0 left-4 right-4 z-40 flex items-center justify-between pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            onClick={() => { setActiveSlide((v) => (v - 1 + FLASH_OFFERS.length) % FLASH_OFFERS.length); setProgress(0); }}
+            className="w-10 h-10 bg-black/30 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center text-white pointer-events-auto hover:bg-yellow-400 hover:text-black transition-all hover:scale-110"
+          >
+            <ArrowRight className="w-4 h-4 rotate-180" />
+          </button>
+          <button 
+            onClick={() => { setActiveSlide((v) => (v + 1) % FLASH_OFFERS.length); setProgress(0); }}
+            className="w-10 h-10 bg-black/30 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center text-white pointer-events-auto hover:bg-yellow-400 hover:text-black transition-all hover:scale-110"
+          >
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 };

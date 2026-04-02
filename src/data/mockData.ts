@@ -1,14 +1,62 @@
 import { Hammer, Zap, HardHat, Droplets, Trash2, Wrench, Paintbrush, Grid3X3 } from 'lucide-react';
 
 export const CATEGORIES = [
-  { name: 'Industrial Tools', icon: Hammer, desc: 'Power & hand tools' },
-  { name: 'Electrical Systems', icon: Zap, desc: 'Wiring & control' },
-  { name: 'Safety Gear', icon: HardHat, desc: 'PPE & site safety' },
-  { name: 'Fluid Dynamics', icon: Droplets, desc: 'Pipes & valves' },
-  { name: 'Janitorial', icon: Trash2, desc: 'Professional sanitation' },
-  { name: 'Hardware', icon: Wrench, desc: 'Fasteners & fixtures' },
-  { name: 'Coatings', icon: Paintbrush, desc: 'Paints & finishes' },
-  { name: 'Tiling', icon: Grid3X3, desc: 'Ceramic & stone' },
+  { 
+    name: 'Industrial Tools', 
+    icon: Hammer, 
+    desc: 'Power & hand tools',
+    count: 1240,
+    subcategories: ['Drills', 'Wrenches', 'Saws', 'Sanders']
+  },
+  { 
+    name: 'Electrical Systems', 
+    icon: Zap, 
+    desc: 'Wiring & control',
+    count: 850,
+    subcategories: ['Circuit Breakers', 'Wiring', 'Panels', 'Conduit']
+  },
+  { 
+    name: 'Safety Gear', 
+    icon: HardHat, 
+    desc: 'PPE & site safety',
+    count: 2100,
+    subcategories: ['Helmets', 'Gloves', 'Boots', 'Vests']
+  },
+  { 
+    name: 'Fluid Dynamics', 
+    icon: Droplets, 
+    desc: 'Pipes & valves',
+    count: 420,
+    subcategories: ['Valves', 'Pipes', 'Pumps', 'Fittings']
+  },
+  { 
+    name: 'Janitorial', 
+    icon: Trash2, 
+    desc: 'Professional sanitation',
+    count: 310,
+    subcategories: ['Cleaning Agents', 'Bins', 'Tools', 'Paper']
+  },
+  { 
+    name: 'Hardware', 
+    icon: Wrench, 
+    desc: 'Fasteners & fixtures',
+    count: 5400,
+    subcategories: ['Bolts', 'Nails', 'Screws', 'Washers']
+  },
+  { 
+    name: 'Coatings', 
+    icon: Paintbrush, 
+    desc: 'Paints & finishes',
+    count: 730,
+    subcategories: ['Exterior', 'Interior', 'Primers', 'Stains']
+  },
+  { 
+    name: 'Tiling', 
+    icon: Grid3X3, 
+    desc: 'Ceramic & stone',
+    count: 1100,
+    subcategories: ['Ceramic', 'Porcelain', 'Marble', 'Slate']
+  },
 ];
 
 export const PRODUCTS = [
@@ -111,6 +159,36 @@ export const PRODUCTS = [
     tier: 'Bulk Distribution',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtasAoLJZNB18AMNnGiCcN1kr_G4sfoYoUhfr-QIktvdulhjzqnXlBtaQc-4xMTs7M4p5rwoauGl5sb600bAtYnfvQ6_PVX9VUpFmbRKfKrtz2L3ebL0ZpHpxp3k9_1ik8ZqbDt_RpOH7SCzRlHc6aXNsXKFFAQ5GJ_7PN4YxwQvQEJCjnK9JiXm4qdLCym9hhOtH0I7xn7VIxk1bBMDx8AnjPINumAaHftYUA29c4qHLJFJEMlMYCyxyin3AKOWGrIuaOn1nCvcTb',
   },
+];
+
+export const FLASH_OFFERS = [
+  {
+    id: 1,
+    title: 'Weekend Construction Bumper',
+    tag: 'Limited Time',
+    discount: 'Extra 15% OFF',
+    desc: 'Get an additional discount on all structural steel and power tools over $500.',
+    color: 'from-orange-600 to-red-700',
+    image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=2000&auto=format&fit=crop'
+  },
+  {
+    id: 2,
+    title: 'Bulk Infrastructure Blowout',
+    tag: 'Bumper Offer',
+    discount: 'Buy 5, Get 1 FREE',
+    desc: 'On all safety equipment and sitewide hardware kits. Stock up for your next project.',
+    color: 'from-blue-700 to-indigo-900',
+    image: 'https://images.unsplash.com/photo-1581094120973-10d9be8a1290?q=80&w=2000&auto=format&fit=crop'
+  },
+  {
+    id: 3,
+    title: 'Premium Project Pack',
+    tag: 'Flash Deal',
+    discount: 'Flat $500 Cashback',
+    desc: 'When you finalize your first procurement order over $5,000 this month.',
+    color: 'from-emerald-700 to-teal-900',
+    image: 'https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=2000&auto=format&fit=crop'
+  }
 ];
 
 export const TESTIMONIALS = [
