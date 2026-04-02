@@ -123,76 +123,71 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
         </div>
       </div>
 
-      <section className="space-y-8">
-        <div className={`flex items-center gap-4 border-b pb-4 ${isDark ? 'border-white/5' : 'border-slate-200'}`}>
-          {(['specs', 'compliance', 'shipping'] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`text-[11px] font-black uppercase tracking-widest pb-4 border-b-2 -mb-4 transition-all ${
-                activeTab === tab
-                  ? isDark ? 'text-white border-yellow-400' : 'text-slate-900 border-slate-900'
-                  : 'text-slate-500 border-transparent hover:text-yellow-400'
-              }`}
-            >
-              {tab === 'specs' ? 'Technical Specs' : tab === 'compliance' ? 'Compliance' : 'Shipping Data'}
-            </button>
-          ))}
+      <section className="space-y-12 py-10">
+        <div className={`flex items-center gap-8 border-b pb-0 ${isDark ? 'border-white/5' : 'border-slate-200'}`}>
+          {(['specs', 'compliance', 'shipping'] as const).map(tab => {
+            const label = tab === 'specs' ? 'TECHNICAL SPECS' : tab === 'compliance' ? 'COMPLIANCE' : 'SHIPPING DATA';
+            const words = label.split(' ');
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`group relative text-[11px] font-black uppercase tracking-widest pb-4 transition-all flex items-center gap-1.5`}
+              >
+                <span className={`px-1.5 py-0.5 transition-colors ${
+                  activeTab === tab 
+                    ? 'bg-yellow-400 text-black' 
+                    : 'text-slate-500 group-hover:text-yellow-400'
+                }`}>
+                  {words[0]}
+                </span>
+                <span className={`${
+                  activeTab === tab 
+                    ? isDark ? 'text-white' : 'text-slate-900' 
+                    : 'text-slate-500 group-hover:text-yellow-400'
+                }`}>
+                  {words.slice(1).join(' ')}
+                </span>
+                {activeTab === tab && (
+                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-yellow-400" />
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {activeTab === 'specs' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
-            {[
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20">
+          {(activeTab === 'specs' ? [
               { label: 'Voltage Range', value: '18V - 24V DC' },
               { label: 'Duty Cycle', value: '100% @ 40°C' },
               { label: 'Ingress Protection', value: 'IP67 Certified' },
               { label: 'Weight (Unloaded)', value: '3.2 kg' },
               { label: 'Materials', value: 'Composite/Aluminum' },
               { label: 'Warranty Code', value: 'IND-S-4200' },
-            ].map((spec, i) => (
-              <div key={i} className={`flex items-center justify-between py-3 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{spec.label}</span>
-                <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>{spec.value}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'compliance' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
-            {[
+            ] : activeTab === 'compliance' ? [
               { label: 'ISO Certification', value: 'ISO 9001:2015' },
               { label: 'Safety Standard', value: 'CE / UL Listed' },
               { label: 'RoHS Compliance', value: 'Compliant' },
               { label: 'REACH Registration', value: 'Registered' },
               { label: 'SDS Sheet', value: 'Available' },
               { label: 'Audit Trail', value: 'Full Chain of Custody' },
-            ].map((item, i) => (
-              <div key={i} className={`flex items-center justify-between py-3 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{item.label}</span>
-                <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.value}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'shipping' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
-            {[
+            ] : [
               { label: 'Freight Class', value: 'LTL Class 70' },
               { label: 'Package Dimensions', value: '48" × 24" × 18"' },
               { label: 'Gross Weight', value: '42 lbs' },
               { label: 'Lead Time', value: '3-5 Business Days' },
               { label: 'Origin Warehouse', value: 'London Hub SE1' },
               { label: 'Export Control', value: 'EAR99' },
-            ].map((item, i) => (
-              <div key={i} className={`flex items-center justify-between py-3 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{item.label}</span>
-                <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.value}</span>
+            ]).map((item, i) => (
+              <div 
+                key={i} 
+                className={`flex items-center justify-between py-6 border-b transition-all duration-300 ${isDark ? 'border-white/[0.03] hover:border-white/10' : 'border-slate-100 hover:border-slate-200'}`}
+              >
+                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">{item.label}</span>
+                <span className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.value}</span>
               </div>
             ))}
-          </div>
-        )}
+        </div>
       </section>
 
       <section className={`p-8 rounded-2xl border ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-slate-50 border-slate-100'} flex items-center justify-between`}>
