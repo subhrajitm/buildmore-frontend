@@ -22,7 +22,7 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
 
   return (
     <div className="relative group/nav font-primary">
-      <nav className={`${isDark ? 'bg-zinc-900 border-white/5' : 'bg-slate-50 border-slate-200'} border-b py-2 px-6 overflow-x-auto transition-colors duration-300 relative z-[45]`}>
+      <nav className={`${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-300'} border-b py-2 px-6 overflow-x-auto transition-colors duration-300 relative z-[45]`}>
         <div className="max-w-[1920px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8 whitespace-nowrap">
             <button 

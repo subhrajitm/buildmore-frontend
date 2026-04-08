@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { authApi } from '../api';
 
 interface User {
   email: string;
@@ -7,12 +8,22 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => { success: boolean; error?: string };
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (name: string, email: string, password: string, phone: string) => Promise<{ success: boolean; error?: string }>;
+  forgotPassword: (email: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+function parseNameFromEmail(email: string) {
+  return email
+    .split('@')[0]
+    .replace(/[._]/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
@@ -24,30 +35,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  const login = (email: string, password: string): { success: boolean; error?: string } => {
-    if (!email || !password) return { success: false, error: 'All fields are required.' };
-    if (!/\S+@\S+\.\S+/.test(email)) return { success: false, error: 'Enter a valid email address.' };
-    if (password.length < 6) return { success: false, error: 'Invalid credentials.' };
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem('buildmore_token')
+  );
 
-    const newUser: User = {
-      email,
-      name: email
-        .split('@')[0]
-        .replace(/[._]/g, ' ')
-        .replace(/\b\w/g, c => c.toUpperCase()),
-    };
-    setUser(newUser);
-    localStorage.setItem('buildmore_user', JSON.stringify(newUser));
-    return { success: true };
+  const persistAuth = (user: User, token: string) => {
+    setUser(user);
+    setToken(token);
+    localStorage.setItem('buildmore_user', JSON.stringify(user));
+    localStorage.setItem('buildmore_token', token);
+  };
+
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await authApi.login({ email, password });
+      const newUser: User = { email, name: parseNameFromEmail(email) };
+      persistAuth(newUser, res.token!);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Login failed.' };
+    }
+  };
+
+  const signup = async (name: string, email: string, password: string, phone: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await authApi.signup({ name, email, password, phone });
+      const newUser: User = { email, name };
+      persistAuth(newUser, res.token!);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Signup failed.' };
+    }
+  };
+
+  const forgotPassword = async (email: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await authApi.forgotPassword({ email, password: newPassword });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Password reset failed.' };
+    }
   };
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem('buildmore_user');
+    localStorage.removeItem('buildmore_token');
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, login, signup, forgotPassword, logout }}>
       {children}
     </AuthContext.Provider>
   );

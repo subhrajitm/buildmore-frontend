@@ -28,7 +28,7 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
             <h2 className={`text-4xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Best Infrastructure Offers</h2>
           </div>
           <div className="flex items-center gap-6">
-            <div className={`flex items-center gap-3 border px-4 py-2.5 rounded-lg shadow-sm ${isDark ? 'bg-zinc-800 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+            <div className={`flex items-center gap-3 border px-4 py-2.5 rounded-lg shadow-sm ${isDark ? 'bg-zinc-800 border-white/5' : 'bg-white border-slate-200'}`}>
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Offer Ends In:</span>
               <span className={`text-lg font-mono font-black ${isDark ? 'text-yellow-400' : 'text-slate-900'}`}>08:42:12</span>
              </div>

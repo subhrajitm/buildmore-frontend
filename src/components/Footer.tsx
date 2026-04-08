@@ -7,7 +7,7 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ isDark }) => (
-  <footer className={`${isDark ? 'bg-zinc-950 text-slate-400 border-white/5' : 'bg-slate-50 text-slate-500 border-slate-200'} border-t transition-colors duration-300`}>
+  <footer className={`${isDark ? 'bg-zinc-950 text-slate-400 border-white/5' : 'bg-white text-slate-500 border-slate-200'} border-t transition-colors duration-300`}>
     {/* Top Brand Bar */}
     <div className={`border-b py-12 ${isDark ? 'border-white/5' : 'border-slate-200'}`}>
       <div className="max-w-[1920px] mx-auto px-10 flex flex-col md:flex-row items-center justify-between gap-10">
