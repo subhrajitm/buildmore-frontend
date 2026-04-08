@@ -1,24 +1,26 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Filter, ChevronDown, X, Check, Truck, ShieldCheck, Zap } from 'lucide-react';
+import { Search, ChevronDown, Check, Truck, ShieldCheck, Zap } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
-import { PRODUCTS, CATEGORIES } from '../data/mockData';
+import { productApi, BackendProduct } from '../api';
+import { normalizeProduct } from '../utils/normalizeProduct';
 
 interface ProductsProps {
   isDark: boolean;
 }
 
-const VERTICALS = CATEGORIES.map(c => c.name);
 const TIERS = ['Standard Export', 'Bulk Distribution', 'LTL Freight Only', 'Custom Fab'];
 const SORT_OPTIONS = [
   { label: 'Featured', value: 'featured' },
   { label: 'Price: Low to High', value: 'price_asc' },
   { label: 'Price: High to Low', value: 'price_desc' },
-  { label: 'Top Rated', value: 'rating' },
 ];
 
 export const Products: React.FC<ProductsProps> = ({ isDark }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [products, setProducts] = useState<BackendProduct[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedVerticals, setSelectedVerticals] = useState<string[]>(() => {
     const cat = searchParams.get('category');
     return cat ? [cat] : [];
@@ -28,6 +30,21 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
   const [sortOpen, setSortOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(12);
   const [statusFilter, setStatusFilter] = useState<'all' | 'ready' | 'certified' | 'bulk'>('all');
+
+  useEffect(() => {
+    productApi.getCategories()
+      .then(res => setCategories(res.categories || []))
+      .catch(() => setCategories([]));
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    const category = selectedVerticals.length === 1 ? selectedVerticals[0] : undefined;
+    productApi.getAll(category ? { category } : undefined)
+      .then(res => setProducts(res.products || []))
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false));
+  }, [selectedVerticals]);
 
   useEffect(() => {
     const cat = searchParams.get('category');
@@ -56,26 +73,22 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
   };
 
   const filtered = useMemo(() => {
-    let result = [...PRODUCTS];
-    
-    // Status Filter Logic
-    if (statusFilter === 'ready') result = result.filter(p => p.price < 500); // Simulate "Ready" assets
-    if (statusFilter === 'certified') result = result.filter(p => p.rating >= 4.7);
-    if (statusFilter === 'bulk') result = result.filter(p => p.tier.includes('Bulk'));
+    let result = [...products];
 
-    if (selectedVerticals.length > 0) {
+    if (statusFilter === 'ready') result = result.filter(p => p.stock > 0);
+    if (statusFilter === 'certified') result = result.filter(p => p.availability);
+    if (statusFilter === 'bulk') result = result.filter(p => p.price >= 500);
+
+    if (selectedVerticals.length > 1) {
       result = result.filter(p => selectedVerticals.includes(p.category));
     }
-    if (selectedTiers.length > 0) {
-      result = result.filter(p => selectedTiers.includes(p.tier));
-    }
+
     switch (sortBy) {
       case 'price_asc': result.sort((a, b) => a.price - b.price); break;
       case 'price_desc': result.sort((a, b) => b.price - a.price); break;
-      case 'rating': result.sort((a, b) => b.rating - a.rating); break;
     }
     return result;
-  }, [statusFilter, selectedVerticals, selectedTiers, sortBy]);
+  }, [statusFilter, selectedVerticals, selectedTiers, sortBy, products]);
 
   const visible = filtered.slice(0, visibleCount);
   const currentSort = SORT_OPTIONS.find(o => o.value === sortBy)!;
@@ -83,8 +96,8 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
   const STATUS_TABS = [
     { id: 'all', label: 'All Identification', icon: Search },
     { id: 'ready', label: 'Ready-to-Ship', icon: Truck },
-    { id: 'certified', label: 'Verified Matrix', icon: ShieldCheck },
-    { id: 'bulk', label: 'Bulk Only', icon: Zap },
+    { id: 'certified', label: 'Available', icon: ShieldCheck },
+    { id: 'bulk', label: 'High Value', icon: Zap },
   ];
 
   return (
@@ -170,11 +183,11 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
             <div className="space-y-4">
               <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Inventory Matrix</h3>
               <div className="space-y-1.5 text-left">
-                {VERTICALS.map(cat => {
+                {categories.map(cat => {
                   const checked = selectedVerticals.includes(cat);
                   return (
-                    <button 
-                      key={cat} 
+                    <button
+                      key={cat}
                       onClick={() => toggleVertical(cat)}
                       className={`w-full flex items-center justify-between p-2 rounded-lg border transition-all text-left ${checked ? (isDark ? 'bg-yellow-400 border-yellow-400 text-black shadow-lg shadow-yellow-400/10' : 'bg-slate-900 border-slate-900 text-white') : (isDark ? 'bg-white/5 border-white/5 text-slate-400 hover:border-white/20' : 'bg-white border-slate-100 text-slate-600 hover:border-slate-300')}`}
                     >
@@ -184,29 +197,17 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
                 })}
               </div>
             </div>
-
-            <div className="space-y-4">
-              <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Protocol Type</h3>
-              <div className="grid grid-cols-1 gap-3">
-                {TIERS.map(tier => {
-                  const checked = selectedTiers.includes(tier);
-                  return (
-                    <label key={tier} className="flex items-center gap-4 cursor-pointer group" onClick={() => toggleTier(tier)}>
-                      <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-all ${checked ? 'bg-yellow-400 border-yellow-400' : isDark ? 'border-white/10 bg-white/5 group-hover:border-yellow-400/50' : 'border-slate-200 bg-slate-50 group-hover:border-slate-400'}`}>
-                        {checked && <Check className="w-2.5 h-2.5 text-black stroke-[4px]" />}
-                      </div>
-                      <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${checked ? (isDark ? 'text-white' : 'text-slate-900') : 'text-slate-500'}`}>{tier}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </aside>
 
         {/* Inventory Matrix Grid */}
         <div className="flex-1 space-y-10">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className={`flex flex-col items-center justify-center py-32 gap-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              <div className="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Loading Matrix Assets...</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className={`flex flex-col items-center justify-center py-32 rounded-[24px] border-2 border-dashed gap-6 ${isDark ? 'border-white/10 text-slate-500 bg-white/[0.02]' : 'border-slate-100 bg-slate-50/50 text-slate-400'}`}>
               <ShieldCheck className="w-12 h-12 opacity-10" />
               <div className="text-center space-y-2">
@@ -218,7 +219,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 pb-20">
               {visible.map(product => (
-                <ProductCard key={product.id} product={product} isDark={isDark} />
+                <ProductCard key={product._id} product={normalizeProduct(product)} isDark={isDark} />
               ))}
             </div>
           )}

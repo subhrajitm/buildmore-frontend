@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, ShieldCheck, Truck, ArrowRight, ChevronRight, FileText, Download, Zap, Check, Plus, Minus } from 'lucide-react';
-import { PRODUCTS } from '../data/mockData';
+import { ShieldCheck, Truck, ArrowRight, ChevronRight, FileText, Download, Zap, Check, Plus, Minus, AlertCircle } from 'lucide-react';
+import { productApi, BackendProduct } from '../api';
+import { normalizeProduct } from '../utils/normalizeProduct';
 import { useCart } from '../context/CartContext';
 
 interface ProductDetailProps {
@@ -10,11 +11,42 @@ interface ProductDetailProps {
 
 export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
   const { id } = useParams<{ id: string }>();
-  const product = PRODUCTS.find(p => p.id === Number(id)) || PRODUCTS[0];
+  const [raw, setRaw] = useState<BackendProduct | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [activeTab, setActiveTab] = useState<'specs' | 'compliance' | 'shipping'>('specs');
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    productApi.getById(id)
+      .then(res => setRaw(res.product))
+      .catch(() => setError('Product not found'))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-48">
+        <div className="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !raw) {
+    return (
+      <div className="flex flex-col items-center justify-center py-48 gap-4">
+        <AlertCircle className="w-10 h-10 text-slate-500" />
+        <p className="text-sm font-black uppercase tracking-widest text-slate-500">{error || 'Product not found'}</p>
+        <Link to="/products" className="text-yellow-400 text-[10px] font-black uppercase tracking-widest border border-yellow-400/20 px-8 py-3 rounded-full hover:bg-yellow-400/10 transition-colors">Back to Catalog</Link>
+      </div>
+    );
+  }
+
+  const product = normalizeProduct(raw);
 
   const handleAdd = () => {
     addItem(product, quantity);
@@ -44,14 +76,21 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
 
         <div className="space-y-8">
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="bg-yellow-400 text-black px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-sm">
-                In Stock: 42 Units
-              </span>
-              <div className="flex items-center gap-1">
-                <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                <span className={`text-[10px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{product.rating} ({product.reviews?.toLocaleString()} Reviews)</span>
-              </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              {product.availability ? (
+                <span className="bg-yellow-400 text-black px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-sm">
+                  In Stock: {raw.stock} Units
+                </span>
+              ) : (
+                <span className="bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-sm">
+                  Unavailable
+                </span>
+              )}
+              {raw.stock === 0 && product.availability && (
+                <span className="bg-slate-500/20 text-slate-400 border border-slate-500/30 px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-sm">
+                  Out of Stock
+                </span>
+              )}
             </div>
             <h1 className={`text-4xl font-black tracking-tighter leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
               {product.name}
@@ -158,12 +197,11 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20">
           {(activeTab === 'specs' ? [
-              { label: 'Voltage Range', value: '18V - 24V DC' },
-              { label: 'Duty Cycle', value: '100% @ 40°C' },
-              { label: 'Ingress Protection', value: 'IP67 Certified' },
-              { label: 'Weight (Unloaded)', value: '3.2 kg' },
-              { label: 'Materials', value: 'Composite/Aluminum' },
-              { label: 'Warranty Code', value: 'IND-S-4200' },
+              ...(raw.materialSpecifications ? [{ label: 'Material Specifications', value: raw.materialSpecifications }] : []),
+              { label: 'Category', value: raw.category },
+              { label: 'Stock', value: `${raw.stock} Units` },
+              { label: 'Availability', value: raw.availability ? 'Available' : 'Unavailable' },
+              ...(raw.desc ? [{ label: 'Description', value: raw.desc }] : []),
             ] : activeTab === 'compliance' ? [
               { label: 'ISO Certification', value: 'ISO 9001:2015' },
               { label: 'Safety Standard', value: 'CE / UL Listed' },

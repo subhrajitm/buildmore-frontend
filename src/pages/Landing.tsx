@@ -1,21 +1,31 @@
-import React from 'react';
-import { ArrowRight, Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Hero } from '../components/Hero';
 import { CategoryGrid } from '../components/CategoryGrid';
 import { ProductCard } from '../components/ProductCard';
 import { TrustSignals } from '../components/TrustSignals';
-import { PRODUCTS, TESTIMONIALS, FLASH_OFFERS } from '../data/mockData';
+import { FLASH_OFFERS } from '../data/mockData';
+import { productApi, BackendProduct } from '../api';
+import { normalizeProduct } from '../utils/normalizeProduct';
 
 interface LandingProps {
   isDark: boolean;
 }
 
 export const Landing: React.FC<LandingProps> = ({ isDark }) => {
+  const [featured, setFeatured] = useState<BackendProduct[]>([]);
+
+  useEffect(() => {
+    productApi.getAll()
+      .then(res => setFeatured((res.products || []).slice(0, 8)))
+      .catch(() => setFeatured([]));
+  }, []);
+
   return (
     <>
       <Hero isDark={isDark} />
-      
+
       <CategoryGrid isDark={isDark} />
 
       <section className="space-y-6">
@@ -28,21 +38,23 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
             <h2 className={`text-4xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Best Infrastructure Offers</h2>
           </div>
           <div className="flex items-center gap-6">
-            <div className={`flex items-center gap-3 border px-4 py-2.5 rounded-lg shadow-sm ${isDark ? 'bg-zinc-800 border-white/5' : 'bg-white border-slate-200'}`}>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Offer Ends In:</span>
-              <span className={`text-lg font-mono font-black ${isDark ? 'text-yellow-400' : 'text-slate-900'}`}>08:42:12</span>
-             </div>
              <Link to="/products" className={`text-xs font-bold hover:text-yellow-400 transition-all flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
               Browse All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {PRODUCTS.map(product => (
-            <ProductCard key={product.id} product={product} isDark={isDark} />
-          ))}
-        </div>
+
+        {featured.length === 0 ? (
+          <div className={`flex items-center justify-center py-24 rounded-2xl border ${isDark ? 'border-white/5 text-slate-600' : 'border-slate-100 text-slate-400'}`}>
+            <p className="text-[10px] font-black uppercase tracking-widest">No products yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {featured.map(product => (
+              <ProductCard key={product._id} product={normalizeProduct(product)} isDark={isDark} />
+            ))}
+          </div>
+        )}
       </section>
 
       <TrustSignals isDark={isDark} />

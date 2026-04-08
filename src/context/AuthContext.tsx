@@ -4,12 +4,14 @@ import { authApi } from '../api';
 interface User {
   email: string;
   name: string;
+  role: 'USER' | 'ADMIN';
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (name: string, email: string, password: string, phone: string) => Promise<{ success: boolean; error?: string }>;
   forgotPassword: (email: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -23,6 +25,15 @@ function parseNameFromEmail(email: string) {
     .split('@')[0]
     .replace(/[._]/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function decodeTokenRole(token: string): 'USER' | 'ADMIN' {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload?.role?.toUpperCase() === 'ADMIN' ? 'ADMIN' : 'USER';
+  } catch {
+    return 'USER';
+  }
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -49,7 +60,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const res = await authApi.login({ email, password });
-      const newUser: User = { email, name: parseNameFromEmail(email) };
+      const role = decodeTokenRole(res.token!);
+      const newUser: User = { email, name: parseNameFromEmail(email), role };
       persistAuth(newUser, res.token!);
       return { success: true };
     } catch (err: any) {
@@ -60,7 +72,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (name: string, email: string, password: string, phone: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const res = await authApi.signup({ name, email, password, phone });
-      const newUser: User = { email, name };
+      const role = decodeTokenRole(res.token!);
+      const newUser: User = { email, name, role };
       persistAuth(newUser, res.token!);
       return { success: true };
     } catch (err: any) {
@@ -85,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, login, signup, forgotPassword, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, isAdmin: user?.role === 'ADMIN', login, signup, forgotPassword, logout }}>
       {children}
     </AuthContext.Provider>
   );

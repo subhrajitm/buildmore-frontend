@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { MainLayout } from './layouts/MainLayout';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
+import { Admin } from './pages/Admin';
 import { Landing } from './pages/Landing';
 import { Products } from './pages/Products';
 import { ProductDetail } from './pages/ProductDetail';
@@ -39,6 +40,9 @@ export default function App() {
               <Route path="/compliance" element={<ProtectedRoute><Compliance isDark={isDark} /></ProtectedRoute>} />
               <Route path="/specs" element={<ProtectedRoute><Specs isDark={isDark} /></ProtectedRoute>} />
               <Route path="/rfqs" element={<ProtectedRoute><RFQs isDark={isDark} /></ProtectedRoute>} />
+
+              {/* Admin routes */}
+              <Route path="/admin" element={<AdminRoute><Admin isDark={isDark} /></AdminRoute>} />
             </Routes>
           </MainLayout>
         </Router>
