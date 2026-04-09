@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ShieldCheck, Truck, ArrowRight, ChevronRight, FileText, Download, Zap, Check, Plus, Minus, AlertCircle } from 'lucide-react';
-import { productApi, BackendProduct } from '../api';
+import { productApi, specsApi, BackendProduct, SpecSheet } from '../api';
 import { normalizeProduct } from '../utils/normalizeProduct';
 import { useCart } from '../context/CartContext';
 
@@ -11,6 +11,7 @@ interface ProductDetailProps {
 
 export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [raw, setRaw] = useState<BackendProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -18,6 +19,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [activeTab, setActiveTab] = useState<'specs' | 'compliance' | 'shipping'>('specs');
+  const [specSheets, setSpecSheets] = useState<SpecSheet[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -26,6 +28,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
       .then(res => setRaw(res.product))
       .catch(() => setError('Product not found'))
       .finally(() => setLoading(false));
+    specsApi.getByProduct(id)
+      .then(res => setSpecSheets(res.specs || []))
+      .catch(() => {});
   }, [id]);
 
   if (loading) {
@@ -96,7 +101,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
               {product.name}
             </h1>
             <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-xl">
-              Professional-grade industrial component engineered for extreme environments. Optimized for high-density duty cycles and rigorous enterprise safety standards. Includes full compliance documentation and technical schemas.
+              {raw.desc || 'Professional-grade industrial component engineered for extreme environments. Optimized for high-density duty cycles and rigorous enterprise safety standards.'}
             </p>
           </div>
 
@@ -144,7 +149,11 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
             >
               {added ? <><Check className="w-4 h-4" /> Added to List</> : <>Add to Procurement List <ArrowRight className="w-4 h-4" /></>}
             </button>
-            <button className={`px-6 rounded-xl border flex items-center justify-center transition-all ${isDark ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-slate-50 border-slate-200 text-slate-900 hover:bg-slate-100'}`}>
+            <button
+              onClick={() => navigate('/rfqs')}
+              title="Request a Quote"
+              className={`px-6 rounded-xl border flex items-center justify-center transition-all ${isDark ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-slate-50 border-slate-200 text-slate-900 hover:bg-slate-100'}`}
+            >
               <FileText className="w-5 h-5" />
             </button>
           </div>
@@ -195,51 +204,79 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
           })}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20">
-          {(activeTab === 'specs' ? [
-              ...(raw.materialSpecifications ? [{ label: 'Material Specifications', value: raw.materialSpecifications }] : []),
-              { label: 'Category', value: raw.category },
-              { label: 'Stock', value: `${raw.stock} Units` },
-              { label: 'Availability', value: raw.availability ? 'Available' : 'Unavailable' },
-              ...(raw.desc ? [{ label: 'Description', value: raw.desc }] : []),
-            ] : activeTab === 'compliance' ? [
-              { label: 'ISO Certification', value: 'ISO 9001:2015' },
-              { label: 'Safety Standard', value: 'CE / UL Listed' },
-              { label: 'RoHS Compliance', value: 'Compliant' },
-              { label: 'REACH Registration', value: 'Registered' },
-              { label: 'SDS Sheet', value: 'Available' },
-              { label: 'Audit Trail', value: 'Full Chain of Custody' },
-            ] : [
-              { label: 'Freight Class', value: 'LTL Class 70' },
-              { label: 'Package Dimensions', value: '48" × 24" × 18"' },
-              { label: 'Gross Weight', value: '42 lbs' },
-              { label: 'Lead Time', value: '3-5 Business Days' },
-              { label: 'Origin Warehouse', value: 'London Hub SE1' },
-              { label: 'Export Control', value: 'EAR99' },
-            ]).map((item, i) => (
-              <div 
-                key={i} 
+        {activeTab === 'compliance' ? (
+          <div className={`flex flex-col items-center justify-center py-16 gap-5 rounded-2xl border-2 border-dashed ${isDark ? 'border-white/10 text-slate-500' : 'border-slate-100 text-slate-400'}`}>
+            <ShieldCheck className="w-10 h-10 opacity-30" />
+            <div className="text-center space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-widest">Platform Compliance Documentation</p>
+              <p className="text-[9px] font-bold opacity-60">ISO, CE, RoHS and full audit records are managed at the platform level.</p>
+            </div>
+            <Link to="/compliance" className="text-yellow-400 text-[9px] font-black uppercase tracking-widest border border-yellow-400/20 px-6 py-2.5 rounded-full hover:bg-yellow-400/10 transition-colors">
+              View Compliance Docs
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20">
+            {(activeTab === 'specs' ? [
+                ...(raw.materialSpecifications ? [{ label: 'Material Specifications', value: raw.materialSpecifications }] : []),
+                { label: 'Category', value: raw.category },
+                { label: 'Stock', value: `${raw.stock} Units` },
+                { label: 'Availability', value: raw.availability ? 'Available' : 'Unavailable' },
+                ...(raw.desc ? [{ label: 'Description', value: raw.desc }] : []),
+              ] : [
+                { label: 'Freight Class', value: raw.category ? `LTL — ${raw.category}` : 'LTL Freight' },
+                { label: 'Lead Time', value: raw.stock > 0 ? '3–5 Business Days' : 'On Backorder' },
+                { label: 'Export Control', value: 'EAR99' },
+              ]).map((item, i) => (
+              <div
+                key={i}
                 className={`flex items-center justify-between py-6 border-b transition-all duration-300 ${isDark ? 'border-white/[0.03] hover:border-white/10' : 'border-slate-100 hover:border-slate-200'}`}
               >
                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">{item.label}</span>
                 <span className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.value}</span>
               </div>
             ))}
-        </div>
+          </div>
+        )}
       </section>
 
-      <section className={`p-8 rounded-2xl border ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-slate-50 border-slate-100'} flex items-center justify-between`}>
-        <div className="flex items-center gap-6">
-          <div className="w-12 h-12 bg-yellow-400 rounded-xl flex items-center justify-center">
-            <Download className="w-6 h-6 text-black" />
+      {specSheets.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-[1.5px] bg-yellow-400" />
+            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-yellow-400">Technical Downloads</span>
           </div>
-          <div>
-            <h4 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>Technical Schema Bundle</h4>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">PDF, CAD, and Compliance PDF (14.2 MB)</p>
+          <div className="space-y-3">
+            {specSheets.map(sheet => (
+              <div key={sheet._id} className={`p-5 rounded-2xl border flex items-center justify-between gap-4 ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center shrink-0">
+                    <Download className="w-5 h-5 text-black" />
+                  </div>
+                  <div>
+                    <p className={`text-xs font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>{sheet.title}</p>
+                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
+                      {sheet.fileType}{sheet.version ? ` · v${sheet.version}` : ''}{sheet.fileSize ? ` · ${sheet.fileSize}` : ''}
+                    </p>
+                  </div>
+                </div>
+                {sheet.fileUrl ? (
+                  <a
+                    href={sheet.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all ${isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-slate-900 text-white hover:bg-black'}`}
+                  >
+                    Download
+                  </a>
+                ) : (
+                  <span className="px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-widest text-slate-500 border border-slate-500/20">Unavailable</span>
+                )}
+              </div>
+            ))}
           </div>
-        </div>
-        <button className={`px-6 py-3 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all ${isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-slate-900 text-white hover:bg-black'}`}>Download Docs</button>
-      </section>
+        </section>
+      )}
     </div>
   );
 };

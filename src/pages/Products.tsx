@@ -9,7 +9,6 @@ interface ProductsProps {
   isDark: boolean;
 }
 
-const TIERS = ['Standard Export', 'Bulk Distribution', 'LTL Freight Only', 'Custom Fab'];
 const SORT_OPTIONS = [
   { label: 'Featured', value: 'featured' },
   { label: 'Price: Low to High', value: 'price_asc' },
@@ -25,7 +24,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
     const cat = searchParams.get('category');
     return cat ? [cat] : [];
   });
-  const [selectedTiers, setSelectedTiers] = useState<string[]>([]);
+  const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('featured');
   const [sortOpen, setSortOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(12);
@@ -48,8 +47,10 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
 
   useEffect(() => {
     const cat = searchParams.get('category');
-    if (cat) {
-      setSelectedVerticals([cat]);
+    const q = searchParams.get('search');
+    if (cat || q) {
+      if (cat) setSelectedVerticals([cat]);
+      if (q) setSearch(q);
       setSearchParams({}, { replace: true });
     }
   }, [searchParams]);
@@ -60,20 +61,19 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
     );
   };
 
-  const toggleTier = (tier: string) => {
-    setSelectedTiers(prev =>
-      prev.includes(tier) ? prev.filter(t => t !== tier) : [...prev, tier]
-    );
-  };
-
   const clearFilters = () => {
     setStatusFilter('all');
     setSelectedVerticals([]);
-    setSelectedTiers([]);
+    setSearch('');
   };
 
   const filtered = useMemo(() => {
     let result = [...products];
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter(p => p.productName.toLowerCase().includes(q));
+    }
 
     if (statusFilter === 'ready') result = result.filter(p => p.stock > 0);
     if (statusFilter === 'certified') result = result.filter(p => p.availability);
@@ -88,7 +88,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
       case 'price_desc': result.sort((a, b) => b.price - a.price); break;
     }
     return result;
-  }, [statusFilter, selectedVerticals, selectedTiers, sortBy, products]);
+  }, [statusFilter, selectedVerticals, search, sortBy, products]);
 
   const visible = filtered.slice(0, visibleCount);
   const currentSort = SORT_OPTIONS.find(o => o.value === sortBy)!;
@@ -122,6 +122,16 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
           </div>
 
           <div className="flex flex-col gap-3">
+            <div className={`flex items-center gap-3 h-11 px-4 rounded-xl border ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
+              <Search className="w-4 h-4 text-slate-500 flex-shrink-0" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => { setSearch(e.target.value); setVisibleCount(12); }}
+                placeholder="Search products..."
+                className={`flex-1 bg-transparent text-[11px] font-bold uppercase tracking-widest outline-none placeholder:text-slate-500 ${isDark ? 'text-white' : 'text-slate-900'}`}
+              />
+            </div>
             <div className="flex items-center gap-3">
               {/* High-Precision Status Toggles */}
               <div className={`flex items-center p-1 rounded-xl border ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-slate-50 border-slate-200 shadow-inner'}`}>

@@ -52,11 +52,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, isDark }) => 
       {/* Content Section - Compact */}
       <div className="p-4 flex-1 flex flex-col space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">BM-{product.id}</span>
-          <div className="flex items-center gap-1">
-            <Star className="w-2.5 h-2.5 text-yellow-400 fill-current" />
-            <span className={`text-[9px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{product.rating}</span>
-          </div>
+          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">
+            BM-{String(product.id).slice(-5).toUpperCase()}
+          </span>
+          {product.rating != null && (
+            <div className="flex items-center gap-1">
+              <Star className="w-2.5 h-2.5 text-yellow-400 fill-current" />
+              <span className={`text-[9px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{product.rating}</span>
+            </div>
+          )}
         </div>
 
         <Link to={`/product/${product.id}`}>

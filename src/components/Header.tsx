@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, Award, LogOut } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,6 +12,15 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
   const { totalItems, totalValue } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    navigate(q ? `/products?search=${encodeURIComponent(q)}` : '/products');
+    setSearchQuery('');
+  };
 
   return (
     <header className={`${isDark ? 'bg-zinc-900/95 border-yellow-400/10' : 'bg-white/95 border-slate-200'} backdrop-blur-xl shadow-sm sticky top-0 z-50 border-b transition-colors duration-300`}>
@@ -32,18 +41,20 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
           </div>
         </div>
 
-        <div className="flex-1 max-w-2xl">
+        <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
           <div className="relative flex items-center group">
             <div className="absolute left-4 text-slate-500 group-focus-within:text-yellow-400 transition-colors">
               <Search className="w-3.5 h-3.5" />
             </div>
             <input
               type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search for materials, tools, and more..."
               className={`w-full ${isDark ? 'bg-zinc-800 border-white/5 text-white focus:bg-zinc-700' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white'} border rounded-lg pl-10 pr-4 py-2.5 text-sm transition-all outline-none focus:ring-2 focus:ring-yellow-400`}
             />
           </div>
-        </div>
+        </form>
 
         <div className="flex items-center gap-6 text-sm font-bold">
           <div className="hidden xl:flex items-center gap-6 text-slate-400">

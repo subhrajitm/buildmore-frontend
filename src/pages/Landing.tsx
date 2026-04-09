@@ -5,13 +5,42 @@ import { Hero } from '../components/Hero';
 import { CategoryGrid } from '../components/CategoryGrid';
 import { ProductCard } from '../components/ProductCard';
 import { TrustSignals } from '../components/TrustSignals';
-import { FLASH_OFFERS } from '../data/mockData';
 import { productApi, BackendProduct } from '../api';
 import { normalizeProduct } from '../utils/normalizeProduct';
 
 interface LandingProps {
   isDark: boolean;
 }
+
+const FLASH_OFFERS = [
+  {
+    id: 1,
+    title: 'Weekend Construction Bumper',
+    tag: 'Limited Time',
+    discount: 'Extra 15% OFF',
+    desc: 'Get an additional discount on all structural steel and power tools over $500.',
+    color: 'from-orange-600 to-red-700',
+    image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=2000&auto=format&fit=crop',
+  },
+  {
+    id: 2,
+    title: 'Bulk Infrastructure Blowout',
+    tag: 'Bumper Offer',
+    discount: 'Buy 5, Get 1 FREE',
+    desc: 'On all safety equipment and sitewide hardware kits. Stock up for your next project.',
+    color: 'from-blue-700 to-indigo-900',
+    image: 'https://images.unsplash.com/photo-1581094120973-10d9be8a1290?q=80&w=2000&auto=format&fit=crop',
+  },
+  {
+    id: 3,
+    title: 'Premium Project Pack',
+    tag: 'Flash Deal',
+    discount: 'Flat $500 Cashback',
+    desc: 'When you finalize your first procurement order over $5,000 this month.',
+    color: 'from-emerald-700 to-teal-900',
+    image: 'https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=2000&auto=format&fit=crop',
+  },
+];
 
 export const Landing: React.FC<LandingProps> = ({ isDark }) => {
   const [featured, setFeatured] = useState<BackendProduct[]>([]);

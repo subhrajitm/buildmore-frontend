@@ -1,44 +1,146 @@
-import React, { useState } from 'react';
-import { Plus, ArrowRight, Clock, CheckCircle, XCircle, FileText, Search, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, ArrowRight, Clock, CheckCircle, XCircle, FileText, Search, ChevronDown, ChevronUp, Send, Loader2, AlertCircle, Package } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { rfqApi, RFQ } from '../api';
 
 interface RFQsProps {
   isDark: boolean;
 }
 
-const MOCK_RFQS = [
-  { id: 'RFQ-2025-0041', title: 'Q2 Safety Gear Bulk Order', items: 4, value: 8420.00, status: 'pending', created: '2025-03-28', deadline: '2025-04-10', supplier: 'BuildMore Direct' },
-  { id: 'RFQ-2025-0038', title: 'Electrical Systems Procurement', items: 2, value: 14250.00, status: 'approved', created: '2025-03-20', deadline: '2025-04-05', supplier: 'GridMaster Co.' },
-  { id: 'RFQ-2025-0035', title: 'Industrial Tool Refresh — Site A', items: 6, value: 5680.00, status: 'approved', created: '2025-03-12', deadline: '2025-03-30', supplier: 'BuildMore Direct' },
-  { id: 'RFQ-2025-0031', title: 'Heavy Machinery LTL Freight Bundle', items: 1, value: 31000.00, status: 'pending', created: '2025-03-05', deadline: '2025-04-15', supplier: 'HeavySet Industrial' },
-  { id: 'RFQ-2025-0028', title: 'Fastener Assortment Kits — Q1 Resupply', items: 8, value: 1240.00, status: 'rejected', created: '2025-02-18', deadline: '2025-03-01', supplier: 'Bolt & Nut Co.' },
-  { id: 'RFQ-2025-0022', title: 'Site B PPE Annual Contract', items: 12, value: 22800.00, status: 'approved', created: '2025-01-30', deadline: '2025-02-28', supplier: 'BuildMore Direct' },
-];
-
-const STATUS_MAP = {
-  pending: { label: 'Pending', icon: Clock, color: 'text-yellow-400', bg: 'bg-yellow-400/10 border-yellow-400/20' },
-  approved: { label: 'Approved', icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-400/10 border-green-400/20' },
-  rejected: { label: 'Rejected', icon: XCircle, color: 'text-red-400', bg: 'bg-red-400/10 border-red-400/20' },
+const STATUS_MAP: Record<string, { label: string; icon: React.FC<{ className?: string }>; color: string; bg: string }> = {
+  DRAFT:        { label: 'Draft',        icon: FileText,    color: 'text-slate-400',  bg: 'bg-slate-400/10 border-slate-400/20' },
+  SUBMITTED:    { label: 'Submitted',    icon: Clock,       color: 'text-blue-400',   bg: 'bg-blue-400/10 border-blue-400/20' },
+  UNDER_REVIEW: { label: 'Under Review', icon: Clock,       color: 'text-yellow-400', bg: 'bg-yellow-400/10 border-yellow-400/20' },
+  QUOTED:       { label: 'Quoted',       icon: CheckCircle, color: 'text-purple-400', bg: 'bg-purple-400/10 border-purple-400/20' },
+  ACCEPTED:     { label: 'Accepted',     icon: CheckCircle, color: 'text-green-400',  bg: 'bg-green-400/10 border-green-400/20' },
+  REJECTED:     { label: 'Rejected',     icon: XCircle,     color: 'text-red-400',    bg: 'bg-red-400/10 border-red-400/20' },
+  EXPIRED:      { label: 'Expired',      icon: XCircle,     color: 'text-slate-500',  bg: 'bg-slate-500/10 border-slate-500/20' },
 };
 
+const STATUS_OPTIONS = ['All', 'DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'QUOTED', 'ACCEPTED', 'REJECTED', 'EXPIRED'];
+
 export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
-  const { user } = useAuth();
+  const { token, user } = useAuth();
+
+  const [rfqs, setRfqs] = useState<RFQ[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+
+  // New RFQ form
   const [showNewForm, setShowNewForm] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
+  const [newNotes, setNewNotes] = useState('');
+  const [newExpiry, setNewExpiry] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
 
-  const statusOptions = ['All', 'pending', 'approved', 'rejected'];
+  // Expanded RFQ for adding items
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const filtered = MOCK_RFQS.filter(rfq => {
-    const matchSearch = rfq.title.toLowerCase().includes(search.toLowerCase()) || rfq.id.toLowerCase().includes(search.toLowerCase());
+  // Add item form per RFQ
+  const [addItemForm, setAddItemForm] = useState<{ productName: string; quantity: string; targetPrice: string; notes: string }>({
+    productName: '', quantity: '1', targetPrice: '', notes: '',
+  });
+  const [addingItem, setAddingItem] = useState(false);
+  const [addItemError, setAddItemError] = useState('');
+
+  // Submit state
+  const [submitting, setSubmitting] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    rfqApi.getAll(token)
+      .then(res => setRfqs(res.rfqs))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const handleCreateRFQ = async () => {
+    if (!token) return;
+    setCreating(true);
+    setCreateError('');
+    try {
+      const res = await rfqApi.create({ notes: newNotes || undefined, expiresAt: newExpiry || undefined }, token);
+      setRfqs(prev => [res.rfq, ...prev]);
+      setShowNewForm(false);
+      setNewNotes('');
+      setNewExpiry('');
+      setExpandedId(res.rfq._id);
+    } catch (err: any) {
+      setCreateError(err.message || 'Failed to create RFQ');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleAddItem = async (rfqId: string) => {
+    if (!token || !addItemForm.productName.trim()) return;
+    setAddingItem(true);
+    setAddItemError('');
+    try {
+      const res = await rfqApi.addItem(rfqId, {
+        productName: addItemForm.productName.trim(),
+        quantity: Number(addItemForm.quantity) || 1,
+        targetPrice: addItemForm.targetPrice ? Number(addItemForm.targetPrice) : undefined,
+        notes: addItemForm.notes || undefined,
+      }, token);
+      setRfqs(prev => prev.map(r => r._id === rfqId ? res.rfq : r));
+      setAddItemForm({ productName: '', quantity: '1', targetPrice: '', notes: '' });
+    } catch (err: any) {
+      setAddItemError(err.message || 'Failed to add item');
+    } finally {
+      setAddingItem(false);
+    }
+  };
+
+  const handleRemoveItem = async (rfqId: string, itemId: string) => {
+    if (!token) return;
+    try {
+      const res = await rfqApi.removeItem(rfqId, itemId, token);
+      setRfqs(prev => prev.map(r => r._id === rfqId ? res.rfq : r));
+    } catch (err: any) {
+      // silent fail — item stays in list
+    }
+  };
+
+  const handleSubmit = async (rfqId: string) => {
+    if (!token) return;
+    setSubmitting(rfqId);
+    try {
+      const res = await rfqApi.submit(rfqId, token);
+      setRfqs(prev => prev.map(r => r._id === rfqId ? res.rfq : r));
+      setExpandedId(null);
+    } catch (err: any) {
+      // no-op
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
+  const filtered = rfqs.filter(rfq => {
+    const matchSearch = rfq.rfqNumber.toLowerCase().includes(search.toLowerCase()) ||
+      (rfq.notes || '').toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'All' || rfq.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
-  const totalValue = MOCK_RFQS.reduce((s, r) => s + r.value, 0);
-  const pendingCount = MOCK_RFQS.filter(r => r.status === 'pending').length;
-  const approvedCount = MOCK_RFQS.filter(r => r.status === 'approved').length;
+  const totalValue = rfqs.reduce((s, r) => s + r.totalEstimatedValue, 0);
+  const pendingCount = rfqs.filter(r => ['SUBMITTED', 'UNDER_REVIEW'].includes(r.status)).length;
+  const acceptedCount = rfqs.filter(r => r.status === 'ACCEPTED').length;
+
+  const inp = isDark
+    ? 'bg-zinc-800 border-white/10 text-white placeholder-slate-500 focus:border-yellow-400/60'
+    : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-yellow-400';
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-40">
+        <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -58,22 +160,30 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
         </button>
       </div>
 
+      {error && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-400/10 border border-red-400/20">
+          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          <p className="text-xs font-bold text-red-400">{error}</p>
+        </div>
+      )}
+
       {/* New RFQ form */}
       {showNewForm && (
         <div className={`p-6 rounded-2xl border space-y-4 animate-in fade-in duration-300 ${isDark ? 'bg-zinc-900 border-yellow-400/20' : 'bg-white border-yellow-400/30 shadow-xl'}`}>
           <h3 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>Create New RFQ</h3>
+          {createError && <p className="text-xs text-red-400 font-bold bg-red-400/10 px-4 py-2 rounded-lg">{createError}</p>}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">RFQ Title</label>
+            <div className="space-y-1.5 md:col-span-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Notes / Description</label>
               <input
                 type="text"
-                value={newTitle}
-                onChange={e => setNewTitle(e.target.value)}
-                placeholder="e.g. Q3 Safety Gear Order"
-                className={`w-full py-3 px-4 rounded-xl border text-sm outline-none transition-all ${isDark ? 'bg-zinc-800 border-white/5 text-white focus:ring-1 focus:ring-yellow-400' : 'bg-slate-50 border-slate-200 text-slate-900 focus:ring-1 focus:ring-yellow-400'}`}
+                value={newNotes}
+                onChange={e => setNewNotes(e.target.value)}
+                placeholder="e.g. Q3 Safety Gear Procurement — Site A"
+                className={`w-full py-3 px-4 rounded-xl border text-sm outline-none transition-all ${inp}`}
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Requester</label>
               <input
                 type="text"
@@ -82,23 +192,32 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
                 className={`w-full py-3 px-4 rounded-xl border text-sm outline-none opacity-60 cursor-not-allowed ${isDark ? 'bg-zinc-800 border-white/5 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
               />
             </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Expiry Date (optional)</label>
+              <input
+                type="date"
+                value={newExpiry}
+                onChange={e => setNewExpiry(e.target.value)}
+                className={`w-full py-3 px-4 rounded-xl border text-sm outline-none transition-all ${inp}`}
+              />
+            </div>
           </div>
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-            Tip: After creating, go to the Procurement Hub to add items and generate a quote.
+            After creating, add items and submit for a quote from our team.
           </p>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => { setShowNewForm(false); setNewTitle(''); }}
+              onClick={() => { setShowNewForm(false); setNewNotes(''); setNewExpiry(''); setCreateError(''); }}
               className={`px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}
             >
               Cancel
             </button>
             <button
-              disabled={!newTitle.trim()}
-              onClick={() => { setShowNewForm(false); setNewTitle(''); }}
+              onClick={handleCreateRFQ}
+              disabled={creating}
               className="bg-yellow-400 text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-yellow-300 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Submit RFQ <ArrowRight className="w-4 h-4" />
+              {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4" /> Create Draft</>}
             </button>
           </div>
         </div>
@@ -107,9 +226,9 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total RFQ Value', value: `$${(totalValue / 1000).toFixed(1)}K`, sub: `${MOCK_RFQS.length} requests` },
+          { label: 'Total RFQ Value', value: `$${(totalValue / 1000).toFixed(1)}K`, sub: `${rfqs.length} requests` },
           { label: 'Pending Review', value: pendingCount, sub: 'awaiting response' },
-          { label: 'Approved', value: approvedCount, sub: 'this quarter' },
+          { label: 'Accepted', value: acceptedCount, sub: 'all time' },
         ].map((s, i) => (
           <div key={i} className={`p-6 rounded-2xl border ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-100 shadow-sm'}`}>
             <p className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{s.value}</p>
@@ -131,18 +250,18 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
             className={`pl-9 pr-4 py-2.5 text-[10px] font-bold uppercase tracking-widest outline-none bg-transparent w-56 ${isDark ? 'text-white placeholder:text-slate-600' : 'text-slate-900 placeholder:text-slate-400'}`}
           />
         </div>
-        <div className="flex items-center gap-2">
-          {statusOptions.map(s => (
+        <div className="flex flex-wrap items-center gap-2">
+          {STATUS_OPTIONS.map(s => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all capitalize ${
+              className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
                 statusFilter === s
                   ? 'bg-yellow-400 text-black'
                   : isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'
               }`}
             >
-              {s}
+              {s === 'UNDER_REVIEW' ? 'Review' : s === 'All' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
             </button>
           ))}
         </div>
@@ -157,32 +276,150 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
           </div>
         )}
         {filtered.map(rfq => {
-          const s = STATUS_MAP[rfq.status as keyof typeof STATUS_MAP];
+          const s = STATUS_MAP[rfq.status] ?? STATUS_MAP['DRAFT'];
+          const isExpanded = expandedId === rfq._id;
+          const isDraft = rfq.status === 'DRAFT';
+
           return (
-            <div
-              key={rfq.id}
-              className={`p-5 rounded-2xl border flex items-center gap-6 transition-all cursor-pointer ${isDark ? 'bg-zinc-900 border-white/5 hover:border-white/10' : 'bg-white border-slate-100 hover:shadow-lg'}`}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-1">
-                  <span className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{rfq.id}</span>
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${s.bg} ${s.color}`}>
-                    <s.icon className="w-2.5 h-2.5" />
-                    {s.label}
-                  </span>
+            <div key={rfq._id} className={`rounded-2xl border transition-all ${isDark ? 'bg-zinc-900 border-white/5 hover:border-white/10' : 'bg-white border-slate-100 hover:shadow-lg'}`}>
+              {/* Row */}
+              <div
+                className="p-5 flex items-center gap-6 cursor-pointer"
+                onClick={() => setExpandedId(isExpanded ? null : rfq._id)}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{rfq.rfqNumber}</span>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${s.bg} ${s.color}`}>
+                      <s.icon className="w-2.5 h-2.5" />
+                      {s.label}
+                    </span>
+                  </div>
+                  <h3 className={`text-sm font-black uppercase leading-tight truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    {rfq.notes || 'No description'}
+                  </h3>
+                  <div className="flex items-center gap-4 mt-1.5">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{rfq.items.length} item{rfq.items.length !== 1 ? 's' : ''}</span>
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Created: {new Date(rfq.createdAt).toLocaleDateString()}</span>
+                    {rfq.expiresAt && <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Expires: {new Date(rfq.expiresAt).toLocaleDateString()}</span>}
+                  </div>
                 </div>
-                <h3 className={`text-sm font-black uppercase leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{rfq.title}</h3>
-                <div className="flex items-center gap-4 mt-1.5">
-                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{rfq.items} item{rfq.items !== 1 ? 's' : ''}</span>
-                  <span className={`text-[9px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{rfq.supplier}</span>
-                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Due: {rfq.deadline}</span>
+                <div className="text-right shrink-0">
+                  <p className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${rfq.totalEstimatedValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Est. Value</p>
                 </div>
+                {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />}
               </div>
-              <div className="text-right shrink-0">
-                <p className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${rfq.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Quote Value</p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-500 shrink-0" />
+
+              {/* Expanded section */}
+              {isExpanded && (
+                <div className={`border-t px-5 pb-5 pt-4 space-y-4 ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                  {/* Items list */}
+                  {rfq.items.length > 0 ? (
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Items</p>
+                      {rfq.items.map(item => (
+                        <div key={item._id} className={`flex items-center justify-between px-4 py-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+                          <div>
+                            <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.productName}</p>
+                            <div className="flex items-center gap-3 mt-0.5">
+                              <span className="text-[9px] text-slate-500 font-bold uppercase">Qty: {item.quantity}</span>
+                              {item.targetPrice != null && <span className="text-[9px] text-slate-500 font-bold uppercase">Target: ${item.targetPrice}</span>}
+                              {item.quotedPrice != null && <span className="text-[9px] text-yellow-400 font-bold uppercase">Quoted: ${item.quotedPrice}</span>}
+                              {item.notes && <span className="text-[9px] text-slate-500 italic">{item.notes}</span>}
+                            </div>
+                          </div>
+                          {isDraft && (
+                            <button
+                              onClick={() => handleRemoveItem(rfq._id, item._id)}
+                              className="text-[9px] font-black uppercase text-red-400 hover:text-red-300 transition-colors"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 py-3">
+                      <Package className="w-4 h-4 text-slate-500" />
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">No items yet — add items below</p>
+                    </div>
+                  )}
+
+                  {/* Add item form — only for DRAFT */}
+                  {isDraft && (
+                    <div className={`p-4 rounded-xl border space-y-3 ${isDark ? 'bg-zinc-800 border-white/5' : 'bg-slate-50 border-slate-200'}`}>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Add Item</p>
+                      {addItemError && <p className="text-xs text-red-400 font-bold">{addItemError}</p>}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="col-span-2 space-y-1">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Product Name *</label>
+                          <input
+                            value={addItemForm.productName}
+                            onChange={e => setAddItemForm(f => ({ ...f, productName: e.target.value }))}
+                            placeholder="e.g. Safety Helmet"
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-bold outline-none transition-colors ${inp}`}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Quantity</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={addItemForm.quantity}
+                            onChange={e => setAddItemForm(f => ({ ...f, quantity: e.target.value }))}
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-bold outline-none transition-colors ${inp}`}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Target Price ($)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={addItemForm.targetPrice}
+                            onChange={e => setAddItemForm(f => ({ ...f, targetPrice: e.target.value }))}
+                            placeholder="Optional"
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-bold outline-none transition-colors ${inp}`}
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleAddItem(rfq._id)}
+                        disabled={addingItem || !addItemForm.productName.trim()}
+                        className="bg-yellow-400 text-black px-5 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-yellow-300 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {addingItem ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                        Add Item
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Admin notes */}
+                  {rfq.adminNotes && (
+                    <div className={`px-4 py-3 rounded-xl ${isDark ? 'bg-yellow-400/5 border border-yellow-400/20' : 'bg-yellow-50 border border-yellow-200'}`}>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-yellow-400 mb-1">Admin Notes</p>
+                      <p className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{rfq.adminNotes}</p>
+                    </div>
+                  )}
+
+                  {/* Submit button — only for DRAFT with items */}
+                  {isDraft && rfq.items.length > 0 && (
+                    <div className="flex justify-end pt-2">
+                      <button
+                        onClick={() => handleSubmit(rfq._id)}
+                        disabled={submitting === rfq._id}
+                        className="bg-yellow-400 text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-yellow-300 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {submitting === rfq._id
+                          ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</>
+                          : <><Send className="w-4 h-4" /> Submit RFQ</>
+                        }
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

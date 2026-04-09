@@ -1,40 +1,46 @@
-import React, { useState } from 'react';
-import { Package, TrendingDown, TrendingUp, AlertTriangle, Search, ChevronUp, ChevronDown } from 'lucide-react';
-import { PRODUCTS } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { Package, TrendingDown, TrendingUp, AlertTriangle, Search, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
+import { productApi, BackendProduct } from '../api';
 
 interface InventoryProps {
   isDark: boolean;
 }
 
-const INVENTORY = PRODUCTS.map((p, i) => ({
-  ...p,
-  sku: `BM-${String(p.id).padStart(5, '0')}`,
-  stock: [42, 8, 156, 23, 5, 88, 3, 210][i] ?? 42,
-  reorderPoint: 20,
-  warehouse: ['London SE1', 'Manchester NW1', 'London SE1', 'Birmingham B1', 'London SE1', 'Manchester NW1', 'Leeds LS1', 'London SE1'][i] ?? 'London SE1',
-  lastRestocked: [`2025-03-10`, `2025-03-22`, `2025-02-28`, `2025-03-15`, `2025-03-29`, `2025-03-05`, `2025-03-18`, `2025-02-20`][i] ?? '2025-03-01',
-}));
-
 type SortField = 'name' | 'stock' | 'price';
 type SortDir = 'asc' | 'desc';
 
 export const Inventory: React.FC<InventoryProps> = ({ isDark }) => {
+  const [products, setProducts] = useState<BackendProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
-  const [warehouseFilter, setWarehouseFilter] = useState('All');
+  const [categoryFilter, setCategoryFilter] = useState('All');
 
-  const warehouses = ['All', ...Array.from(new Set(INVENTORY.map(i => i.warehouse)))];
+  useEffect(() => {
+    productApi.getAll()
+      .then(res => setProducts(res.products))
+      .catch(() => setError('Failed to load inventory'))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const filtered = INVENTORY
-    .filter(item => {
-      const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || item.sku.toLowerCase().includes(search.toLowerCase());
-      const matchWarehouse = warehouseFilter === 'All' || item.warehouse === warehouseFilter;
-      return matchSearch && matchWarehouse;
+  const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
+
+  const LOW_STOCK_THRESHOLD = 20;
+
+  const filtered = products
+    .filter(p => {
+      const sku = `BM-${p._id.slice(-5).toUpperCase()}`;
+      const matchSearch = p.productName.toLowerCase().includes(search.toLowerCase()) ||
+        sku.toLowerCase().includes(search.toLowerCase());
+      const matchCat = categoryFilter === 'All' || p.category === categoryFilter;
+      return matchSearch && matchCat;
     })
     .sort((a, b) => {
       let cmp = 0;
-      if (sortField === 'name') cmp = a.name.localeCompare(b.name);
+      if (sortField === 'name') cmp = a.productName.localeCompare(b.productName);
       else if (sortField === 'stock') cmp = a.stock - b.stock;
       else if (sortField === 'price') cmp = a.price - b.price;
       return sortDir === 'asc' ? cmp : -cmp;
@@ -45,14 +51,31 @@ export const Inventory: React.FC<InventoryProps> = ({ isDark }) => {
     else { setSortField(field); setSortDir('asc'); }
   };
 
-  const totalStock = INVENTORY.reduce((s, i) => s + i.stock, 0);
-  const lowStock = INVENTORY.filter(i => i.stock <= i.reorderPoint).length;
-  const totalValue = INVENTORY.reduce((s, i) => s + i.price * i.stock, 0);
+  const totalStock = products.reduce((s, p) => s + p.stock, 0);
+  const lowStock = products.filter(p => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD).length;
+  const totalValue = products.reduce((s, p) => s + p.price * p.stock, 0);
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ChevronDown className="w-3 h-3 opacity-30" />;
     return sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-yellow-400" /> : <ChevronDown className="w-3 h-3 text-yellow-400" />;
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-40">
+        <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-40 gap-4">
+        <AlertTriangle className="w-10 h-10 text-red-400" />
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -67,9 +90,9 @@ export const Inventory: React.FC<InventoryProps> = ({ isDark }) => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total Stock Units', value: totalStock.toLocaleString(), icon: Package, color: 'text-yellow-400', trend: null },
-          { label: 'Low Stock Alerts', value: lowStock, icon: AlertTriangle, color: 'text-red-400', trend: 'down' },
-          { label: 'Inventory Value', value: `$${(totalValue / 1000).toFixed(1)}K`, icon: TrendingUp, color: 'text-green-400', trend: 'up' },
+          { label: 'Total Stock Units', value: totalStock.toLocaleString(), icon: Package, color: 'text-yellow-400' },
+          { label: 'Low Stock Alerts', value: lowStock, icon: AlertTriangle, color: 'text-red-400' },
+          { label: 'Inventory Value', value: `$${(totalValue / 1000).toFixed(1)}K`, icon: TrendingUp, color: 'text-green-400' },
         ].map((s, i) => (
           <div key={i} className={`p-6 rounded-2xl border flex items-center gap-5 ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-100 shadow-sm'}`}>
             <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
@@ -83,7 +106,7 @@ export const Inventory: React.FC<InventoryProps> = ({ isDark }) => {
         ))}
       </div>
 
-      {/* Search + warehouse filter */}
+      {/* Search + category filter */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className={`relative flex items-center border rounded-lg ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-200'}`}>
           <Search className="absolute left-3 w-3.5 h-3.5 text-slate-500" />
@@ -96,17 +119,17 @@ export const Inventory: React.FC<InventoryProps> = ({ isDark }) => {
           />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {warehouses.map(wh => (
+          {categories.map(cat => (
             <button
-              key={wh}
-              onClick={() => setWarehouseFilter(wh)}
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
               className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                warehouseFilter === wh
+                categoryFilter === cat
                   ? 'bg-yellow-400 text-black'
                   : isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'
               }`}
             >
-              {wh}
+              {cat}
             </button>
           ))}
         </div>
@@ -119,7 +142,7 @@ export const Inventory: React.FC<InventoryProps> = ({ isDark }) => {
           <button className="col-span-4 flex items-center gap-1 text-left" onClick={() => toggleSort('name')}>
             Product <SortIcon field="name" />
           </button>
-          <span className="col-span-2">Warehouse</span>
+          <span className="col-span-2">Category</span>
           <button className="col-span-2 flex items-center gap-1" onClick={() => toggleSort('stock')}>
             Stock <SortIcon field="stock" />
           </button>
@@ -129,51 +152,63 @@ export const Inventory: React.FC<InventoryProps> = ({ isDark }) => {
           </button>
         </div>
 
-        {filtered.map((item, i) => {
-          const isLow = item.stock <= item.reorderPoint;
-          const isCritical = item.stock <= 5;
-          return (
-            <div
-              key={item.id}
-              className={`grid grid-cols-12 px-6 py-4 items-center border-b transition-colors ${
-                isDark ? 'border-white/5 hover:bg-white/5' : 'border-slate-50 hover:bg-slate-50'
-              } ${i === filtered.length - 1 ? 'border-b-0' : ''}`}
-            >
-              <span className="col-span-1 text-[9px] font-black text-slate-500 uppercase">{item.sku}</span>
-              <div className="col-span-4 pr-4 flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-                  <img src={item.image} alt={item.name} className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
+        {filtered.length === 0 ? (
+          <div className={`flex flex-col items-center justify-center py-16 gap-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            <Package className="w-10 h-10 opacity-30" />
+            <p className="text-[10px] font-black uppercase tracking-widest">No products found</p>
+          </div>
+        ) : (
+          filtered.map((item, i) => {
+            const sku = `BM-${item._id.slice(-5).toUpperCase()}`;
+            const isLow = item.stock > 0 && item.stock <= LOW_STOCK_THRESHOLD;
+            const isCritical = item.stock === 0;
+            const img = item.productImages?.[0];
+            return (
+              <div
+                key={item._id}
+                className={`grid grid-cols-12 px-6 py-4 items-center border-b transition-colors ${
+                  isDark ? 'border-white/5 hover:bg-white/5' : 'border-slate-50 hover:bg-slate-50'
+                } ${i === filtered.length - 1 ? 'border-b-0' : ''}`}
+              >
+                <span className="col-span-1 text-[9px] font-black text-slate-500 uppercase">{sku}</span>
+                <div className="col-span-4 pr-4 flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+                    {img
+                      ? <img src={img} alt={item.productName} className="w-8 h-8 object-contain mix-blend-multiply dark:mix-blend-normal" referrerPolicy="no-referrer" />
+                      : <Package className="w-4 h-4 text-slate-500" />
+                    }
+                  </div>
+                  <p className={`text-[11px] font-black uppercase leading-tight line-clamp-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.productName}</p>
                 </div>
-                <p className={`text-[11px] font-black uppercase leading-tight line-clamp-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.name}</p>
-              </div>
-              <span className={`col-span-2 text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{item.warehouse}</span>
-              <div className="col-span-2">
-                <span className={`text-base font-black ${isCritical ? 'text-red-400' : isLow ? 'text-yellow-400' : isDark ? 'text-white' : 'text-slate-900'}`}>
-                  {item.stock}
-                </span>
-                <span className="text-[9px] text-slate-500 font-bold ml-1 uppercase">units</span>
-              </div>
-              <div className="col-span-1">
-                {isCritical ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-red-400/10 border border-red-400/20 text-red-400">
-                    <AlertTriangle className="w-2.5 h-2.5" /> Critical
+                <span className={`col-span-2 text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{item.category}</span>
+                <div className="col-span-2">
+                  <span className={`text-base font-black ${isCritical ? 'text-red-400' : isLow ? 'text-yellow-400' : isDark ? 'text-white' : 'text-slate-900'}`}>
+                    {item.stock}
                   </span>
-                ) : isLow ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-yellow-400/10 border border-yellow-400/20 text-yellow-400">
-                    <TrendingDown className="w-2.5 h-2.5" /> Low
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-green-400/10 border border-green-400/20 text-green-400">
-                    OK
-                  </span>
-                )}
+                  <span className="text-[9px] text-slate-500 font-bold ml-1 uppercase">units</span>
+                </div>
+                <div className="col-span-1">
+                  {isCritical ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-red-400/10 border border-red-400/20 text-red-400">
+                      <AlertTriangle className="w-2.5 h-2.5" /> Out
+                    </span>
+                  ) : isLow ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-yellow-400/10 border border-yellow-400/20 text-yellow-400">
+                      <TrendingDown className="w-2.5 h-2.5" /> Low
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-green-400/10 border border-green-400/20 text-green-400">
+                      OK
+                    </span>
+                  )}
+                </div>
+                <div className="col-span-2 text-right">
+                  <span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${item.price.toFixed(2)}</span>
+                </div>
               </div>
-              <div className="col-span-2 text-right">
-                <span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${item.price.toFixed(2)}</span>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { authApi } from '../api';
+import { authApi, userApi } from '../api';
 
 interface User {
   email: string;
@@ -16,6 +16,7 @@ interface AuthContextType {
   signup: (name: string, email: string, password: string, phone: string) => Promise<{ success: boolean; error?: string }>;
   forgotPassword: (email: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  updateUser: (patch: Partial<Pick<User, 'name'>>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -60,9 +61,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const res = await authApi.login({ email, password });
-      const role = decodeTokenRole(res.token!);
-      const newUser: User = { email, name: parseNameFromEmail(email), role };
-      persistAuth(newUser, res.token!);
+      const tok = res.token!;
+      const role = decodeTokenRole(tok);
+      let name = parseNameFromEmail(email);
+      try {
+        const profile = await userApi.getProfile(tok);
+        name = profile.user.name;
+      } catch { /* use email-derived fallback */ }
+      persistAuth({ email, name, role }, tok);
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Login failed.' };
@@ -97,8 +103,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('buildmore_token');
   };
 
+  const updateUser = (patch: Partial<Pick<User, 'name'>>) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...patch };
+      localStorage.setItem('buildmore_user', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, isAdmin: user?.role === 'ADMIN', login, signup, forgotPassword, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, isAdmin: user?.role === 'ADMIN', login, signup, forgotPassword, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
