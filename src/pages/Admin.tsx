@@ -670,6 +670,137 @@ function ShipmentsTab({ isDark, token, input, card, showToast }: {
   );
 }
 
+// ─── Specs Tab ────────────────────────────────────────────────────────────────
+
+function SpecsTab({ isDark, token, input, card, showToast }: {
+  isDark: boolean; token: string; input: string; card: string; showToast: (m: string) => void;
+}) {
+  const [specs, setSpecs] = useState<SpecSheet[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const FILE_TYPES = ['PDF', 'CAD', 'XLSX', 'DWG', 'OTHER'] as const;
+  const [form, setForm] = useState({ title: '', fileType: 'PDF' as typeof FILE_TYPES[number], version: '1.0', description: '', productId: '' });
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const load = () => {
+    setLoading(true);
+    specsApi.getAll()
+      .then(r => setSpecs(r.specs))
+      .catch(() => showToast('Failed to load spec sheets'))
+      .finally(() => setLoading(false));
+  };
+  useEffect(load, [token]);
+
+  const handleUpload = async () => {
+    if (!form.title.trim() || !file) { showToast('Title and file are required'); return; }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('title', form.title.trim());
+      fd.append('fileType', form.fileType);
+      fd.append('version', form.version || '1.0');
+      if (form.description.trim()) fd.append('description', form.description.trim());
+      if (form.productId.trim()) fd.append('productId', form.productId.trim());
+      await specsApi.adminUpload(fd, token);
+      showToast('Spec sheet uploaded');
+      setForm({ title: '', fileType: 'PDF', version: '1.0', description: '', productId: '' });
+      setFile(null);
+      if (fileRef.current) fileRef.current.value = '';
+      load();
+    } catch (e: any) { showToast(e.message || 'Upload failed'); }
+    finally { setUploading(false); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this spec sheet?')) return;
+    setDeleting(id);
+    try {
+      await specsApi.adminDelete(id, token);
+      setSpecs(prev => prev.filter(s => s._id !== id));
+      showToast('Deleted');
+    } catch (e: any) { showToast(e.message || 'Delete failed'); }
+    finally { setDeleting(null); }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Upload form */}
+      <div className={`p-6 rounded-2xl border space-y-5 ${card}`}>
+        <h3 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>Upload Spec Sheet</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Title *</label>
+            <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Structural Steel Grade A Datasheet" className={`w-full px-3 py-2.5 rounded-xl border text-xs font-bold outline-none transition-colors ${input}`} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">File Type *</label>
+            <select value={form.fileType} onChange={e => setForm(f => ({ ...f, fileType: e.target.value as any }))} className={`w-full px-3 py-2.5 rounded-xl border text-xs font-bold outline-none transition-colors ${input}`}>
+              {FILE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Version</label>
+            <input value={form.version} onChange={e => setForm(f => ({ ...f, version: e.target.value }))} placeholder="1.0" className={`w-full px-3 py-2.5 rounded-xl border text-xs font-bold outline-none transition-colors ${input}`} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Product ID <span className="text-slate-600 normal-case font-bold">(optional — links sheet to a product)</span></label>
+            <input value={form.productId} onChange={e => setForm(f => ({ ...f, productId: e.target.value }))} placeholder="MongoDB _id of linked product" className={`w-full px-3 py-2.5 rounded-xl border text-xs font-bold outline-none transition-colors ${input}`} />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Description</label>
+            <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief description of the document" className={`w-full px-3 py-2.5 rounded-xl border text-xs font-bold outline-none transition-colors ${input}`} />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">File *</label>
+            <input ref={fileRef} type="file" onChange={e => setFile(e.target.files?.[0] || null)} className={`w-full px-3 py-2.5 rounded-xl border text-xs font-bold outline-none transition-colors ${input} file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-yellow-400 file:text-black`} />
+          </div>
+        </div>
+        <button onClick={handleUpload} disabled={uploading} className="flex items-center gap-2 bg-yellow-400 text-black px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-yellow-300 disabled:opacity-50 transition-all">
+          {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Upload
+        </button>
+      </div>
+
+      {/* Spec sheets list */}
+      <div className="space-y-3">
+        <h3 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>
+          All Spec Sheets <span className="text-slate-500 font-bold text-xs">({specs.length})</span>
+        </h3>
+        {loading ? (
+          <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-yellow-400" /></div>
+        ) : specs.length === 0 ? (
+          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest py-8 text-center">No spec sheets yet</p>
+        ) : specs.map(s => (
+          <div key={s._id} className={`p-4 rounded-xl border flex items-center justify-between gap-4 ${card}`}>
+            <div className="flex items-center gap-4 min-w-0">
+              <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-md ${isDark ? 'bg-white/10 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{s.fileType}</span>
+              <div className="min-w-0">
+                <p className={`text-xs font-black uppercase truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{s.title}</p>
+                <p className="text-[9px] text-slate-500 font-bold mt-0.5">
+                  v{s.version}{s.product ? ` · ${s.product.productName}` : ''}{s.fileSize ? ` · ${s.fileSize}` : ''}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {s.fileUrl && (
+                <a href={s.fileUrl} target="_blank" rel="noopener noreferrer" className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-slate-400 hover:text-yellow-400' : 'hover:bg-slate-100 text-slate-400 hover:text-yellow-500'}`}>
+                  <FileText className="w-4 h-4" />
+                </a>
+              )}
+              <button onClick={() => handleDelete(s._id)} disabled={deleting === s._id} className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-red-500/10 text-slate-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-500'}`}>
+                {deleting === s._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Admin Page ──────────────────────────────────────────────────────────
 
 export const Admin: React.FC<AdminProps> = ({ isDark }) => {
@@ -693,6 +824,7 @@ export const Admin: React.FC<AdminProps> = ({ isDark }) => {
     { id: 'orders', label: 'Orders', icon: ClipboardList },
     { id: 'rfqs', label: 'RFQs', icon: FileText },
     { id: 'shipments', label: 'Shipments', icon: Truck },
+    { id: 'specs', label: 'Spec Sheets', icon: FileText },
   ];
 
   if (!token) return null;
@@ -737,6 +869,7 @@ export const Admin: React.FC<AdminProps> = ({ isDark }) => {
         {activeTab === 'orders'   && <OrdersTab   isDark={isDark} token={token} input={input} card={card} showToast={showToast} />}
         {activeTab === 'rfqs'     && <RFQsTab     isDark={isDark} token={token} input={input} card={card} showToast={showToast} />}
         {activeTab === 'shipments'&& <ShipmentsTab isDark={isDark} token={token} input={input} card={card} showToast={showToast} />}
+        {activeTab === 'specs'    && <SpecsTab    isDark={isDark} token={token} input={input} card={card} showToast={showToast} />}
       </div>
     </div>
   );

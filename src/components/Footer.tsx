@@ -63,8 +63,8 @@ export const Footer: React.FC<FooterProps> = ({ isDark }) => (
           <ul className="space-y-4 text-xs font-bold capitalize">
             <li><Link to="/logistics" className="hover:text-yellow-400 transition-colors">Global Freight</Link></li>
             <li><Link to="/compliance" className="hover:text-yellow-400 transition-colors">ISO Compliance</Link></li>
-            <li><a href="#" className="hover:text-yellow-400 transition-colors">Price Benchmarking</a></li>
-            <li><a href="#" className="hover:text-yellow-400 transition-colors">LTL Logistics</a></li>
+            <li><Link to="/rfqs" className="hover:text-yellow-400 transition-colors">Price Benchmarking</Link></li>
+            <li><Link to="/logistics" className="hover:text-yellow-400 transition-colors">LTL Logistics</Link></li>
           </ul>
         </div>
 

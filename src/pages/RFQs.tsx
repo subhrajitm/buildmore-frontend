@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, ArrowRight, Clock, CheckCircle, XCircle, FileText, Search, ChevronDown, ChevronUp, Send, Loader2, AlertCircle, Package } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { rfqApi, RFQ } from '../api';
+import { useLocation } from 'react-router-dom';
 
 interface RFQsProps {
   isDark: boolean;
@@ -21,6 +22,7 @@ const STATUS_OPTIONS = ['All', 'DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'QUOTED', '
 
 export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
   const { token, user } = useAuth();
+  const location = useLocation();
 
   const [rfqs, setRfqs] = useState<RFQ[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +50,7 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
 
   // Submit state
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
     if (!token) return;
@@ -56,6 +59,15 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]);
+
+  // Pre-populate from ProductDetail navigation state
+  useEffect(() => {
+    const state = location.state as { productName?: string; productId?: string } | null;
+    if (state?.productName) {
+      setShowNewForm(true);
+      setAddItemForm(prev => ({ ...prev, productName: state.productName! }));
+    }
+  }, []);
 
   const handleCreateRFQ = async () => {
     if (!token) return;
@@ -108,12 +120,13 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
   const handleSubmit = async (rfqId: string) => {
     if (!token) return;
     setSubmitting(rfqId);
+    setSubmitError('');
     try {
       const res = await rfqApi.submit(rfqId, token);
       setRfqs(prev => prev.map(r => r._id === rfqId ? res.rfq : r));
       setExpandedId(null);
     } catch (err: any) {
-      // no-op
+      setSubmitError(err.message || 'Failed to submit RFQ');
     } finally {
       setSubmitting(null);
     }
@@ -405,7 +418,10 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
 
                   {/* Submit button — only for DRAFT with items */}
                   {isDraft && rfq.items.length > 0 && (
-                    <div className="flex justify-end pt-2">
+                    <div className="flex flex-col items-end gap-2 pt-2">
+                      {submitting !== rfq._id && submitError && expandedId === rfq._id && (
+                        <p className="text-[10px] font-bold text-red-400">{submitError}</p>
+                      )}
                       <button
                         onClick={() => handleSubmit(rfq._id)}
                         disabled={submitting === rfq._id}

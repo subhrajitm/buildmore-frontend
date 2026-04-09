@@ -150,7 +150,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
               {added ? <><Check className="w-4 h-4" /> Added to List</> : <>Add to Procurement List <ArrowRight className="w-4 h-4" /></>}
             </button>
             <button
-              onClick={() => navigate('/rfqs')}
+              onClick={() => navigate('/rfqs', { state: { productName: raw.productName, productId: raw._id } })}
               title="Request a Quote"
               className={`px-6 rounded-xl border flex items-center justify-center transition-all ${isDark ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-slate-50 border-slate-200 text-slate-900 hover:bg-slate-100'}`}
             >
