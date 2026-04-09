@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, Award, LogOut } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +11,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
   const { totalItems, totalValue } = useCart();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -78,6 +78,11 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
                 <Link to="/profile" className="flex flex-col cursor-pointer group text-right">
                   <span className="text-[10px] leading-tight text-slate-500 font-bold">Account</span>
                   <div className="flex items-center gap-1.5 justify-end">
+                    {isAdmin && (
+                      <span className="flex items-center gap-0.5 bg-yellow-400 text-black px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">
+                        <ShieldCheck className="w-2.5 h-2.5" /> Admin
+                      </span>
+                    )}
                     <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.name}</span>
                     <ChevronDown className="w-3.5 h-3.5 text-slate-500 group-hover:text-yellow-400 transition-colors" />
                   </div>

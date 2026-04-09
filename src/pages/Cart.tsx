@@ -210,7 +210,10 @@ export const Cart: React.FC<CartProps> = ({ isDark }) => {
                 <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>${totalValue.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-medium">Shipping & Fees</span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-slate-500 font-medium">Flat Logistics Fee</span>
+                  <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">LTL · Standard delivery 3–5 days</span>
+                </div>
                 <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>${LOGISTICS_FEE.toFixed(2)}</span>
               </div>
               <div className={`flex items-center justify-between pt-5 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
@@ -229,7 +232,7 @@ export const Cart: React.FC<CartProps> = ({ isDark }) => {
               </div>
               <div className="flex items-center gap-3">
                 <Truck className="w-4 h-4 text-blue-500" />
-                <span className="text-[10px] font-bold text-slate-500">Standard Delivery: 3-5 Business Days</span>
+                <span className="text-[10px] font-bold text-slate-500">Flat logistics fee covers LTL freight nationwide</span>
               </div>
             </div>
 

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Hero } from '../components/Hero';
 import { CategoryGrid } from '../components/CategoryGrid';
@@ -44,11 +44,14 @@ const FLASH_OFFERS = [
 
 export const Landing: React.FC<LandingProps> = ({ isDark }) => {
   const [featured, setFeatured] = useState<BackendProduct[]>([]);
+  const [loadingFeatured, setLoadingFeatured] = useState(true);
+  const [featuredError, setFeaturedError] = useState('');
 
   useEffect(() => {
     productApi.getAll()
       .then(res => setFeatured((res.products || []).slice(0, 8)))
-      .catch(() => setFeatured([]));
+      .catch(() => setFeaturedError('Could not load products. Please try again later.'))
+      .finally(() => setLoadingFeatured(false));
   }, []);
 
   return (
@@ -73,7 +76,16 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
           </div>
         </div>
 
-        {featured.length === 0 ? (
+        {loadingFeatured ? (
+          <div className={`flex items-center justify-center py-24 rounded-2xl border ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+            <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
+          </div>
+        ) : featuredError ? (
+          <div className={`flex items-center justify-center gap-3 py-20 rounded-2xl border ${isDark ? 'border-white/5 text-slate-500' : 'border-slate-100 text-slate-400'}`}>
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-red-400">{featuredError}</p>
+          </div>
+        ) : featured.length === 0 ? (
           <div className={`flex items-center justify-center py-24 rounded-2xl border ${isDark ? 'border-white/5 text-slate-600' : 'border-slate-100 text-slate-400'}`}>
             <p className="text-[10px] font-black uppercase tracking-widest">No products yet</p>
           </div>
@@ -93,25 +105,44 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
   );
 };
 
+const OFFER_DURATION_SECS = 6 * 60 * 60; // 6h per offer slot, resets each slide
+
 const BumperSlider: React.FC<{ isDark: boolean }> = ({ isDark }) => {
   const [activeSlide, setActiveSlide] = React.useState(0);
   const [progress, setProgress] = React.useState(0);
+  const [remaining, setRemaining] = React.useState(OFFER_DURATION_SECS);
+  const remainingRef = useRef(OFFER_DURATION_SECS);
 
   React.useEffect(() => {
-    const timer = setInterval(() => {
+    remainingRef.current = OFFER_DURATION_SECS;
+    setRemaining(OFFER_DURATION_SECS);
+  }, [activeSlide]);
+
+  React.useEffect(() => {
+    const slideTimer = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % FLASH_OFFERS.length);
       setProgress(0);
     }, 6000);
-    
+
     const progressTimer = setInterval(() => {
       setProgress((prev) => Math.min(prev + (100 / 60), 100));
     }, 100);
 
+    const countdownTimer = setInterval(() => {
+      remainingRef.current = Math.max(0, remainingRef.current - 1);
+      setRemaining(remainingRef.current);
+    }, 1000);
+
     return () => {
-      clearInterval(timer);
+      clearInterval(slideTimer);
       clearInterval(progressTimer);
+      clearInterval(countdownTimer);
     };
   }, [activeSlide]);
+
+  const hh = String(Math.floor(remaining / 3600)).padStart(2, '0');
+  const mm = String(Math.floor((remaining % 3600) / 60)).padStart(2, '0');
+  const ss = String(remaining % 60).padStart(2, '0');
 
   return (
     <section className="pb-12 relative overflow-hidden font-primary">
@@ -185,14 +216,14 @@ const BumperSlider: React.FC<{ isDark: boolean }> = ({ isDark }) => {
               </p>
 
               <div className="flex items-center gap-6">
-                <button className="bg-white text-black px-8 py-3.5 rounded-xl font-black text-[11px] transition-all shadow-xl hover:bg-yellow-400 hover:scale-105 active:scale-95">
+                <Link to="/products" className="bg-white text-black px-8 py-3.5 rounded-xl font-black text-[11px] transition-all shadow-xl hover:bg-yellow-400 hover:scale-105 active:scale-95">
                   Claim Offer
-                </button>
-                
+                </Link>
+
                 <div className="flex items-center gap-3 px-5 py-2.5 bg-white/5 backdrop-blur-xl rounded-xl border border-white/10">
                   <div className="flex flex-col">
                     <span className="text-[8px] text-white/50 uppercase font-black tracking-widest">Time left</span>
-                    <span className="text-lg font-mono font-black text-yellow-400">02:14:45</span>
+                    <span className="text-lg font-mono font-black text-yellow-400">{hh}:{mm}:{ss}</span>
                   </div>
                 </div>
               </div>
