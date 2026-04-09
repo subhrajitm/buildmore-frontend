@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, ArrowRight, Clock, CheckCircle, XCircle, FileText, Search, ChevronDown, ChevronUp, Send, Loader2, AlertCircle, Package } from 'lucide-react';
+import { Plus, ArrowRight, Clock, CheckCircle, XCircle, FileText, Search, ChevronDown, ChevronUp, Send, Loader2, AlertCircle, Package, Pencil, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { rfqApi, RFQ } from '../api';
 import { useLocation } from 'react-router-dom';
@@ -51,6 +51,11 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
   // Submit state
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState('');
+
+  // Inline item edit
+  const [editingItem, setEditingItem] = useState<{ rfqId: string; itemId: string } | null>(null);
+  const [editItemForm, setEditItemForm] = useState({ quantity: '1', targetPrice: '', notes: '' });
+  const [savingItem, setSavingItem] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -112,8 +117,31 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
     try {
       const res = await rfqApi.removeItem(rfqId, itemId, token);
       setRfqs(prev => prev.map(r => r._id === rfqId ? res.rfq : r));
-    } catch (err: any) {
+    } catch {
       // silent fail — item stays in list
+    }
+  };
+
+  const startEditItem = (rfqId: string, itemId: string, quantity: number, targetPrice?: number, notes?: string) => {
+    setEditingItem({ rfqId, itemId });
+    setEditItemForm({ quantity: String(quantity), targetPrice: targetPrice != null ? String(targetPrice) : '', notes: notes || '' });
+  };
+
+  const handleUpdateItem = async () => {
+    if (!token || !editingItem) return;
+    setSavingItem(true);
+    try {
+      const res = await rfqApi.updateItem(editingItem.rfqId, editingItem.itemId, {
+        quantity: Number(editItemForm.quantity) || 1,
+        targetPrice: editItemForm.targetPrice ? Number(editItemForm.targetPrice) : null,
+        notes: editItemForm.notes || undefined,
+      }, token);
+      setRfqs(prev => prev.map(r => r._id === editingItem.rfqId ? res.rfq : r));
+      setEditingItem(null);
+    } catch (err: any) {
+      // keep editing open so user can retry
+    } finally {
+      setSavingItem(false);
     }
   };
 
@@ -331,27 +359,60 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
                   {rfq.items.length > 0 ? (
                     <div className="space-y-2">
                       <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Items</p>
-                      {rfq.items.map(item => (
-                        <div key={item._id} className={`flex items-center justify-between px-4 py-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-                          <div>
-                            <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.productName}</p>
-                            <div className="flex items-center gap-3 mt-0.5">
-                              <span className="text-[9px] text-slate-500 font-bold uppercase">Qty: {item.quantity}</span>
-                              {item.targetPrice != null && <span className="text-[9px] text-slate-500 font-bold uppercase">Target: ${item.targetPrice}</span>}
-                              {item.quotedPrice != null && <span className="text-[9px] text-yellow-400 font-bold uppercase">Quoted: ${item.quotedPrice}</span>}
-                              {item.notes && <span className="text-[9px] text-slate-500 italic">{item.notes}</span>}
-                            </div>
+                      {rfq.items.map(item => {
+                        const isEditingThis = editingItem?.rfqId === rfq._id && editingItem?.itemId === item._id;
+                        return (
+                          <div key={item._id} className={`px-4 py-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+                            {isEditingThis ? (
+                              <div className="space-y-2">
+                                <p className={`text-xs font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.productName}</p>
+                                <div className="grid grid-cols-3 gap-2">
+                                  <div className="space-y-1">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Qty</label>
+                                    <input type="number" min="1" value={editItemForm.quantity} onChange={e => setEditItemForm(f => ({ ...f, quantity: e.target.value }))} className={`w-full px-2 py-1.5 rounded-lg border text-xs font-bold outline-none ${inp}`} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Target ($)</label>
+                                    <input type="number" min="0" value={editItemForm.targetPrice} onChange={e => setEditItemForm(f => ({ ...f, targetPrice: e.target.value }))} placeholder="—" className={`w-full px-2 py-1.5 rounded-lg border text-xs font-bold outline-none ${inp}`} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Notes</label>
+                                    <input value={editItemForm.notes} onChange={e => setEditItemForm(f => ({ ...f, notes: e.target.value }))} placeholder="—" className={`w-full px-2 py-1.5 rounded-lg border text-xs font-bold outline-none ${inp}`} />
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 pt-1">
+                                  <button onClick={handleUpdateItem} disabled={savingItem} className="flex items-center gap-1 bg-yellow-400 text-black px-3 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-yellow-300 disabled:opacity-50">
+                                    {savingItem ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Save
+                                  </button>
+                                  <button onClick={() => setEditingItem(null)} className={`px-3 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest ${isDark ? 'bg-white/10 text-slate-400' : 'bg-slate-200 text-slate-600'}`}>Cancel</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.productName}</p>
+                                  <div className="flex items-center gap-3 mt-0.5">
+                                    <span className="text-[9px] text-slate-500 font-bold uppercase">Qty: {item.quantity}</span>
+                                    {item.targetPrice != null && <span className="text-[9px] text-slate-500 font-bold uppercase">Target: ${item.targetPrice}</span>}
+                                    {item.quotedPrice != null && <span className="text-[9px] text-yellow-400 font-bold uppercase">Quoted: ${item.quotedPrice}</span>}
+                                    {item.notes && <span className="text-[9px] text-slate-500 italic">{item.notes}</span>}
+                                  </div>
+                                </div>
+                                {isDraft && (
+                                  <div className="flex items-center gap-3">
+                                    <button onClick={() => startEditItem(rfq._id, item._id, item.quantity, item.targetPrice, item.notes)} className="text-[9px] font-black uppercase text-slate-400 hover:text-yellow-400 transition-colors flex items-center gap-1">
+                                      <Pencil className="w-3 h-3" /> Edit
+                                    </button>
+                                    <button onClick={() => handleRemoveItem(rfq._id, item._id)} className="text-[9px] font-black uppercase text-red-400 hover:text-red-300 transition-colors">
+                                      Remove
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
-                          {isDraft && (
-                            <button
-                              onClick={() => handleRemoveItem(rfq._id, item._id)}
-                              className="text-[9px] font-black uppercase text-red-400 hover:text-red-300 transition-colors"
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="flex items-center gap-3 py-3">

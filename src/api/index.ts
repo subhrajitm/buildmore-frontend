@@ -274,6 +274,9 @@ export const rfqApi = {
   addItem: (id: string, body: { productName: string; quantity: number; targetPrice?: number; notes?: string; productId?: string }, token: string) =>
     request<{ success: boolean; rfq: RFQ }>(`/api/rfqs/${id}/items`, { method: 'POST', body, token }),
 
+  updateItem: (id: string, itemId: string, body: { quantity?: number; targetPrice?: number | null; notes?: string }, token: string) =>
+    request<{ success: boolean; rfq: RFQ }>(`/api/rfqs/${id}/items/${itemId}`, { method: 'PATCH', body, token }),
+
   removeItem: (id: string, itemId: string, token: string) =>
     request<{ success: boolean; rfq: RFQ }>(`/api/rfqs/${id}/items/${itemId}`, { method: 'DELETE', token }),
 

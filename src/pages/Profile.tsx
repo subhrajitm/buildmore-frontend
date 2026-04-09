@@ -44,6 +44,10 @@ export const Profile: React.FC<ProfileProps> = ({ isDark }) => {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
 
+  // Order cancel state
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancelReasonMap, setCancelReasonMap] = useState<Record<string, string>>({});
+
   const card = isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-100 shadow-sm';
   const input = isDark
     ? 'bg-zinc-800 border-white/10 text-white placeholder-slate-500 focus:border-yellow-400/60'
@@ -102,6 +106,21 @@ export const Profile: React.FC<ProfileProps> = ({ isDark }) => {
       const res = await userApi.deleteAddress(id, token);
       setProfile(p => p ? { ...p, address: res.address } : p);
     } catch { /* deletion failed — address list unchanged */ }
+  };
+
+  const cancelOrder = async (orderId: string) => {
+    if (!token) return;
+    const reason = (cancelReasonMap[orderId] || '').trim() || 'Cancelled by customer';
+    setCancellingId(orderId);
+    try {
+      const res = await orderApi.cancel(orderId, reason, token);
+      setOrders(prev => prev.map(o => o._id === orderId ? res.order : o));
+      setCancelReasonMap(m => { const n = { ...m }; delete n[orderId]; return n; });
+    } catch (e: any) {
+      alert(e.message || 'Failed to cancel order');
+    } finally {
+      setCancellingId(null);
+    }
   };
 
   const totalSpend = orders.filter(o => o.status !== 'CANCELLED').reduce((s, o) => s + o.totalAmount, 0);
@@ -247,28 +266,51 @@ export const Profile: React.FC<ProfileProps> = ({ isDark }) => {
                   <p className="text-[10px] font-black uppercase tracking-widest">No orders yet</p>
                   <Link to="/products" className="text-yellow-400 text-[10px] font-black uppercase tracking-widest hover:text-yellow-300">Browse Products →</Link>
                 </div>
-              ) : orders.map(order => (
-                <div key={order._id} className={`p-6 rounded-2xl border ${card}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <p className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>{order.orderNumber}</p>
-                      <p className="text-[10px] text-slate-500 font-bold mt-0.5">{new Date(order.createdAt).toLocaleDateString()} · {order.items.length} item{order.items.length !== 1 ? 's' : ''}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${order.totalAmount.toFixed(2)}</p>
-                      <p className={`text-[10px] font-black uppercase tracking-widest ${ORDER_STATUS_COLOR[order.status] || 'text-slate-400'}`}>{order.status}</p>
-                    </div>
-                  </div>
-                  <div className={`space-y-1 pt-3 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
-                    {order.items.map((item, i) => (
-                      <div key={i} className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-500 truncate max-w-xs">{item.productName}</span>
-                        <span className="text-[10px] font-black text-slate-400">×{item.quantity} · ${(item.price * item.quantity).toFixed(2)}</span>
+              ) : orders.map(order => {
+                const cancellable = ['PENDING', 'CONFIRMED'].includes(order.status);
+                const isCancelling = cancellingId === order._id;
+                const reason = cancelReasonMap[order._id] || '';
+                return (
+                  <div key={order._id} className={`p-6 rounded-2xl border ${card}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>{order.orderNumber}</p>
+                        <p className="text-[10px] text-slate-500 font-bold mt-0.5">{new Date(order.createdAt).toLocaleDateString()} · {order.items.length} item{order.items.length !== 1 ? 's' : ''}</p>
                       </div>
-                    ))}
+                      <div className="text-right">
+                        <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${order.totalAmount.toFixed(2)}</p>
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${ORDER_STATUS_COLOR[order.status] || 'text-slate-400'}`}>{order.status}</p>
+                      </div>
+                    </div>
+                    <div className={`space-y-1 pt-3 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                      {order.items.map((item, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-500 truncate max-w-xs">{item.productName}</span>
+                          <span className="text-[10px] font-black text-slate-400">×{item.quantity} · ${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {cancellable && (
+                      <div className={`flex items-center gap-3 mt-4 pt-4 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                        <input
+                          value={reason}
+                          onChange={e => setCancelReasonMap(m => ({ ...m, [order._id]: e.target.value }))}
+                          placeholder="Cancel reason (optional)"
+                          className={`flex-1 px-3 py-2 rounded-xl border text-xs font-bold outline-none transition-colors ${input}`}
+                        />
+                        <button
+                          onClick={() => cancelOrder(order._id)}
+                          disabled={isCancelling}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-50 shrink-0"
+                        >
+                          {isCancelling ? <div className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" /> : <X className="w-3 h-3" />}
+                          Cancel Order
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

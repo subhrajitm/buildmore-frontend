@@ -37,9 +37,21 @@ function decodeTokenRole(token: string): 'USER' | 'ADMIN' {
   }
 }
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (!payload?.exp) return false;
+    return Date.now() / 1000 > payload.exp;
+  } catch {
+    return false;
+  }
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     try {
+      const tok = localStorage.getItem('buildmore_token');
+      if (tok && isTokenExpired(tok)) return null;
       const stored = localStorage.getItem('buildmore_user');
       return stored ? JSON.parse(stored) : null;
     } catch {
@@ -47,9 +59,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem('buildmore_token')
-  );
+  const [token, setToken] = useState<string | null>(() => {
+    const stored = localStorage.getItem('buildmore_token');
+    if (stored && isTokenExpired(stored)) {
+      localStorage.removeItem('buildmore_token');
+      localStorage.removeItem('buildmore_user');
+      return null;
+    }
+    return stored;
+  });
 
   const persistAuth = (user: User, token: string) => {
     setUser(user);

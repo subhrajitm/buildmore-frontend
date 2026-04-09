@@ -89,7 +89,8 @@ export const Auth: React.FC<AuthProps> = ({ isDark }) => {
     const result = await forgotPassword(forgotEmail, newPassword);
     setLoading(false);
     if (result.success) {
-      setSuccessMsg('Password updated successfully. You can now log in.');
+      setSuccessMsg('Password updated successfully. Redirecting to sign in…');
+      setTimeout(() => switchMode('login'), 2500);
     } else {
       setError(result.error || 'Password reset failed.');
     }

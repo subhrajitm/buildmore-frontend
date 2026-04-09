@@ -25,6 +25,7 @@ export const Cart: React.FC<CartProps> = ({ isDark }) => {
   const [showAddress, setShowAddress] = useState(false);
   const [addr, setAddr] = useState({ ...EMPTY_ADDR });
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [addrFetchWarn, setAddrFetchWarn] = useState('');
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -33,7 +34,7 @@ export const Cart: React.FC<CartProps> = ({ isDark }) => {
     if (!token) return;
     userApi.getProfile(token)
       .then(res => setSavedAddresses(res.user.address || []))
-      .catch(() => {});
+      .catch(() => setAddrFetchWarn('Could not load saved addresses. Enter manually.'));
   }, [token]);
 
   const handlePlaceOrder = async () => {
@@ -146,6 +147,10 @@ export const Cart: React.FC<CartProps> = ({ isDark }) => {
                 <MapPin className="w-4 h-4 text-yellow-400" />
                 <h3 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>Shipping Address</h3>
               </div>
+
+              {addrFetchWarn && (
+                <p className="text-[10px] font-bold text-yellow-500 bg-yellow-400/10 border border-yellow-400/20 px-3 py-2 rounded-lg">{addrFetchWarn}</p>
+              )}
 
               {savedAddresses.length > 0 && (
                 <div className="space-y-2">

@@ -124,14 +124,12 @@ export const Compliance: React.FC<ComplianceProps> = ({ isDark }) => {
           </div>
           <h1 className={`text-5xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>Compliance Hub</h1>
         </div>
-        {isAdmin && (
-          <button
-            onClick={() => setShowUpload(!showUpload)}
-            className="bg-yellow-400 text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-yellow-300 transition-all flex items-center gap-2 shrink-0 mt-2"
-          >
-            <Upload className="w-4 h-4" /> Upload Doc
-          </button>
-        )}
+        <button
+          onClick={() => setShowUpload(!showUpload)}
+          className="bg-yellow-400 text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-yellow-300 transition-all flex items-center gap-2 shrink-0 mt-2"
+        >
+          <Upload className="w-4 h-4" /> Upload Doc
+        </button>
       </div>
 
       {fetchError && (
@@ -142,7 +140,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ isDark }) => {
       )}
 
       {/* Upload form */}
-      {showUpload && isAdmin && (
+      {showUpload && (
         <div className={`p-6 rounded-2xl border space-y-4 animate-in fade-in duration-300 ${isDark ? 'bg-zinc-900 border-yellow-400/20' : 'bg-white border-yellow-400/30 shadow-xl'}`}>
           <h3 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>Upload Compliance Document</h3>
           {uploadError && <p className="text-xs text-red-400 font-bold bg-red-400/10 px-4 py-2 rounded-lg">{uploadError}</p>}
@@ -277,6 +275,20 @@ export const Compliance: React.FC<ComplianceProps> = ({ isDark }) => {
                   {doc.issuedBy || '—'}
                 </span>
                 <div className="col-span-1 flex justify-end items-center gap-1">
+                  {(doc.status === 'EXPIRING_SOON' || doc.status === 'EXPIRED') && isAdmin && (
+                    <button
+                      onClick={() => {
+                        setUploadTitle(doc.title);
+                        setUploadType(doc.type);
+                        setShowUpload(true);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      title="Upload replacement document"
+                      className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-yellow-400/10 text-yellow-500 hover:text-yellow-400' : 'hover:bg-yellow-50 text-yellow-500 hover:text-yellow-600'}`}
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   {doc.documentUrl && (
                     <a
                       href={doc.documentUrl}
