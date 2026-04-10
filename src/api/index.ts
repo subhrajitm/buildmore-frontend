@@ -1,5 +1,4 @@
-// @ts-ignore
-const BASE_URL: string = import.meta.env?.VITE_API_URL || 'http://localhost:5050';
+const BASE_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:5050';
 
 type RequestOptions = {
   method?: string;

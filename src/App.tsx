@@ -1,9 +1,18 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { AdminAuthProvider } from './context/AdminAuthContext';
 import { CartProvider } from './context/CartContext';
 import { MainLayout } from './layouts/MainLayout';
-import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminProtectedRoute } from './components/AdminProtectedRoute';
+import { AdminLayout } from './layouts/AdminLayout';
+import { AdminLogin } from './pages/AdminLogin';
+import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminProducts } from './pages/AdminProducts';
+import { AdminOrders } from './pages/AdminOrders';
+import { AdminRFQs } from './pages/AdminRFQs';
+import { AdminShipments } from './pages/AdminShipments';
 import { Admin } from './pages/Admin';
 import { Landing } from './pages/Landing';
 import { Products } from './pages/Products';
@@ -23,34 +32,88 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <CartProvider>
-        <Router>
-          <MainLayout isDark={isDark} setIsDark={setIsDark}>
+      <AdminAuthProvider>
+        <CartProvider>
+          <Router>
             <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Landing isDark={isDark} />} />
-              <Route path="/products" element={<Products isDark={isDark} />} />
-              <Route path="/product/:id" element={<ProductDetail isDark={isDark} />} />
-              <Route path="/inventory" element={<Inventory isDark={isDark} />} />
-              <Route path="/specs" element={<Specs isDark={isDark} />} />
-              <Route path="/auth" element={<Auth isDark={isDark} />} />
+              <Route path="/" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <Landing isDark={isDark} />
+                </MainLayout>
+              } />
+              <Route path="/products" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <Products isDark={isDark} />
+                </MainLayout>
+              } />
+              <Route path="/product/:id" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <ProductDetail isDark={isDark} />
+                </MainLayout>
+              } />
+              <Route path="/inventory" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <Inventory isDark={isDark} />
+                </MainLayout>
+              } />
+              <Route path="/specs" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <Specs isDark={isDark} />
+                </MainLayout>
+              } />
+              
+              <Route path="/auth" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <Auth isDark={isDark} />
+                </MainLayout>
+              } />
+              
+              <Route path="/cart" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <ProtectedRoute><Cart isDark={isDark} /></ProtectedRoute>
+                </MainLayout>
+              } />
+              <Route path="/profile" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <ProtectedRoute><Profile isDark={isDark} /></ProtectedRoute>
+                </MainLayout>
+              } />
+              <Route path="/logistics" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <ProtectedRoute><Logistics isDark={isDark} /></ProtectedRoute>
+                </MainLayout>
+              } />
+              <Route path="/compliance" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <ProtectedRoute><Compliance isDark={isDark} /></ProtectedRoute>
+                </MainLayout>
+              } />
+              <Route path="/rfqs" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <ProtectedRoute><RFQs isDark={isDark} /></ProtectedRoute>
+                </MainLayout>
+              } />
+              <Route path="/manage" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <ProtectedRoute><Admin isDark={isDark} /></ProtectedRoute>
+                </MainLayout>
+              } />
 
-              {/* Protected routes */}
-              <Route path="/cart" element={<ProtectedRoute><Cart isDark={isDark} /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile isDark={isDark} /></ProtectedRoute>} />
-              <Route path="/logistics" element={<ProtectedRoute><Logistics isDark={isDark} /></ProtectedRoute>} />
-              <Route path="/compliance" element={<ProtectedRoute><Compliance isDark={isDark} /></ProtectedRoute>} />
-              <Route path="/rfqs" element={<ProtectedRoute><RFQs isDark={isDark} /></ProtectedRoute>} />
+              <Route path="/admin" element={<AdminLayout isDark={isDark} />}>
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="login" element={<AdminLogin isDark={isDark} />} />
+                <Route path="dashboard" element={<AdminProtectedRoute><AdminDashboard isDark={isDark} /></AdminProtectedRoute>} />
+                <Route path="products" element={<AdminProtectedRoute><AdminProducts isDark={isDark} /></AdminProtectedRoute>} />
+                <Route path="orders" element={<AdminProtectedRoute><AdminOrders isDark={isDark} /></AdminProtectedRoute>} />
+                <Route path="rfqs" element={<AdminProtectedRoute><AdminRFQs isDark={isDark} /></AdminProtectedRoute>} />
+                <Route path="shipments" element={<AdminProtectedRoute><AdminShipments isDark={isDark} /></AdminProtectedRoute>} />
+              </Route>
 
-              {/* Admin routes */}
-              <Route path="/admin" element={<AdminRoute><Admin isDark={isDark} /></AdminRoute>} />
-
-              {/* 404 */}
               <Route path="*" element={<NotFound isDark={isDark} />} />
             </Routes>
-          </MainLayout>
-        </Router>
-      </CartProvider>
+          </Router>
+        </CartProvider>
+      </AdminAuthProvider>
     </AuthProvider>
   );
 }
