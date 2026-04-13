@@ -115,7 +115,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ isDark }) => {
   }
 
   return (
-    <div className="space-y-10 transition-all duration-500">
+    <div className="space-y-10">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -141,7 +141,7 @@ export const Compliance: React.FC<ComplianceProps> = ({ isDark }) => {
 
       {/* Upload form */}
       {showUpload && (
-        <div className={`p-6 rounded-2xl border space-y-4 transition-all duration-300 ${isDark ? 'bg-zinc-900 border-yellow-400/20' : 'bg-white border-yellow-400/30 shadow-xl'}`}>
+        <div className={`p-6 rounded-2xl border space-y-4 ${isDark ? 'bg-zinc-900 border-yellow-400/20' : 'bg-white border-yellow-400/30 shadow-xl'}`}>
           <h3 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>Upload Compliance Document</h3>
           {uploadError && <p className="text-xs text-red-400 font-bold bg-red-400/10 px-4 py-2 rounded-lg">{uploadError}</p>}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

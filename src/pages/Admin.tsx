@@ -837,7 +837,7 @@ export const Admin: React.FC<AdminProps> = ({ isDark }) => {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="border-b border-white/5 pb-8">
           <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">BuildMore Admin</p>

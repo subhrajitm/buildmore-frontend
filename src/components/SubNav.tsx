@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { productApi } from '../api';
@@ -21,6 +21,23 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
   const { pathname } = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
 
   useEffect(() => {
     productApi.getCategories()
@@ -32,7 +49,7 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
   const subcategoryLinks = categories.slice(0, 4).flatMap(name => getCategoryMeta(name).subcategories.slice(0, 2));
 
   return (
-    <div className="relative group/nav font-primary">
+    <div className="relative group/nav font-primary" ref={menuRef}>
       <nav className={`${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-300'} border-b py-2 px-6 overflow-x-auto transition-colors duration-300 relative z-[45]`}>
         <div className="max-w-[1920px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8 whitespace-nowrap">
@@ -72,7 +89,7 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
             className="fixed inset-0 bg-black/20 z-[40] transition-opacity duration-300 pointer-events-auto"
             onClick={() => setIsMenuOpen(false)}
           />
-          <div className={`absolute top-full left-0 right-0 z-[42] border-b shadow-2xl transition-all duration-300 transform origin-top animate-fade-down overflow-hidden ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-200'} rounded-b-[24px]`}>
+          <div className={`absolute top-full left-0 right-0 z-[42] border-b shadow-2xl transition-all duration-300 transform origin-top overflow-hidden ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-200'} rounded-b-[24px]`}>
             <div className="max-w-[1920px] mx-auto flex min-h-[380px]">
 
               {/* Left Segment: Primary Categories */}

@@ -51,7 +51,7 @@ export const Specs: React.FC<SpecsProps> = ({ isDark }) => {
   }
 
   return (
-    <div className="space-y-10 transition-all duration-500">
+    <div className="space-y-10">
       <div>
         <div className="flex items-center gap-2 mb-2">
           <span className="w-8 h-[1.5px] bg-yellow-400"></span>

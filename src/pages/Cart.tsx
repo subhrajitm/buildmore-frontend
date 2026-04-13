@@ -66,7 +66,7 @@ export const Cart: React.FC<CartProps> = ({ isDark }) => {
 
   if (success) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 animate-fade-in text-center px-6">
+      <div className="flex flex-col items-center justify-center py-32  text-center px-6">
         <div className="w-24 h-24 rounded-full bg-green-400/10 flex items-center justify-center mb-8">
           <CheckCircle className="w-10 h-10 text-green-400" />
         </div>
@@ -78,7 +78,7 @@ export const Cart: React.FC<CartProps> = ({ isDark }) => {
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 animate-fade-in text-center px-6">
+      <div className="flex flex-col items-center justify-center py-32  text-center px-6">
         <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-8 ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
           <Package className={`w-10 h-10 ${isDark ? 'text-slate-600' : 'text-slate-300'}`} />
         </div>
@@ -92,7 +92,7 @@ export const Cart: React.FC<CartProps> = ({ isDark }) => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 animate-fade-in pb-20">
+    <div className="max-w-6xl mx-auto space-y-10  pb-20">
       <div className={`flex items-end justify-between border-b pb-8 ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
         <div>
           <h1 className={`text-4xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Shopping Cart</h1>

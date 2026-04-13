@@ -92,7 +92,7 @@ export const Logistics: React.FC<LogisticsProps> = ({ isDark }) => {
   }
 
   return (
-    <div className="space-y-10 transition-all duration-500">
+    <div className="space-y-10">
       <div>
         <div className="flex items-center gap-2 mb-2">
           <span className="w-8 h-[1.5px] bg-yellow-400"></span>
@@ -256,7 +256,7 @@ export const Logistics: React.FC<LogisticsProps> = ({ isDark }) => {
 
         {/* Detail panel */}
         {selected && selectedShipment && (
-          <div className={`p-6 rounded-2xl border space-y-6 sticky top-24 h-fit transition-all duration-300 ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-100 shadow-xl'}`}>
+          <div className={`p-6 rounded-2xl border space-y-6 sticky top-24 h-fit ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-100 shadow-xl'}`}>
             <h3 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>Shipment Detail</h3>
             <ShipmentDetail shipment={selectedShipment} isDark={isDark} />
           </div>

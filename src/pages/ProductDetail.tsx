@@ -69,7 +69,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
   const inputClass = isDark ? 'bg-zinc-950 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900';
 
   return (
-    <div className="max-w-7xl mx-auto animate-fade-in pb-20">
+    <div className="max-w-7xl mx-auto pb-20">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-8">
         <Link to="/" className="hover:text-yellow-400">Home</Link>

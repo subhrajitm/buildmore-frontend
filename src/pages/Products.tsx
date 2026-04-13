@@ -156,9 +156,9 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
   const activeFiltersCount = selectedCategories.length + selectedPriceRanges.length + (selectedRating !== null ? 1 : 0) + (inStockOnly ? 1 : 0) + (onSaleOnly ? 1 : 0);
 
   return (
-    <div className="max-w-[1920px] mx-auto animate-fade-in pb-32">
+    <div className="max-w-[1920px] mx-auto pb-32">
       {/* Header */}
-      <div className={`border-b ${isDark ? 'border-white/10' : 'border-slate-200'} sticky top-[73px] z-40 ${isDark ? 'bg-black' : 'bg-white'}`}>
+      <div className={`border-b ${isDark ? 'border-white/10' : 'border-slate-200'} ${isDark ? 'bg-black' : 'bg-white'}`}>
         <div className="px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <button 
