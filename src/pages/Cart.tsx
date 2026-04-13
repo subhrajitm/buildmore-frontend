@@ -208,19 +208,19 @@ export const Cart: React.FC<CartProps> = ({ isDark }) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-500 font-medium">Items Total</span>
-                <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>${totalValue.toFixed(2)}</span>
+                <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatPrice(totalValue)}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-slate-500 font-medium">Flat Logistics Fee</span>
                   <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">LTL · Standard delivery 3–5 days</span>
                 </div>
-                <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>${LOGISTICS_FEE.toFixed(2)}</span>
+                <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatPrice(LOGISTICS_FEE)}</span>
               </div>
               <div className={`flex items-center justify-between pt-5 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
                 <span className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Grand Total</span>
                 <div className="text-right">
-                  <p className="text-2xl font-black text-yellow-500">${grandTotal.toFixed(2)}</p>
+                  <p className="text-2xl font-black text-yellow-500">{formatPrice(grandTotal)}</p>
                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Estimates included</p>
                 </div>
               </div>

@@ -35,29 +35,22 @@ export const AddProduct: React.FC<AddProductProps> = ({ isDark }) => {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!files || files.length === 0) { setError('At least one product image is required'); return; }
     if (!adminToken) return;
     setSubmitting(true);
     setError('');
-    
+
     try {
-      const images: string[] = [];
-      if (files) {
-        for (let i = 0; i < files.length; i++) {
-          const data = await adminApi.upload(adminToken, files[i]);
-          images.push(data.url);
-        }
-      }
-      
-      await adminApi.create(adminToken, {
-        productName: form.productName,
-        category: form.category,
-        price: Number(form.price),
-        stock: Number(form.stock),
-        desc: form.desc,
-        materialSpecifications: form.materialSpecifications,
-        images,
-      });
-      
+      const fd = new FormData();
+      fd.append('productName', form.productName);
+      fd.append('desc', form.desc);
+      fd.append('category', form.category);
+      fd.append('price', form.price);
+      fd.append('stock', form.stock);
+      fd.append('materialSpecifications', form.materialSpecifications);
+      Array.from(files as FileList).forEach((f: File) => fd.append('images', f));
+
+      await adminApi.add(fd, adminToken);
       navigate('/admin/products');
     } catch (err: any) {
       setError(err.message || 'Failed to add product');

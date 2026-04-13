@@ -25,7 +25,12 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'shipping'>('description');
   const [specSheets, setSpecSheets] = useState<SpecSheet[]>([]);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(() => {
+    try {
+      const saved: string[] = JSON.parse(localStorage.getItem('buildmore_wishlist') || '[]');
+      return saved.includes(id || '');
+    } catch { return false; }
+  });
 
   useEffect(() => {
     if (!id) return;
@@ -65,6 +70,14 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
     setTimeout(() => setAdded(false), 1800);
   };
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({ title: product.name, url: window.location.href }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(window.location.href);
+    }
+  };
+
   const cardClass = isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-slate-200';
   const inputClass = isDark ? 'bg-zinc-950 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900';
 
@@ -84,7 +97,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
         <div className="space-y-4">
           <div className={`relative aspect-square ${cardClass} rounded-2xl overflow-hidden border`}>
             <img
-              src={product.image}
+              src={(raw.productImages && raw.productImages[selectedImage]) || product.image}
               alt={product.name}
               className="w-full h-full object-contain p-8"
               referrerPolicy="no-referrer"
@@ -103,8 +116,16 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
               )}
             </div>
             {/* Wishlist */}
-            <button 
-              onClick={() => setIsWishlisted(!isWishlisted)}
+            <button
+              onClick={() => {
+                const next = !isWishlisted;
+                setIsWishlisted(next);
+                try {
+                  const saved: string[] = JSON.parse(localStorage.getItem('buildmore_wishlist') || '[]');
+                  const updated = next ? [...saved, id || ''] : saved.filter(wid => wid !== id);
+                  localStorage.setItem('buildmore_wishlist', JSON.stringify(updated));
+                } catch {}
+              }}
               className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all ${isWishlisted ? 'bg-red-500 text-white' : 'bg-white/90 text-slate-600 hover:text-red-500 shadow-lg'}`}
             >
               <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
@@ -112,24 +133,33 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
           </div>
           
           {/* Thumbnail Navigation */}
-          <div className="flex items-center gap-2">
-            <button className={`p-2 rounded-lg ${isDark ? 'bg-zinc-800 text-white' : 'bg-slate-100 text-slate-600'}`}>
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            <div className="flex-1 flex gap-2 overflow-x-auto">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <button 
-                  key={i}
-                  className={`w-16 h-16 rounded-lg border-2 flex-shrink-0 flex items-center justify-center ${i === 1 ? 'border-yellow-400' : isDark ? 'border-white/10' : 'border-slate-200'}`}
-                >
-                  <span className="text-xs text-slate-400">{i}</span>
-                </button>
-              ))}
+          {raw.productImages && raw.productImages.length > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedImage(i => (i - 1 + raw.productImages.length) % raw.productImages.length)}
+                className={`p-2 rounded-lg ${isDark ? 'bg-zinc-800 text-white' : 'bg-slate-100 text-slate-600'}`}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <div className="flex-1 flex gap-2 overflow-x-auto">
+                {raw.productImages.map((imgUrl, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedImage(i)}
+                    className={`w-16 h-16 rounded-lg border-2 flex-shrink-0 overflow-hidden ${i === selectedImage ? 'border-yellow-400' : isDark ? 'border-white/10' : 'border-slate-200'}`}
+                  >
+                    <img src={imgUrl} alt={`${product.name} ${i + 1}`} className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setSelectedImage(i => (i + 1) % raw.productImages.length)}
+                className={`p-2 rounded-lg ${isDark ? 'bg-zinc-800 text-white' : 'bg-slate-100 text-slate-600'}`}
+              >
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
-            <button className={`p-2 rounded-lg ${isDark ? 'bg-zinc-800 text-white' : 'bg-slate-100 text-slate-600'}`}>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          )}
         </div>
 
         {/* Right - Product Info */}
@@ -237,7 +267,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
               >
                 <FileText className="w-5 h-5" />
               </button>
-              <button className={`px-5 rounded-xl border flex items-center justify-center transition-all ${isDark ? 'border-white/10 text-white hover:bg-white/10' : 'border-slate-200 text-slate-900 hover:bg-slate-50'}`}>
+              <button onClick={handleShare} className={`px-5 rounded-xl border flex items-center justify-center transition-all ${isDark ? 'border-white/10 text-white hover:bg-white/10' : 'border-slate-200 text-slate-900 hover:bg-slate-50'}`}>
                 <Share2 className="w-5 h-5" />
               </button>
             </div>

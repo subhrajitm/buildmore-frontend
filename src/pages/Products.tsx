@@ -19,11 +19,11 @@ const SORT_OPTIONS = [
 ];
 
 const PRICE_RANGES = [
-  { label: 'Under ₹4,000', min: 0, max: 50 },
-  { label: '₹4,000 - ₹8,000', min: 50, max: 100 },
-  { label: '₹8,000 - ₹17,000', min: 100, max: 200 },
-  { label: '₹17,000 - ₹42,000', min: 200, max: 500 },
-  { label: 'Over ₹42,000', min: 500, max: Infinity },
+  { label: 'Under ₹4,000', min: 0, max: 4000 },
+  { label: '₹4,000 - ₹8,000', min: 4000, max: 8000 },
+  { label: '₹8,000 - ₹17,000', min: 8000, max: 17000 },
+  { label: '₹17,000 - ₹42,000', min: 17000, max: 42000 },
+  { label: 'Over ₹42,000', min: 42000, max: Infinity },
 ];
 
 const RATING_FILTERS = [
@@ -237,11 +237,28 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
           w-64 flex-shrink-0 border-r ${isDark ? 'border-white/10' : 'border-slate-200'} 
           ${isDark ? 'bg-zinc-900' : 'bg-white'} sticky top-[137px] h-[calc(100vh-137px)] overflow-y-auto p-6
         `}>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <h2 className={`text-sm font-black uppercase tracking-wider ${isDark ? 'text-white' : 'text-slate-900'}`}>Filters</h2>
             {hasActiveFilters && (
               <button onClick={clearFilters} className="text-xs font-bold text-yellow-400 hover:text-yellow-300">
                 Clear all
+              </button>
+            )}
+          </div>
+
+          {/* Desktop Search */}
+          <div className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border mb-6 ${isDark ? 'bg-zinc-950 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+            <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setVisibleCount(12); }}
+              placeholder="Search products..."
+              className={`flex-1 bg-transparent text-sm font-medium outline-none ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="text-slate-400 hover:text-yellow-400">
+                <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -488,7 +505,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
               </button>
             </div>
           ) : (
-            <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-0' : 'space-y-0'}>
+            <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' : 'space-y-3'}>
               {visible.map(product => (
                 <ProductCard key={product._id} product={normalizeProduct(product)} isDark={isDark} viewMode={viewMode} />
               ))}

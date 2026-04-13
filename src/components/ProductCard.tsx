@@ -13,7 +13,12 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product, isDark, viewMode = 'grid' }) => {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(() => {
+    try {
+      const saved: string[] = JSON.parse(localStorage.getItem('buildmore_wishlist') || '[]');
+      return saved.includes(String(product.id));
+    } catch { return false; }
+  });
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -26,7 +31,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, isDark, viewM
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
+    const next = !isWishlisted;
+    setIsWishlisted(next);
+    try {
+      const saved: string[] = JSON.parse(localStorage.getItem('buildmore_wishlist') || '[]');
+      const id = String(product.id);
+      const updated = next ? [...saved, id] : saved.filter(wid => wid !== id);
+      localStorage.setItem('buildmore_wishlist', JSON.stringify(updated));
+    } catch {}
   };
 
   if (viewMode === 'list') {
