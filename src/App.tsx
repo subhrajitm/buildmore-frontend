@@ -38,7 +38,7 @@ export default function App() {
           <Router>
             <Routes>
               <Route path="/" element={
-                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                <MainLayout isDark={isDark} setIsDark={setIsDark} isHome>
                   <Landing isDark={isDark} />
                 </MainLayout>
               } />

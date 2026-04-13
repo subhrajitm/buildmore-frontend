@@ -4,11 +4,13 @@ import { BarChart3, Mail, Phone, MapPin, Globe, Linkedin, Twitter, Github, Youtu
 
 interface FooterProps {
   isDark: boolean;
+  isHome?: boolean;
 }
 
-export const Footer: React.FC<FooterProps> = ({ isDark }) => (
+export const Footer: React.FC<FooterProps> = ({ isDark, isHome }) => (
   <footer className={`${isDark ? 'bg-zinc-950 text-slate-400 border-white/5' : 'bg-white text-slate-500 border-slate-200'} border-t transition-colors duration-300`}>
     {/* Top Brand Bar */}
+    {isHome && (
     <div className={`border-b py-12 ${isDark ? 'border-white/5' : 'border-slate-200'}`}>
       <div className="max-w-[1920px] mx-auto px-10 flex flex-col md:flex-row items-center justify-between gap-10">
         <div className="space-y-4">
@@ -44,6 +46,7 @@ export const Footer: React.FC<FooterProps> = ({ isDark }) => (
         </div>
       </div>
     </div>
+    )}
 
     {/* Middle Section: Navigation */}
     <div className="max-w-[1920px] mx-auto px-10 py-20">
