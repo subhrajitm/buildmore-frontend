@@ -4,11 +4,13 @@ import { BarChart3, Mail, Phone, MapPin, Globe, Linkedin, Twitter, Github, Youtu
 
 interface FooterProps {
   isDark: boolean;
+  isHome?: boolean;
 }
 
-export const Footer: React.FC<FooterProps> = ({ isDark }) => (
-  <footer className={`${isDark ? 'bg-zinc-950 text-slate-400 border-white/5' : 'bg-slate-50 text-slate-500 border-slate-200'} border-t transition-colors duration-300`}>
+export const Footer: React.FC<FooterProps> = ({ isDark, isHome }) => (
+  <footer className={`${isDark ? 'bg-zinc-950 text-slate-400 border-white/5' : 'bg-white text-slate-500 border-slate-200'} border-t transition-colors duration-300`}>
     {/* Top Brand Bar */}
+    {isHome && (
     <div className={`border-b py-12 ${isDark ? 'border-white/5' : 'border-slate-200'}`}>
       <div className="max-w-[1920px] mx-auto px-10 flex flex-col md:flex-row items-center justify-between gap-10">
         <div className="space-y-4">
@@ -44,6 +46,7 @@ export const Footer: React.FC<FooterProps> = ({ isDark }) => (
         </div>
       </div>
     </div>
+    )}
 
     {/* Middle Section: Navigation */}
     <div className="max-w-[1920px] mx-auto px-10 py-20">
@@ -63,8 +66,8 @@ export const Footer: React.FC<FooterProps> = ({ isDark }) => (
           <ul className="space-y-4 text-xs font-bold capitalize">
             <li><Link to="/logistics" className="hover:text-yellow-400 transition-colors">Global Freight</Link></li>
             <li><Link to="/compliance" className="hover:text-yellow-400 transition-colors">ISO Compliance</Link></li>
-            <li><a href="#" className="hover:text-yellow-400 transition-colors">Price Benchmarking</a></li>
-            <li><a href="#" className="hover:text-yellow-400 transition-colors">LTL Logistics</a></li>
+            <li><Link to="/rfqs" className="hover:text-yellow-400 transition-colors">Price Benchmarking</Link></li>
+            <li><Link to="/logistics" className="hover:text-yellow-400 transition-colors">LTL Logistics</Link></li>
           </ul>
         </div>
 

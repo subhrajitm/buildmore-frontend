@@ -1,8 +1,9 @@
-import React from 'react';
-import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, Award, LogOut } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { formatPrice } from '../utils/currency';
 
 interface HeaderProps {
   isDark: boolean;
@@ -11,7 +12,16 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
   const { totalItems, totalValue } = useCart();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    navigate(q ? `/products?search=${encodeURIComponent(q)}` : '/products');
+    setSearchQuery('');
+  };
 
   return (
     <header className={`${isDark ? 'bg-zinc-900/95 border-yellow-400/10' : 'bg-white/95 border-slate-200'} backdrop-blur-xl shadow-sm sticky top-0 z-50 border-b transition-colors duration-300`}>
@@ -32,18 +42,20 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
           </div>
         </div>
 
-        <div className="flex-1 max-w-2xl">
+        <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
           <div className="relative flex items-center group">
             <div className="absolute left-4 text-slate-500 group-focus-within:text-yellow-400 transition-colors">
               <Search className="w-3.5 h-3.5" />
             </div>
             <input
               type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search for materials, tools, and more..."
               className={`w-full ${isDark ? 'bg-zinc-800 border-white/5 text-white focus:bg-zinc-700' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white'} border rounded-lg pl-10 pr-4 py-2.5 text-sm transition-all outline-none focus:ring-2 focus:ring-yellow-400`}
             />
           </div>
-        </div>
+        </form>
 
         <div className="flex items-center gap-6 text-sm font-bold">
           <div className="hidden xl:flex items-center gap-6 text-slate-400">
@@ -67,10 +79,16 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
                 <Link to="/profile" className="flex flex-col cursor-pointer group text-right">
                   <span className="text-[10px] leading-tight text-slate-500 font-bold">Account</span>
                   <div className="flex items-center gap-1.5 justify-end">
+                    {isAdmin && (
+                      <span className="flex items-center gap-0.5 bg-yellow-400 text-black px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">
+                        <ShieldCheck className="w-2.5 h-2.5" /> Admin
+                      </span>
+                    )}
                     <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.name}</span>
                     <ChevronDown className="w-3.5 h-3.5 text-slate-500 group-hover:text-yellow-400 transition-colors" />
                   </div>
                 </Link>
+                
                 <button
                   onClick={logout}
                   title="Sign out"
@@ -102,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
               </div>
               <div className="hidden sm:flex flex-col">
                 <span className="text-[10px] text-slate-500 font-bold">Cart Total</span>
-                <span className="text-xs font-bold text-yellow-400">${totalValue.toFixed(2)}</span>
+                <span className="text-xs font-bold text-yellow-400">{formatPrice(totalValue)}</span>
               </div>
             </Link>
           </div>

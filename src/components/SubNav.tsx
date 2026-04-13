@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Menu, X, ArrowRight, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { CATEGORIES } from '../data/mockData';
+import { productApi } from '../api';
+import { getCategoryMeta } from '../utils/categoryMeta';
 
 interface SubNavProps {
   isDark: boolean;
@@ -19,13 +20,40 @@ const NAV_LINKS = [
 export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
   const { pathname } = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    productApi.getCategories()
+      .then(res => setCategories(res.categories || []))
+      .catch(() => setCategories([]));
+  }, []);
+
+  const featured = categories.slice(0, 3);
+  const subcategoryLinks = categories.slice(0, 4).flatMap(name => getCategoryMeta(name).subcategories.slice(0, 2));
 
   return (
-    <div className="relative group/nav font-primary">
-      <nav className={`${isDark ? 'bg-zinc-900 border-white/5' : 'bg-slate-50 border-slate-200'} border-b py-2 px-6 overflow-x-auto transition-colors duration-300 relative z-[45]`}>
+    <div className="relative group/nav font-primary" ref={menuRef}>
+      <nav className={`${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-300'} border-b py-2 px-6 overflow-x-auto transition-colors duration-300 relative z-[45]`}>
         <div className="max-w-[1920px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8 whitespace-nowrap">
-            <button 
+            <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className={`flex items-center gap-2 font-bold text-xs transition-all ${isMenuOpen ? 'text-white' : 'text-yellow-400'}`}
             >
@@ -57,36 +85,41 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
       {/* Mega Menu Overlay */}
       {isMenuOpen && (
         <>
-          <div 
+          <div
             className="fixed inset-0 bg-black/20 z-[40] transition-opacity duration-300 pointer-events-auto"
             onClick={() => setIsMenuOpen(false)}
           />
-          <div className={`absolute top-full left-0 right-0 z-[42] border-b shadow-2xl transition-all duration-300 transform origin-top animate-fade-down overflow-hidden ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-200'} rounded-b-[24px]`}>
+          <div className={`absolute top-full left-0 right-0 z-[42] border-b shadow-2xl transition-all duration-300 transform origin-top overflow-hidden ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-200'} rounded-b-[24px]`}>
             <div className="max-w-[1920px] mx-auto flex min-h-[380px]">
-              
+
               {/* Left Segment: Primary Categories */}
               <div className={`w-[260px] border-r p-6 space-y-3 ${isDark ? 'bg-white/[0.02] border-white/5' : 'bg-slate-50/50 border-slate-100'}`}>
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-400 mb-4">Market Sectors</div>
-                {CATEGORIES.slice(0, 3).map((cat, idx) => (
-                  <button 
-                    key={idx}
-                    className={`w-full group p-4 rounded-xl border transition-all text-left flex flex-col gap-0.5 relative overflow-hidden ${idx === 0 ? (isDark ? 'bg-yellow-400 border-yellow-400 shadow-lg' : 'bg-yellow-400 border-yellow-400 shadow-md') : (isDark ? 'bg-white/5 border-white/5 hover:border-white/20' : 'bg-white border-slate-200 hover:border-yellow-400/50')}`}
-                  >
-                    <div className="flex items-center justify-between z-10">
-                      <span className={`text-xs font-black uppercase tracking-tight ${idx === 0 ? 'text-black' : (isDark ? 'text-white' : 'text-slate-900')}`}>{cat.name}</span>
-                      <ArrowRight className={`w-3.5 h-3.5 transition-transform group-hover:translate-x-1 ${idx === 0 ? 'text-black' : 'text-yellow-400'}`} />
-                    </div>
-                    <span className={`text-[10px] font-medium z-10 ${idx === 0 ? 'text-black/60' : 'text-slate-500'}`}>Pro Materials</span>
-                    {idx === 0 && <div className="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl" />}
-                  </button>
-                ))}
+                {featured.map((name, idx) => {
+                  const cat = getCategoryMeta(name);
+                  return (
+                    <Link
+                      key={idx}
+                      to={`/products?category=${encodeURIComponent(name)}`}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={`w-full group p-4 rounded-xl border transition-all text-left flex flex-col gap-0.5 relative overflow-hidden ${idx === 0 ? (isDark ? 'bg-yellow-400 border-yellow-400 shadow-lg' : 'bg-yellow-400 border-yellow-400 shadow-md') : (isDark ? 'bg-white/5 border-white/5 hover:border-white/20' : 'bg-white border-slate-200 hover:border-yellow-400/50')}`}
+                    >
+                      <div className="flex items-center justify-between z-10">
+                        <span className={`text-xs font-black uppercase tracking-tight ${idx === 0 ? 'text-black' : (isDark ? 'text-white' : 'text-slate-900')}`}>{cat.name}</span>
+                        <ArrowRight className={`w-3.5 h-3.5 transition-transform group-hover:translate-x-1 ${idx === 0 ? 'text-black' : 'text-yellow-400'}`} />
+                      </div>
+                      <span className={`text-[10px] font-medium z-10 ${idx === 0 ? 'text-black/60' : 'text-slate-500'}`}>{cat.desc}</span>
+                      {idx === 0 && <div className="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl" />}
+                    </Link>
+                  );
+                })}
               </div>
 
-              {/* Center Segment: Deep Inventory */}
+              {/* Center Segment: Subcategory links */}
               <div className="flex-1 p-8 grid grid-cols-2 gap-x-10 gap-y-1">
                 <div className="col-span-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">Catalog Inventory</div>
-                {CATEGORIES[0].subcategories.concat(CATEGORIES[1].subcategories).slice(0, 8).map((sub, sidx) => (
-                  <Link 
+                {subcategoryLinks.slice(0, 8).map((sub, sidx) => (
+                  <Link
                     key={sidx}
                     to="/products"
                     onClick={() => setIsMenuOpen(false)}
@@ -116,10 +149,10 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
                   <p className="text-xs text-slate-500 leading-relaxed font-medium">
                     Optimize your construction supply chain with proprietary price engines.
                   </p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-yellow-400">{categories.length} live categories</p>
                 </div>
-                
                 <div className="pt-6">
-                  <Link 
+                  <Link
                     to="/products"
                     onClick={() => setIsMenuOpen(false)}
                     className="group w-10 h-10 rounded-full border border-yellow-400 flex items-center justify-center transition-all hover:bg-yellow-400 bg-transparent"
