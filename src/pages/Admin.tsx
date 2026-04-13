@@ -121,7 +121,7 @@ function ProductsTab({ isDark, token, input, card, showToast }: {
                 <input required value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={`w-full px-4 py-3 rounded-xl border text-xs font-bold outline-none transition-colors ${input}`} placeholder="Industrial Tools" />
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Price (USD) *</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Price (INR) *</label>
                 <input required type="number" min="0" step="0.01" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className={`w-full px-4 py-3 rounded-xl border text-xs font-bold outline-none transition-colors ${input}`} placeholder="0.00" />
               </div>
               <div className="space-y-2">

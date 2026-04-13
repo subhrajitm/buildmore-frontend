@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminApi, BackendProduct } from '../api';
-import { Plus, Pencil, Trash2, Package, ToggleLeft, ToggleRight, Check, X, Upload, AlertCircle, ChevronDown, Loader2 } from 'lucide-react';
+import { 
+  Plus, Pencil, Trash2, Package, ToggleLeft, ToggleRight, Check, X, 
+  Upload, AlertCircle, ChevronDown, Loader2, Search, Filter, Grid3X3, 
+  List, IndianRupee, Box, Eye, EyeOff, RefreshCw, PlusCircle, MinusCircle
+} from 'lucide-react';
+import { formatPrice, formatINR } from '../utils/currency';
 
 interface AdminProductsProps {
   isDark: boolean;
@@ -12,14 +17,21 @@ const EMPTY_FORM = {
   productName: '', desc: '', category: '', price: '', stock: '', materialSpecifications: '',
 };
 
+const CATEGORIES = ['Industrial Tools', 'Bulk Materials', 'Safety Gear', 'Electrical Kits', 'Machinery', 'Plumbing', 'HVAC', 'Steel & Metal'];
+
 export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
-  const { adminToken } = useAdminAuth();
   const navigate = useNavigate();
+  const { adminToken } = useAdminAuth();
   
   const [products, setProducts] = useState<BackendProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterAvailability, setFilterAvailability] = useState<'all' | 'available' | 'unavailable'>('all');
+  
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<BackendProduct>>({});
   const [stockEditing, setStockEditing] = useState<string | null>(null);
@@ -30,10 +42,12 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
   const [toast, setToast] = useState('');
   const fileRef = React.useRef<HTMLInputElement>(null);
 
-  const input = `px-4 py-3 rounded-xl border text-xs font-bold outline-none transition-colors ${
+  const input = `w-full px-4 py-3 rounded-xl border text-sm font-bold outline-none transition-colors ${
     isDark ? 'bg-zinc-900 border-white/10 text-white placeholder-slate-500 focus:border-yellow-400/50' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-yellow-400'
   }`;
   const card = isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-200';
+  const bgClass = isDark ? 'bg-black text-white' : 'bg-slate-50 text-slate-900';
+  const mutedClass = isDark ? 'text-slate-400' : 'text-slate-500';
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -46,6 +60,23 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
     adminApi.getAll(adminToken).then(r => setProducts(r.products || [])).catch(() => setError('Failed to load')).finally(() => setLoading(false));
   };
   useEffect(load, [adminToken]);
+
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.productName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         p.desc?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = !filterCategory || p.category === filterCategory;
+    const matchesAvailability = filterAvailability === 'all' || 
+                               (filterAvailability === 'available' && p.availability) ||
+                               (filterAvailability === 'unavailable' && !p.availability);
+    return matchesSearch && matchesCategory && matchesAvailability;
+  });
+
+  const stats = {
+    total: products.length,
+    available: products.filter(p => p.availability).length,
+    outOfStock: products.filter(p => p.stock === 0).length,
+    totalValue: products.reduce((sum, p) => sum + (p.price * p.stock), 0)
+  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,20 +92,20 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
       await adminApi.add(fd, adminToken);
       setForm({ ...EMPTY_FORM }); setFiles(null);
       if (fileRef.current) fileRef.current.value = '';
-      setShowAddForm(false); showToast('Product added'); load();
-    } catch (err: any) { setError(err.message || 'Failed'); }
+      setShowAddForm(false); showToast('Product added successfully'); load();
+    } catch (err: any) { setError(err.message || 'Failed to add product'); }
     finally { setSubmitting(false); }
   };
 
   const handleUpdate = async (id: string) => {
     if (!adminToken) return;
-    try { await adminApi.update(id, editForm, adminToken); setEditingId(null); showToast('Updated'); load(); }
+    try { await adminApi.update(id, editForm, adminToken); setEditingId(null); showToast('Product updated'); load(); }
     catch (err: any) { showToast('Update failed: ' + err.message); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this product?') || !adminToken) return;
-    try { await adminApi.delete(id, adminToken); showToast('Deleted'); load(); }
+    if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.') || !adminToken) return;
+    try { await adminApi.delete(id, adminToken); showToast('Product deleted'); load(); }
     catch (err: any) { showToast('Delete failed: ' + err.message); }
   };
 
@@ -88,120 +119,188 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
 
   const handleToggleAvailability = async (id: string) => {
     if (!adminToken) return;
-    try { await adminApi.toggleAvailability(id, adminToken); showToast('Availability toggled'); load(); }
+    try { await adminApi.toggleAvailability(id, adminToken); showToast('Availability updated'); load(); }
     catch (err: any) { showToast('Toggle failed: ' + err.message); }
   };
 
   return (
     <div className="space-y-6">
       {toast && (
-        <div className="fixed top-4 right-4 bg-yellow-400 text-black px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest z-50">
+        <div className="fixed top-4 right-4 bg-yellow-400 text-black px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest z-50 shadow-lg">
           {toast}
         </div>
       )}
+
+      {/* Header Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={`p-5 rounded-2xl border ${card}`}>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-yellow-400/10 flex items-center justify-center">
+              <Package className="w-5 h-5 text-yellow-400" />
+            </div>
+          </div>
+          <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.total}</p>
+          <p className={`text-[10px] font-black uppercase tracking-widest ${mutedClass}`}>Total Products</p>
+        </div>
+        <div className={`p-5 rounded-2xl border ${card}`}>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+              <Check className="w-5 h-5 text-green-500" />
+            </div>
+          </div>
+          <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.available}</p>
+          <p className={`text-[10px] font-black uppercase tracking-widest ${mutedClass}`}>Available</p>
+        </div>
+        <div className={`p-5 rounded-2xl border ${card}`}>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+              <Box className="w-5 h-5 text-red-500" />
+            </div>
+          </div>
+          <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.outOfStock}</p>
+          <p className={`text-[10px] font-black uppercase tracking-widest ${mutedClass}`}>Out of Stock</p>
+        </div>
+        <div className={`p-5 rounded-2xl border ${card}`}>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+              <IndianRupee className="w-5 h-5 text-blue-500" />
+            </div>
+          </div>
+          <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatINR(stats.totalValue)}</p>
+          <p className={`text-[10px] font-black uppercase tracking-widest ${mutedClass}`}>Total Value</p>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className={`rounded-2xl border p-4 ${card}`}>
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search products by name or description..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className={`w-full pl-12 pr-4 py-3 rounded-xl border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white placeholder-slate-500' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'}`}
+            />
+          </div>
+          <div className="flex gap-2">
+            <select
+              value={filterCategory}
+              onChange={e => setFilterCategory(e.target.value)}
+              className={`px-4 py-3 rounded-xl border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'}`}
+            >
+              <option value="">All Categories</option>
+              {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
+            <select
+              value={filterAvailability}
+              onChange={e => setFilterAvailability(e.target.value as any)}
+              className={`px-4 py-3 rounded-xl border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'}`}
+            >
+              <option value="all">All Status</option>
+              <option value="available">Available</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+            <div className="flex rounded-xl border overflow-hidden">
+              <button onClick={() => setViewMode('list')} className={`p-3 ${viewMode === 'list' ? 'bg-yellow-400 text-black' : isDark ? 'bg-zinc-900 text-slate-400' : 'bg-white text-slate-500'}`}>
+                <List className="w-4 h-4" />
+              </button>
+              <button onClick={() => setViewMode('grid')} className={`p-3 ${viewMode === 'grid' ? 'bg-yellow-400 text-black' : isDark ? 'bg-zinc-900 text-slate-400' : 'bg-white text-slate-500'}`}>
+                <Grid3X3 className="w-4 h-4" />
+              </button>
+            </div>
+            <button
+              onClick={() => navigate('/admin/products/add')}
+              className="flex items-center gap-2 bg-yellow-400 text-black px-5 py-3 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-yellow-300 transition-all"
+            >
+              <Plus className="w-4 h-4" /> Add Product
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Results Count */}
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{products.length} Products in Catalog</p>
-        <button
-          onClick={() => { setShowAddForm(v => !v); setError(''); }}
-          className="flex items-center gap-3 bg-yellow-400 text-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-300 transition-all"
-        >
-          {showAddForm ? <><X className="w-4 h-4" /> Cancel</> : <><Plus className="w-4 h-4" /> Add Product</>}
+        <p className={`text-sm font-bold ${mutedClass}`}>
+          Showing {filteredProducts.length} of {products.length} products
+        </p>
+        <button onClick={load} className={`flex items-center gap-2 text-sm font-bold ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`}>
+          <RefreshCw className="w-4 h-4" /> Refresh
         </button>
       </div>
 
-      {showAddForm && (
-        <div className={`rounded-2xl border p-8 space-y-6 ${card}`}>
-          <h2 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>New Product</h2>
-          {error && (
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-              <p className="text-xs text-red-400 font-bold">{error}</p>
-            </div>
-          )}
-          <form onSubmit={handleAdd} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Product Name *</label>
-                <input required value={form.productName} onChange={e => setForm(f => ({ ...f, productName: e.target.value }))} className={input} placeholder="BuildMore X-Series..." />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Category *</label>
-                <input required value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={input} placeholder="Industrial Tools" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Price (USD) *</label>
-                <input required type="number" min="0" step="0.01" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className={input} placeholder="0.00" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Stock *</label>
-                <input required type="number" min="0" value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} className={input} placeholder="0" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Description *</label>
-              <textarea required rows={3} value={form.desc} onChange={e => setForm(f => ({ ...f, desc: e.target.value }))} className={`w-full ${input} resize-none`} placeholder="Professional-grade..." />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Material Specifications</label>
-              <input value={form.materialSpecifications} onChange={e => setForm(f => ({ ...f, materialSpecifications: e.target.value }))} className={input} placeholder="Composite/Aluminum, IP67..." />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Product Images * (up to 5)</label>
-              <div className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center gap-3 cursor-pointer transition-colors ${isDark ? 'border-white/10 hover:border-yellow-400/40' : 'border-slate-200 hover:border-yellow-400/60'}`} onClick={() => fileRef.current?.click()}>
-                <Upload className="w-6 h-6 text-slate-500" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{files && files.length > 0 ? `${files.length} file(s) selected` : 'Click to upload images'}</p>
-                <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={e => setFiles(e.target.files)} />
-              </div>
-            </div>
-            <div className="flex gap-4 pt-2">
-              <button type="submit" disabled={submitting} className="bg-yellow-400 text-black px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-300 transition-all disabled:opacity-50 flex items-center gap-2">
-                {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><Check className="w-4 h-4" /> Save Product</>}
-              </button>
-              <button type="button" onClick={() => { setShowAddForm(false); setError(''); setForm({ ...EMPTY_FORM }); }} className={`px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${isDark ? 'bg-white/5 text-slate-400 hover:bg-white/10' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Cancel</button>
-            </div>
-          </form>
-        </div>
-      )}
-
+      {/* Products List/Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-yellow-400" /></div>
-      ) : products.length === 0 ? (
-        <div className={`flex flex-col items-center justify-center py-24 rounded-2xl border-2 border-dashed gap-4 ${isDark ? 'border-white/10 text-slate-600' : 'border-slate-100 text-slate-400'}`}>
-          <Package className="w-10 h-10 opacity-20" />
-          <p className="text-[10px] font-black uppercase tracking-widest opacity-60">No products in catalog</p>
+      ) : filteredProducts.length === 0 ? (
+        <div className={`flex flex-col items-center justify-center py-24 rounded-2xl border-2 border-dashed gap-4 ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+          <Package className="w-16 h-16 text-slate-300" />
+          <p className={`text-sm font-black uppercase tracking-widest ${mutedClass}`}>No products found</p>
+          <p className={`text-xs ${mutedClass}`}>Try adjusting your search or filters</p>
+        </div>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredProducts.map(p => (
+            <div key={p._id} className={`rounded-2xl border overflow-hidden ${card} hover:border-yellow-400/30 transition-all`}>
+              <div className={`h-32 ${isDark ? 'bg-white/5' : 'bg-slate-100'} flex items-center justify-center`}>
+                <Package className="w-12 h-12 text-slate-400" />
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-black truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.productName}</p>
+                    <p className={`text-[10px] font-bold uppercase ${mutedClass}`}>{p.category}</p>
+                  </div>
+                  <button onClick={() => handleToggleAvailability(p._id)} className={`p-1.5 rounded-lg ${p.availability ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                    {p.availability ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatPrice(p.price)}</p>
+                    <p className={`text-[10px] font-bold ${p.stock === 0 ? 'text-red-400' : mutedClass}`}>{p.stock} in stock</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={() => { setEditingId(p._id); setEditForm({}); }} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}><Pencil className="w-4 h-4" /></button>
+                    <button onClick={() => handleDelete(p._id)} className={`p-2 rounded-lg ${isDark ? 'hover:bg-red-500/10 text-slate-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`}><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className={`rounded-2xl border overflow-hidden ${card}`}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className={`border-b text-[9px] font-black uppercase tracking-widest ${isDark ? 'border-white/5 text-slate-500' : 'border-slate-100 text-slate-400'}`}>
+                <tr className={`border-b text-[10px] font-black uppercase tracking-widest ${isDark ? 'border-white/5 text-slate-500' : 'border-slate-100 text-slate-400'}`}>
                   <th className="text-left px-6 py-4">Product</th>
                   <th className="text-left px-4 py-4">Category</th>
                   <th className="text-right px-4 py-4">Price</th>
                   <th className="text-right px-4 py-4">Stock</th>
-                  <th className="text-center px-4 py-4">Available</th>
+                  <th className="text-center px-4 py-4">Status</th>
                   <th className="text-right px-6 py-4">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.03]">
-                {products.map(p => (
+                {filteredProducts.map(p => (
                   <tr key={p._id} className={`transition-colors ${isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50'}`}>
                     {editingId === p._id ? (
                       <>
                         <td className="px-6 py-4" colSpan={4}>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <input value={editForm.productName ?? p.productName} onChange={e => setEditForm(f => ({ ...f, productName: e.target.value }))} className={`px-3 py-2 rounded-lg border text-xs font-bold outline-none ${input}`} placeholder="Name" />
-                            <input value={editForm.category ?? p.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))} className={`px-3 py-2 rounded-lg border text-xs font-bold outline-none ${input}`} placeholder="Category" />
-                            <input type="number" value={editForm.price ?? p.price} onChange={e => setEditForm(f => ({ ...f, price: Number(e.target.value) }))} className={`px-3 py-2 rounded-lg border text-xs font-bold outline-none ${input}`} placeholder="Price" />
-                            <input value={editForm.materialSpecifications ?? p.materialSpecifications ?? ''} onChange={e => setEditForm(f => ({ ...f, materialSpecifications: e.target.value }))} className={`px-3 py-2 rounded-lg border text-xs font-bold outline-none ${input}`} placeholder="Material specs" />
+                            <input value={editForm.productName ?? p.productName} onChange={e => setEditForm(f => ({ ...f, productName: e.target.value }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`} placeholder="Name" />
+                            <input value={editForm.category ?? p.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`} placeholder="Category" />
+                            <input type="number" value={editForm.price ?? p.price} onChange={e => setEditForm(f => ({ ...f, price: Number(e.target.value) }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`} placeholder="Price" />
+                            <input value={editForm.materialSpecifications ?? p.materialSpecifications ?? ''} onChange={e => setEditForm(f => ({ ...f, materialSpecifications: e.target.value }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`} placeholder="Specs" />
                           </div>
                         </td>
-                        <td className="text-center px-4 py-4" />
                         <td className="text-right px-6 py-4">
                           <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => handleUpdate(p._id)} className="bg-yellow-400 text-black px-4 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-yellow-300 flex items-center gap-1.5"><Check className="w-3 h-3" /> Save</button>
-                            <button onClick={() => { setEditingId(null); setEditForm({}); }} className={`px-4 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest ${isDark ? 'bg-white/5 text-slate-400 hover:bg-white/10' : 'bg-slate-100 text-slate-600'}`}><X className="w-3 h-3" /></button>
+                            <button onClick={() => handleUpdate(p._id)} className="bg-yellow-400 text-black px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest hover:bg-yellow-300 flex items-center gap-1.5"><Check className="w-3 h-3" /> Save</button>
+                            <button onClick={() => { setEditingId(null); setEditForm({}); }} className={`px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest ${isDark ? 'bg-white/5 text-slate-400 hover:bg-white/10' : 'bg-slate-100 text-slate-600'}`}><X className="w-3 h-3" /></button>
                           </div>
                         </td>
                       </>
@@ -209,39 +308,47 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                       <>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
-                              <Package className="w-4 h-4 text-slate-500" />
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
+                              <Package className="w-5 h-5 text-slate-400" />
                             </div>
-                            <div>
-                              <p className={`text-xs font-black leading-tight max-w-[200px] truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.productName}</p>
-                              {p.desc && <p className="text-[9px] text-slate-500 font-medium truncate max-w-[200px]">{p.desc}</p>}
+                            <div className="min-w-0">
+                              <p className={`text-sm font-black truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.productName}</p>
+                              {p.desc && <p className={`text-[10px] font-medium truncate max-w-[250px] ${mutedClass}`}>{p.desc}</p>}
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4"><span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded ${isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>{p.category}</span></td>
-                        <td className="px-4 py-4 text-right"><span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${p.price.toFixed(2)}</span></td>
+                        <td className="px-4 py-4">
+                          <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>{p.category}</span>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <span className={`text-base font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatPrice(p.price)}</span>
+                        </td>
                         <td className="px-4 py-4 text-right">
                           {stockEditing === p._id ? (
                             <div className="flex items-center justify-end gap-2">
-                              <input type="number" min="0" value={stockValue} onChange={e => setStockValue(e.target.value)} className={`w-20 px-2 py-1 rounded-lg border text-xs font-bold outline-none text-right ${input}`} autoFocus />
-                              <button onClick={() => handleStockUpdate(p._id)} className="text-yellow-400 hover:text-yellow-300"><Check className="w-3.5 h-3.5" /></button>
-                              <button onClick={() => setStockEditing(null)} className="text-slate-500 hover:text-slate-300"><X className="w-3.5 h-3.5" /></button>
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => setStockValue(String(Math.max(0, Number(stockValue) - 1)))} className={`p-1 rounded ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}><MinusCircle className="w-4 h-4" /></button>
+                                <input type="number" min="0" value={stockValue} onChange={e => setStockValue(e.target.value)} className={`w-16 px-2 py-1 rounded-lg border text-sm font-bold text-center ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`} autoFocus />
+                                <button onClick={() => setStockValue(String(Number(stockValue) + 1))} className={`p-1 rounded ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}><PlusCircle className="w-4 h-4" /></button>
+                              </div>
+                              <button onClick={() => handleStockUpdate(p._id)} className="text-green-500 hover:text-green-400"><Check className="w-4 h-4" /></button>
+                              <button onClick={() => setStockEditing(null)} className="text-slate-500 hover:text-slate-300"><X className="w-4 h-4" /></button>
                             </div>
                           ) : (
-                            <button onClick={() => { setStockEditing(p._id); setStockValue(String(p.stock)); }} className={`text-xs font-black hover:text-yellow-400 transition-colors flex items-center gap-1 ml-auto ${p.stock === 0 ? 'text-red-400' : isDark ? 'text-white' : 'text-slate-900'}`}>
-                              {p.stock} <ChevronDown className="w-3 h-3 opacity-50" />
+                            <button onClick={() => { setStockEditing(p._id); setStockValue(String(p.stock)); }} className={`text-sm font-black hover:text-yellow-400 transition-colors flex items-center gap-1 ${p.stock === 0 ? 'text-red-400' : isDark ? 'text-white' : 'text-slate-900'}`}>
+                              {p.stock} units
                             </button>
                           )}
                         </td>
                         <td className="px-4 py-4 text-center">
-                          <button onClick={() => handleToggleAvailability(p._id)} title={p.availability ? 'Click to disable' : 'Click to enable'}>
-                            {p.availability ? <ToggleRight className="w-6 h-6 text-yellow-400" /> : <ToggleLeft className="w-6 h-6 text-slate-500" />}
+                          <button onClick={() => handleToggleAvailability(p._id)} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors ${p.availability ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                            {p.availability ? <><Eye className="w-3 h-3" /> Available</> : <><EyeOff className="w-3 h-3" /> Unavailable</>}
                           </button>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => { setEditingId(p._id); setEditForm({}); }} className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-white/5 text-slate-400 hover:text-yellow-400' : 'hover:bg-slate-100 text-slate-500 hover:text-yellow-500'}`}><Pencil className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => handleDelete(p._id)} className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-red-500/10 text-slate-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`}><Trash2 className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => { setEditingId(p._id); setEditForm({}); }} className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-white/5 text-slate-400 hover:text-yellow-400' : 'hover:bg-slate-100 text-slate-500 hover:text-yellow-500'}`}><Pencil className="w-4 h-4" /></button>
+                            <button onClick={() => handleDelete(p._id)} className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-red-500/10 text-slate-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`}><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </>

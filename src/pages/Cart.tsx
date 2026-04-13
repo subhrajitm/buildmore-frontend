@@ -4,6 +4,7 @@ import { Trash2, Plus, Minus, ArrowRight, ShieldCheck, Truck, Package, CheckCirc
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { orderApi, userApi, Address } from '../api';
+import { formatPrice } from '../utils/currency';
 
 interface CartProps {
   isDark: boolean;
@@ -127,8 +128,8 @@ export const Cart: React.FC<CartProps> = ({ isDark }) => {
                     <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-1 text-slate-500 hover:text-yellow-400 transition-colors"><Plus className="w-3 h-3" /></button>
                   </div>
                   <div className="text-right">
-                    <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${(item.price * item.quantity).toFixed(2)}</p>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">${item.price.toFixed(2)} / unit</p>
+                    <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatPrice(item.price * item.quantity)}</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{formatPrice(item.price)} / unit</p>
                   </div>
                 </div>
               </div>

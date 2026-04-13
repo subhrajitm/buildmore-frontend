@@ -19,7 +19,7 @@ interface AdminLayoutProps {
 }
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ isDark }) => {
-  const { adminUser, adminLogout } = useAdminAuth();
+  const { adminUser, adminLogout, isAdminAuthenticated } = useAdminAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -31,6 +31,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ isDark }) => {
   const sidebarBg = isDark ? 'bg-zinc-900 border-r border-white/5' : 'bg-white border-r border-slate-200';
   const textClass = isDark ? 'text-white' : 'text-slate-900';
   const mutedClass = isDark ? 'text-slate-400' : 'text-slate-500';
+
+  if (!isAdminAuthenticated) {
+    return (
+      <div className={`min-h-screen ${bgClass}`}>
+        <Outlet />
+      </div>
+    );
+  }
 
   return (
     <div className={`flex h-screen ${bgClass}`}>

@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, Truck, ArrowRight, ChevronRight, FileText, Download, Zap, Check, Plus, Minus, AlertCircle } from 'lucide-react';
+import { 
+  Truck, ChevronRight, FileText, Zap, Check, Plus, Minus, AlertCircle,
+  Heart, Share2, Star, ShieldCheck, MapPin, ArrowLeft, ArrowRight
+} from 'lucide-react';
 import { productApi, specsApi, BackendProduct, SpecSheet } from '../api';
 import { normalizeProduct } from '../utils/normalizeProduct';
 import { useCart } from '../context/CartContext';
+import { formatPrice } from '../utils/currency';
 
 interface ProductDetailProps {
   isDark: boolean;
@@ -18,8 +22,10 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'specs' | 'compliance' | 'shipping'>('specs');
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'shipping'>('description');
   const [specSheets, setSpecSheets] = useState<SpecSheet[]>([]);
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -52,230 +58,306 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
   }
 
   const product = normalizeProduct(raw);
-
+  
   const handleAdd = () => {
     addItem(product, quantity);
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
   };
 
+  const cardClass = isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-slate-200';
+  const inputClass = isDark ? 'bg-zinc-950 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900';
+
   return (
-    <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
-      <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+    <div className="max-w-7xl mx-auto animate-fade-in pb-20">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-8">
         <Link to="/" className="hover:text-yellow-400">Home</Link>
         <ChevronRight className="w-3 h-3" />
-        <Link to="/products" className="hover:text-yellow-400">Catalog</Link>
+        <Link to="/products" className="hover:text-yellow-400">Products</Link>
         <ChevronRight className="w-3 h-3" />
         <span className={isDark ? 'text-white' : 'text-slate-900'}>{product.name}</span>
       </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-        <div className={`aspect-square rounded-2xl flex items-center justify-center p-12 border ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-contain"
-            referrerPolicy="no-referrer"
-          />
-        </div>
-
-        <div className="space-y-8">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 flex-wrap">
-              {product.availability ? (
-                <span className="bg-yellow-400 text-black px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-sm">
-                  In Stock: {raw.stock} Units
-                </span>
-              ) : (
-                <span className="bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-sm">
-                  Unavailable
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+        {/* Left - Image Gallery */}
+        <div className="space-y-4">
+          <div className={`relative aspect-square ${cardClass} rounded-2xl overflow-hidden border`}>
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-contain p-8"
+              referrerPolicy="no-referrer"
+            />
+            {/* Badges */}
+            <div className="absolute top-4 left-4 flex flex-col gap-2">
+              {product.discount && (
+                <span className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
+                  {product.discount} OFF
                 </span>
               )}
-              {raw.stock === 0 && product.availability && (
-                <span className="bg-slate-500/20 text-slate-400 border border-slate-500/30 px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-sm">
+              {raw.stock === 0 && (
+                <span className="bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
                   Out of Stock
                 </span>
               )}
             </div>
-            <h1 className={`text-4xl font-black tracking-tighter leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            {/* Wishlist */}
+            <button 
+              onClick={() => setIsWishlisted(!isWishlisted)}
+              className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all ${isWishlisted ? 'bg-red-500 text-white' : 'bg-white/90 text-slate-600 hover:text-red-500 shadow-lg'}`}
+            >
+              <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
+            </button>
+          </div>
+          
+          {/* Thumbnail Navigation */}
+          <div className="flex items-center gap-2">
+            <button className={`p-2 rounded-lg ${isDark ? 'bg-zinc-800 text-white' : 'bg-slate-100 text-slate-600'}`}>
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div className="flex-1 flex gap-2 overflow-x-auto">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <button 
+                  key={i}
+                  className={`w-16 h-16 rounded-lg border-2 flex-shrink-0 flex items-center justify-center ${i === 1 ? 'border-yellow-400' : isDark ? 'border-white/10' : 'border-slate-200'}`}
+                >
+                  <span className="text-xs text-slate-400">{i}</span>
+                </button>
+              ))}
+            </div>
+            <button className={`p-2 rounded-lg ${isDark ? 'bg-zinc-800 text-white' : 'bg-slate-100 text-slate-600'}`}>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Right - Product Info */}
+        <div className="space-y-6">
+          {/* Header */}
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <span className={`text-xs font-bold px-2 py-1 rounded ${isDark ? 'bg-white/10 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                {product.category}
+              </span>
+              {product.rating && (
+                <div className="flex items-center gap-1">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star key={star} className={`w-3.5 h-3.5 ${star <= Math.round(product.rating) ? 'text-yellow-400 fill-current' : 'text-slate-300'}`} />
+                    ))}
+                  </div>
+                  <span className="text-xs text-slate-500">({product.reviews || 0} reviews)</span>
+                </div>
+              )}
+            </div>
+            <h1 className={`text-3xl font-black mb-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>
               {product.name}
             </h1>
-            <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-xl">
-              {raw.desc || 'Professional-grade industrial component engineered for extreme environments. Optimized for high-density duty cycles and rigorous enterprise safety standards.'}
+            <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              {raw.desc || 'Premium quality industrial product designed for professional use. Engineered for durability and performance in demanding environments.'}
             </p>
           </div>
 
-          <div className="space-y-6">
-            <div className="flex items-baseline gap-4">
-              <span className={`text-5xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${product.price.toFixed(2)}</span>
-              {product.originalPrice && (
-                <span className="text-xl text-slate-500 line-through font-bold">${product.originalPrice.toFixed(2)}</span>
-              )}
-            </div>
-
-            {product.bulkInfo && (
-              <div className={`p-4 rounded-xl border flex items-center justify-between ${isDark ? 'bg-yellow-400/5 border-yellow-400/20' : 'bg-yellow-50 border-yellow-100'}`}>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-yellow-400">Bulk Tier Pricing</p>
-                  <p className={`text-base font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{product.bulkInfo}</p>
-                </div>
-                <Zap className="w-6 h-6 text-yellow-400" />
-              </div>
+          {/* Price */}
+          <div className="flex items-baseline gap-3">
+            <span className={`text-4xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              {formatPrice(product.price)}
+            </span>
+            {product.originalPrice && (
+              <span className="text-lg text-slate-400 line-through font-medium">
+                {formatPrice(product.originalPrice)}
+              </span>
             )}
           </div>
 
-          {/* Quantity selector */}
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Qty:</span>
-            <div className={`flex items-center gap-4 px-4 py-3 rounded-xl border ${isDark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
-              <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="text-slate-500 hover:text-yellow-400 transition-colors">
-                <Minus className="w-4 h-4" />
+          {/* Stock Status */}
+          <div className="flex items-center gap-2">
+            {raw.stock > 0 ? (
+              <>
+                <div className="w-2 h-2 bg-green-500 rounded-full" />
+                <span className="text-sm font-medium text-green-500">In Stock ({raw.stock} available)</span>
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 bg-red-500 rounded-full" />
+                <span className="text-sm font-medium text-red-500">Out of Stock</span>
+              </>
+            )}
+          </div>
+
+          {/* Bulk Pricing */}
+          {product.bulkInfo && (
+            <div className={`p-4 rounded-xl border ${isDark ? 'bg-yellow-400/5 border-yellow-400/20' : 'bg-yellow-50 border-yellow-200'}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-yellow-500 uppercase tracking-wide">Bulk Pricing Available</p>
+                  <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{product.bulkInfo}</p>
+                </div>
+                <Zap className="w-5 h-5 text-yellow-400" />
+              </div>
+            </div>
+          )}
+
+          {/* Quantity & Add to Cart */}
+          <div className="space-y-4 pt-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-bold text-slate-500">Quantity:</span>
+              <div className={`flex items-center gap-0 rounded-xl border overflow-hidden ${inputClass}`}>
+                <button 
+                  onClick={() => setQuantity(q => Math.max(1, q - 1))} 
+                  className="px-4 py-3 hover:bg-yellow-400 hover:text-black transition-colors"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="px-6 py-3 font-bold text-center min-w-[60px] border-x">{quantity}</span>
+                <button 
+                  onClick={() => setQuantity(q => q + 1)} 
+                  className="px-4 py-3 hover:bg-yellow-400 hover:text-black transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleAdd}
+                className={`flex-1 py-4 rounded-xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                  added
+                    ? 'bg-green-500 text-white'
+                    : 'bg-yellow-400 text-black hover:bg-yellow-300'
+                }`}
+              >
+                {added ? <><Check className="w-5 h-5" /> Added to Cart</> : <>Add to Cart</>}
               </button>
-              <span className={`text-sm font-black w-6 text-center ${isDark ? 'text-white' : 'text-slate-900'}`}>{quantity}</span>
-              <button onClick={() => setQuantity(q => q + 1)} className="text-slate-500 hover:text-yellow-400 transition-colors">
-                <Plus className="w-4 h-4" />
+              <button
+                onClick={() => navigate('/rfqs', { state: { productName: raw.productName, productId: raw._id } })}
+                className={`px-5 rounded-xl border flex items-center justify-center transition-all ${isDark ? 'border-white/10 text-white hover:bg-white/10' : 'border-slate-200 text-slate-900 hover:bg-slate-50'}`}
+              >
+                <FileText className="w-5 h-5" />
+              </button>
+              <button className={`px-5 rounded-xl border flex items-center justify-center transition-all ${isDark ? 'border-white/10 text-white hover:bg-white/10' : 'border-slate-200 text-slate-900 hover:bg-slate-50'}`}>
+                <Share2 className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <button
-              onClick={handleAdd}
-              className={`flex-1 py-5 rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl flex items-center justify-center gap-3 ${
-                added
-                  ? 'bg-green-400 text-black'
-                  : 'bg-yellow-400 text-black hover:bg-yellow-300'
-              }`}
-            >
-              {added ? <><Check className="w-4 h-4" /> Added to List</> : <>Add to Procurement List <ArrowRight className="w-4 h-4" /></>}
-            </button>
-            <button
-              onClick={() => navigate('/rfqs', { state: { productName: raw.productName, productId: raw._id } })}
-              title="Request a Quote"
-              className={`px-6 rounded-xl border flex items-center justify-center transition-all ${isDark ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-slate-50 border-slate-200 text-slate-900 hover:bg-slate-100'}`}
-            >
-              <FileText className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className={`grid grid-cols-2 gap-4 pt-6 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
-            <div className="flex items-center gap-3">
-              <Truck className="w-4 h-4 text-yellow-400" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Expedited LTL Shipping</span>
+          {/* Shipping Info */}
+          <div className={`pt-6 space-y-3 ${isDark ? 'border-t border-white/10' : 'border-t border-slate-200'}`}>
+            <div className="flex items-center gap-3 text-sm">
+              <Truck className="w-5 h-5 text-yellow-400" />
+              <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>Free shipping on orders over ₹42,000</span>
             </div>
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="w-4 h-4 text-yellow-400" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">2-Year Cert Warranty</span>
+            <div className="flex items-center gap-3 text-sm">
+              <MapPin className="w-5 h-5 text-yellow-400" />
+              <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>Ships from Mumbai Warehouse</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <ShieldCheck className="w-5 h-5 text-yellow-400" />
+              <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>2-Year Manufacturer Warranty</span>
             </div>
           </div>
         </div>
       </div>
 
-      <section className="space-y-12 py-10">
-        <div className={`flex items-center gap-8 border-b pb-0 ${isDark ? 'border-white/5' : 'border-slate-200'}`}>
-          {(['specs', 'compliance', 'shipping'] as const).map(tab => {
-            const label = tab === 'specs' ? 'TECHNICAL SPECS' : tab === 'compliance' ? 'COMPLIANCE' : 'SHIPPING DATA';
-            const words = label.split(' ');
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`group relative text-[11px] font-black uppercase tracking-widest pb-4 transition-all flex items-center gap-1.5`}
-              >
-                <span className={`px-1.5 py-0.5 transition-colors ${
-                  activeTab === tab 
-                    ? 'bg-yellow-400 text-black' 
-                    : 'text-slate-500 group-hover:text-yellow-400'
-                }`}>
-                  {words[0]}
-                </span>
-                <span className={`${
-                  activeTab === tab 
-                    ? isDark ? 'text-white' : 'text-slate-900' 
-                    : 'text-slate-500 group-hover:text-yellow-400'
-                }`}>
-                  {words.slice(1).join(' ')}
-                </span>
-                {activeTab === tab && (
-                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-yellow-400" />
-                )}
-              </button>
-            );
-          })}
+      {/* Tabs Section */}
+      <div className="mt-16">
+        <div className={`flex border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          {(['description', 'specs', 'shipping'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors relative ${
+                activeTab === tab 
+                  ? isDark ? 'text-white' : 'text-slate-900'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {tab === 'description' ? 'Description' : tab === 'specs' ? 'Specifications' : 'Shipping'}
+              {activeTab === tab && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-400" />
+              )}
+            </button>
+          ))}
         </div>
 
-        {activeTab === 'compliance' ? (
-          <div className={`flex flex-col items-center justify-center py-16 gap-5 rounded-2xl border-2 border-dashed ${isDark ? 'border-white/10 text-slate-500' : 'border-slate-100 text-slate-400'}`}>
-            <ShieldCheck className="w-10 h-10 opacity-30" />
-            <div className="text-center space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-widest">Platform Compliance Documentation</p>
-              <p className="text-[9px] font-bold opacity-60">ISO, CE, RoHS and full audit records are managed at the platform level.</p>
+        <div className="py-8">
+          {activeTab === 'description' && (
+            <div className="max-w-3xl">
+              <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                {raw.desc || 'This premium industrial product is engineered to meet the highest standards of quality and performance. Designed for professional use in demanding environments, it features robust construction, precision engineering, and reliable operation. Ideal for construction, manufacturing, and industrial applications.'}
+              </p>
+              {product.bulkInfo && (
+                <div className={`mt-6 p-4 rounded-xl ${isDark ? 'bg-zinc-900' : 'bg-slate-50'}`}>
+                  <h4 className={`text-sm font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Bulk Orders</h4>
+                  <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                    For bulk orders of 10+ units, contact us for special pricing. We offer competitive rates for bulk procurement with flexible delivery schedules.
+                  </p>
+                </div>
+              )}
             </div>
-            <Link to="/compliance" className="text-yellow-400 text-[9px] font-black uppercase tracking-widest border border-yellow-400/20 px-6 py-2.5 rounded-full hover:bg-yellow-400/10 transition-colors">
-              View Compliance Docs
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20">
-            {(activeTab === 'specs' ? [
-                ...(raw.materialSpecifications ? [{ label: 'Material Specifications', value: raw.materialSpecifications }] : []),
-                { label: 'Category', value: raw.category },
-                { label: 'Stock', value: `${raw.stock} Units` },
-                { label: 'Availability', value: raw.availability ? 'Available' : 'Unavailable' },
-                ...(raw.desc ? [{ label: 'Description', value: raw.desc }] : []),
-              ] : [
-                { label: 'Freight Class', value: raw.category ? `LTL — ${raw.category}` : 'LTL Freight' },
-                { label: 'Lead Time', value: raw.stock > 0 ? '3–5 Business Days' : 'On Backorder' },
-                { label: 'Export Control', value: 'EAR99' },
-              ]).map((item, i) => (
-              <div
-                key={i}
-                className={`flex items-center justify-between py-6 border-b transition-all duration-300 ${isDark ? 'border-white/[0.03] hover:border-white/10' : 'border-slate-100 hover:border-slate-200'}`}
-              >
-                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">{item.label}</span>
-                <span className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.value}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+          )}
 
+          {activeTab === 'specs' && (
+            <div className="max-w-3xl space-y-4">
+              {[
+                { label: 'Category', value: raw.category },
+                { label: 'Material', value: raw.materialSpecifications || 'Standard' },
+                { label: 'Availability', value: raw.availability ? 'In Stock' : 'Out of Stock' },
+                { label: 'Stock', value: `${raw.stock} units` },
+              ].map((item, i) => (
+                <div key={i} className={`flex justify-between py-3 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                  <span className="text-sm font-medium text-slate-500">{item.label}</span>
+                  <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'shipping' && (
+            <div className="max-w-3xl space-y-4">
+              {[
+                { label: 'Shipping Method', value: 'Standard / Express LTL' },
+                { label: 'Delivery Time', value: raw.stock > 0 ? '5-7 Business Days' : '14-21 Days (Backorder)' },
+                { label: 'Shipping Cost', value: 'Free over ₹42,000' },
+                { label: 'Warehouse', value: 'Mumbai, India' },
+              ].map((item, i) => (
+                <div key={i} className={`flex justify-between py-3 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                  <span className="text-sm font-medium text-slate-500">{item.label}</span>
+                  <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Technical Downloads */}
       {specSheets.length > 0 && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="w-6 h-[1.5px] bg-yellow-400" />
-            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-yellow-400">Technical Downloads</span>
-          </div>
-          <div className="space-y-3">
+        <div className="mt-12 pt-8 border-t border-dashed">
+          <h3 className={`text-lg font-black mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>Technical Documents</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {specSheets.map(sheet => (
-              <div key={sheet._id} className={`p-5 rounded-2xl border flex items-center justify-between gap-4 ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center shrink-0">
-                    <Download className="w-5 h-5 text-black" />
-                  </div>
-                  <div>
-                    <p className={`text-xs font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>{sheet.title}</p>
-                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
-                      {sheet.fileType}{sheet.version ? ` · v${sheet.version}` : ''}{sheet.fileSize ? ` · ${sheet.fileSize}` : ''}
-                    </p>
-                  </div>
+              <div key={sheet._id} className={`p-4 rounded-xl border flex items-center gap-4 ${cardClass}`}>
+                <div className="w-10 h-10 bg-yellow-400 rounded-lg flex items-center justify-center shrink-0">
+                  <span className="text-black text-xs font-bold">PDF</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{sheet.title}</p>
+                  <p className="text-xs text-slate-500">{sheet.fileSize || 'PDF'}</p>
                 </div>
                 {sheet.fileUrl ? (
-                  <a
-                    href={sheet.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all ${isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-slate-900 text-white hover:bg-black'}`}
-                  >
-                    Download
+                  <a href={sheet.fileUrl} target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:text-yellow-300">
+                    <span className="text-xs font-bold">Download</span>
                   </a>
                 ) : (
-                  <span className="px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-widest text-slate-500 border border-slate-500/20">Unavailable</span>
+                  <span className="text-xs text-slate-500">N/A</span>
                 )}
               </div>
             ))}
           </div>
-        </section>
+        </div>
       )}
     </div>
   );

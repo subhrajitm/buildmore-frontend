@@ -3,6 +3,7 @@ import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { formatPrice } from '../utils/currency';
 
 interface HeaderProps {
   isDark: boolean;
@@ -127,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
               </div>
               <div className="hidden sm:flex flex-col">
                 <span className="text-[10px] text-slate-500 font-bold">Cart Total</span>
-                <span className="text-xs font-bold text-yellow-400">${totalValue.toFixed(2)}</span>
+                <span className="text-xs font-bold text-yellow-400">{formatPrice(totalValue)}</span>
               </div>
             </Link>
           </div>
