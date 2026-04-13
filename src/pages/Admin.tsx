@@ -832,7 +832,7 @@ export const Admin: React.FC<AdminProps> = ({ isDark }) => {
   return (
     <div className={`min-h-screen ${base} pb-32`}>
       {toast && (
-        <div className="fixed top-6 right-6 z-50 bg-yellow-400 text-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-2xl animate-in slide-in-from-top-2">
+        <div className="fixed top-6 right-6 z-50 bg-yellow-400 text-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-2xl transition-all duration-300">
           {toast}
         </div>
       )}

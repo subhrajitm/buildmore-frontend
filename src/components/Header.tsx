@@ -88,15 +88,7 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
                     <ChevronDown className="w-3.5 h-3.5 text-slate-500 group-hover:text-yellow-400 transition-colors" />
                   </div>
                 </Link>
-                {isAdmin && (
-                  <Link
-                    to="/manage"
-                    className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-white/10 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'}`}
-                    title="User Admin Panel"
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                  </Link>
-                )}
+                
                 <button
                   onClick={logout}
                   title="Sign out"

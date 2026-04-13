@@ -14,7 +14,7 @@ import { AddProduct } from './pages/AddProduct';
 import { AdminOrders } from './pages/AdminOrders';
 import { AdminRFQs } from './pages/AdminRFQs';
 import { AdminShipments } from './pages/AdminShipments';
-import { Admin } from './pages/Admin';
+
 import { Landing } from './pages/Landing';
 import { Products } from './pages/Products';
 import { ProductDetail } from './pages/ProductDetail';
@@ -94,11 +94,7 @@ export default function App() {
                   <ProtectedRoute><RFQs isDark={isDark} /></ProtectedRoute>
                 </MainLayout>
               } />
-              <Route path="/manage" element={
-                <MainLayout isDark={isDark} setIsDark={setIsDark}>
-                  <ProtectedRoute><Admin isDark={isDark} /></ProtectedRoute>
-                </MainLayout>
-              } />
+              
 
               <Route path="/admin" element={<AdminLayout isDark={isDark} />}>
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
