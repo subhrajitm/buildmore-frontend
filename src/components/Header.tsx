@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { formatPrice } from '../utils/currency';
+import { LocationModal, getStoredLocation } from './LocationModal';
 
 interface HeaderProps {
   isDark: boolean;
@@ -15,6 +16,8 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [location, setLocation] = useState(() => getStoredLocation());
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +27,7 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
   };
 
   return (
+  <>
     <header className={`${isDark ? 'bg-zinc-900/95 border-yellow-400/10' : 'bg-white/95 border-slate-200'} backdrop-blur-xl shadow-sm sticky top-0 z-50 border-b transition-colors duration-300`}>
       <div className="max-w-[1920px] mx-auto px-6 py-2 flex items-center justify-between gap-6">
         <div className="flex items-center gap-8">
@@ -33,13 +37,18 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
             </div>
             <span className={`text-xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'} uppercase`}>Build<span className="text-yellow-400">More</span></span>
           </Link>
-          <div className={`hidden lg:flex items-center gap-2 group cursor-pointer ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'} p-1.5 rounded-md transition-colors`}>
+          <button
+            onClick={() => setLocationOpen(true)}
+            className={`hidden lg:flex items-center gap-2 group cursor-pointer ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'} p-1.5 rounded-md transition-colors`}
+          >
             <MapPin className="w-5 h-5 text-yellow-400" />
-            <div className="flex flex-col">
+            <div className="flex flex-col text-left">
               <span className="text-[10px] leading-tight text-slate-500 font-bold">Deliver to</span>
-              <span className={`text-xs font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>London Hub SE1</span>
+              <span className={`text-xs font-bold leading-tight max-w-[120px] truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                {location || 'Select location'}
+              </span>
             </div>
-          </div>
+          </button>
         </div>
 
         <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
@@ -127,5 +136,14 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
         </div>
       </div>
     </header>
+
+    {locationOpen && (
+      <LocationModal
+        isDark={isDark}
+        onClose={() => setLocationOpen(false)}
+        onSelect={loc => setLocation(loc)}
+      />
+    )}
+  </>
   );
 };
