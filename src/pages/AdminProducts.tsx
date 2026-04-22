@@ -18,19 +18,24 @@ const EMPTY_FORM = {
 };
 
 const CATEGORIES = [
+  // Civil & Interiors
   'Cement & Concrete',
   'Tiles & Flooring',
   'Paints & Finishes',
   'Construction Chemicals',
   'Plywood, Laminates & Boards',
+  'Doors & Windows',
+  // Furniture & Architectural Hardware
+  'Hardware & Fittings',
+  'Kitchen & Wardrobe Solutions',
+  'Tools & Equipment',
+  // Electrical
   'Electrical',
   'Lighting & Fans',
   'Electrical Infrastructure',
-  'Plumbing & Sanitary',
-  'Hardware & Fittings',
-  'Kitchen & Wardrobe Solutions',
-  'Doors & Windows',
-  'Tools & Equipment',
+  // Plumbing, Sanitary & Bath
+  'Plumbing',
+  'Sanitary & Bath',
 ];
 
 export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {

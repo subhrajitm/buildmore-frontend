@@ -4,27 +4,11 @@ import { useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { productApi, BackendProduct } from '../api';
 import { normalizeProduct } from '../utils/normalizeProduct';
-import { getCategoryMeta } from '../utils/categoryMeta';
+import { getCategoryMeta, TOP_CATEGORIES, ALL_CATEGORIES } from '../utils/categoryMeta';
 
 interface ProductsProps {
   isDark: boolean;
 }
-
-const ALL_CATEGORIES = [
-  'Cement & Concrete',
-  'Tiles & Flooring',
-  'Paints & Finishes',
-  'Construction Chemicals',
-  'Plywood, Laminates & Boards',
-  'Electrical',
-  'Lighting & Fans',
-  'Electrical Infrastructure',
-  'Plumbing & Sanitary',
-  'Hardware & Fittings',
-  'Kitchen & Wardrobe Solutions',
-  'Doors & Windows',
-  'Tools & Equipment',
-];
 
 const SORT_OPTIONS = [
   { label: 'Featured', value: 'featured' },
@@ -69,9 +53,26 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
     const cat = searchParams.get('category');
+    const group = searchParams.get('group');
+    if (group) {
+      const top = TOP_CATEGORIES.find(t => t.slug === group);
+      return top ? top.categories : [];
+    }
     return cat ? [cat] : [];
   });
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [expandedTopCategories, setExpandedTopCategories] = useState<string[]>(
+    () => {
+      // Auto-expand the top group that owns the initial category selection
+      const cat = searchParams.get('category');
+      const group = searchParams.get('group');
+      if (group) return TOP_CATEGORIES.map(t => t.slug);
+      if (cat) {
+        const owner = TOP_CATEGORIES.find(t => t.categories.includes(cat));
+        return owner ? [owner.slug] : TOP_CATEGORIES.map(t => t.slug);
+      }
+      return TOP_CATEGORIES.map(t => t.slug); // expand all by default
+    }
+  );
   const [selectedPriceRanges, setSelectedPriceRanges] = useState<number[]>([]);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [inStockOnly, setInStockOnly] = useState(false);
@@ -89,9 +90,15 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
 
   useEffect(() => {
     const cat = searchParams.get('category');
+    const group = searchParams.get('group');
     const q = searchParams.get('search');
-    if (cat || q) {
-      if (cat) setSelectedCategories([cat]);
+    if (cat || group || q) {
+      if (group) {
+        const top = TOP_CATEGORIES.find(t => t.slug === group);
+        if (top) setSelectedCategories(top.categories);
+      } else if (cat) {
+        setSelectedCategories([cat]);
+      }
       if (q) setSearch(q);
       setSearchParams({}, { replace: true });
     }
@@ -103,11 +110,19 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
     );
   };
 
-  const toggleExpand = (cat: string) => {
-    setExpandedCategories(prev =>
-      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+  const toggleTopCategory = (slug: string, cats: string[]) => {
+    const allSelected = cats.every(c => selectedCategories.includes(c));
+    setSelectedCategories(prev =>
+      allSelected ? prev.filter(c => !cats.includes(c)) : [...new Set([...prev, ...cats])]
     );
   };
+
+  const toggleExpandTop = (slug: string) => {
+    setExpandedTopCategories(prev =>
+      prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]
+    );
+  };
+
 
   const togglePriceRange = (idx: number) => {
     setSelectedPriceRanges(prev =>
@@ -175,60 +190,74 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
   const visible = filtered.slice(0, visibleCount);
   const currentSort = SORT_OPTIONS.find(o => o.value === sortBy)!;
 
-  // Category filter sidebar section (shared between desktop and mobile)
+  // Grouped category filter (shared between desktop and mobile)
   const CategoryFilter = () => (
-    <div className="space-y-0.5">
-      {ALL_CATEGORIES.map(cat => {
-        const meta = getCategoryMeta(cat);
-        const isSelected = selectedCategories.includes(cat);
-        const isExpanded = expandedCategories.includes(cat);
-        const count = products.filter(p => p.category === cat).length;
+    <div className="space-y-1">
+      {TOP_CATEGORIES.map(top => {
+        const isExpanded = expandedTopCategories.includes(top.slug);
+        const allSelected = top.categories.every(c => selectedCategories.includes(c));
+        const someSelected = top.categories.some(c => selectedCategories.includes(c));
+        const topCount = top.categories.reduce((s, c) => s + products.filter(p => p.category === c).length, 0);
         return (
-          <div key={cat}>
-            <div className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all group ${isSelected ? isDark ? 'bg-yellow-400/10' : 'bg-yellow-50' : isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'}`}>
-              {/* Checkbox */}
+          <div key={top.slug}>
+            {/* Top category header row */}
+            <div className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all group ${someSelected ? isDark ? 'bg-yellow-400/5' : 'bg-yellow-50/60' : ''}`}>
               <button
-                onClick={() => toggleCategory(cat)}
-                className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${isSelected ? 'bg-yellow-400 border-yellow-400' : isDark ? 'border-slate-600 group-hover:border-yellow-400/50' : 'border-slate-300 group-hover:border-yellow-400'}`}
+                onClick={() => toggleTopCategory(top.slug, top.categories)}
+                className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${
+                  allSelected ? 'bg-yellow-400 border-yellow-400'
+                  : someSelected ? 'bg-yellow-400/40 border-yellow-400'
+                  : isDark ? 'border-slate-600 group-hover:border-yellow-400/50' : 'border-slate-300 group-hover:border-yellow-400'
+                }`}
               >
-                {isSelected && <Checkmark className="w-2.5 h-2.5 text-black" />}
+                {allSelected && <Checkmark className="w-2.5 h-2.5 text-black" />}
+                {someSelected && !allSelected && <span className="w-1.5 h-1.5 rounded-sm bg-yellow-400" />}
               </button>
-              {/* Icon */}
-              <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${isSelected ? 'text-yellow-400' : isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                <meta.icon className="w-3 h-3" />
+              <div className={`w-4 h-4 flex items-center justify-center shrink-0 ${someSelected ? 'text-yellow-400' : isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                <top.icon className="w-3 h-3" />
               </div>
-              {/* Label */}
               <span
-                onClick={() => toggleCategory(cat)}
-                className={`flex-1 text-xs font-semibold cursor-pointer leading-tight transition-colors ${isSelected ? isDark ? 'text-white' : 'text-slate-900' : isDark ? 'text-slate-400 group-hover:text-slate-200' : 'text-slate-500 group-hover:text-slate-800'}`}
+                onClick={() => toggleTopCategory(top.slug, top.categories)}
+                className={`flex-1 text-[10px] font-black uppercase tracking-wide cursor-pointer transition-colors ${someSelected ? 'text-yellow-400' : isDark ? 'text-slate-400' : 'text-slate-500'}`}
               >
-                {cat}
+                {top.shortName}
               </span>
-              {/* Count */}
-              {count > 0 && (
-                <span className={`text-[9px] font-black tabular-nums ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{count}</span>
+              {topCount > 0 && (
+                <span className={`text-[9px] font-black tabular-nums ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{topCount}</span>
               )}
-              {/* Expand toggle */}
-              <button
-                onClick={() => toggleExpand(cat)}
-                className={`shrink-0 transition-colors ${isDark ? 'text-slate-600 hover:text-slate-400' : 'text-slate-300 hover:text-slate-500'}`}
-              >
+              <button onClick={() => toggleExpandTop(top.slug)} className={`shrink-0 ${isDark ? 'text-slate-600 hover:text-slate-400' : 'text-slate-300 hover:text-slate-500'}`}>
                 <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
               </button>
             </div>
-            {/* Subcategories */}
+
+            {/* Leaf categories */}
             {isExpanded && (
-              <div className="ml-9 mb-1 space-y-0.5">
-                {meta.subcategories.map(sub => (
-                  <div
-                    key={sub}
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium cursor-pointer transition-colors ${isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-700'}`}
-                    onClick={() => toggleCategory(cat)}
-                  >
-                    <span className="w-1 h-1 rounded-full bg-slate-400 shrink-0" />
-                    {sub}
-                  </div>
-                ))}
+              <div className="ml-4 mt-0.5 space-y-0.5 mb-1">
+                {top.categories.map(cat => {
+                  const meta = getCategoryMeta(cat);
+                  const isSelected = selectedCategories.includes(cat);
+                  const count = products.filter(p => p.category === cat).length;
+                  return (
+                    <div
+                      key={cat}
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all group cursor-pointer ${isSelected ? isDark ? 'bg-yellow-400/10' : 'bg-yellow-50' : isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'}`}
+                      onClick={() => toggleCategory(cat)}
+                    >
+                      <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${isSelected ? 'bg-yellow-400 border-yellow-400' : isDark ? 'border-slate-600 group-hover:border-yellow-400/50' : 'border-slate-300 group-hover:border-yellow-400'}`}>
+                        {isSelected && <Checkmark className="w-2.5 h-2.5 text-black" />}
+                      </div>
+                      <div className={`w-4 h-4 flex items-center justify-center shrink-0 ${isSelected ? 'text-yellow-400' : isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <meta.icon className="w-2.5 h-2.5" />
+                      </div>
+                      <span className={`flex-1 text-xs font-semibold leading-tight transition-colors ${isSelected ? isDark ? 'text-white' : 'text-slate-900' : isDark ? 'text-slate-400 group-hover:text-slate-200' : 'text-slate-500 group-hover:text-slate-800'}`}>
+                        {cat}
+                      </span>
+                      {count > 0 && (
+                        <span className={`text-[9px] font-black tabular-nums ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{count}</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -257,7 +286,16 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
             </button>
             <div>
               <h1 className={`text-base font-black leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                {selectedCategories.length === 1 ? selectedCategories[0] : 'All Products'}
+                {(() => {
+                  if (selectedCategories.length === 0) return 'All Products';
+                  const matchedTop = TOP_CATEGORIES.find(t =>
+                    t.categories.length === selectedCategories.length &&
+                    t.categories.every(c => selectedCategories.includes(c))
+                  );
+                  if (matchedTop) return matchedTop.name;
+                  if (selectedCategories.length === 1) return selectedCategories[0];
+                  return 'All Products';
+                })()}
               </h1>
               <p className={`text-[10px] font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                 {filtered.length} {filtered.length === 1 ? 'item' : 'items'}
@@ -424,23 +462,25 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
               />
               {search && <button onClick={() => setSearch('')} className="text-slate-400"><X className="w-4 h-4" /></button>}
             </div>
-            {/* Scrollable category pills */}
+            {/* Scrollable top-category pills */}
             <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-              {ALL_CATEGORIES.map(cat => {
-                const meta = getCategoryMeta(cat);
-                const isSelected = selectedCategories.includes(cat);
+              {TOP_CATEGORIES.map(top => {
+                const someSelected = top.categories.some(c => selectedCategories.includes(c));
+                const allSelected = top.categories.every(c => selectedCategories.includes(c));
                 return (
                   <button
-                    key={cat}
-                    onClick={() => toggleCategory(cat)}
+                    key={top.slug}
+                    onClick={() => toggleTopCategory(top.slug, top.categories)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold whitespace-nowrap shrink-0 transition-colors border ${
-                      isSelected
+                      allSelected
                         ? 'bg-yellow-400 border-yellow-400 text-black'
+                        : someSelected
+                        ? isDark ? 'bg-yellow-400/20 border-yellow-400/40 text-yellow-400' : 'bg-yellow-50 border-yellow-400/40 text-yellow-600'
                         : isDark ? 'bg-zinc-800 border-white/5 text-slate-400' : 'bg-white border-slate-200 text-slate-600'
                     }`}
                   >
-                    <meta.icon className="w-3 h-3" />
-                    {cat}
+                    <top.icon className="w-3 h-3" />
+                    {top.shortName}
                   </button>
                 );
               })}
