@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck, User, Package, FileText, Settings } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { formatPrice } from '../utils/currency';
@@ -15,9 +15,24 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
   const { totalItems, totalValue } = useCart();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [locationOpen, setLocationOpen] = useState(false);
   const [location, setLocation] = useState(() => getStoredLocation());
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setProfileOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    if (profileOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [profileOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,27 +99,80 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
 
           <div className="flex items-center gap-6">
             {isAuthenticated ? (
-              <div className="flex items-center gap-3">
-                <Link to="/profile" className="flex flex-col cursor-pointer group text-right">
-                  <span className="text-[10px] leading-tight text-slate-500 font-bold">Account</span>
-                  <div className="flex items-center gap-1.5 justify-end">
-                    {isAdmin && (
-                      <span className="flex items-center gap-0.5 bg-yellow-400 text-black px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">
-                        <ShieldCheck className="w-2.5 h-2.5" /> Admin
-                      </span>
-                    )}
-                    <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.name}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-500 group-hover:text-yellow-400 transition-colors" />
-                  </div>
-                </Link>
-                
+              <div className="relative" ref={profileRef}>
                 <button
-                  onClick={logout}
-                  title="Sign out"
-                  className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-white/10 text-slate-500 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-900'}`}
+                  onClick={() => setProfileOpen(o => !o)}
+                  className={`flex items-center gap-2 p-1.5 rounded-xl transition-all ${profileOpen ? isDark ? 'bg-white/10' : 'bg-slate-100' : isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'}`}
                 >
-                  <LogOut className="w-4 h-4" />
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs ${isDark ? 'bg-zinc-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                    {user?.name?.[0]?.toUpperCase() ?? 'U'}
+                  </div>
+                  <div className="hidden sm:flex flex-col text-left">
+                    <span className="text-[10px] leading-tight text-slate-500 font-bold">Account</span>
+                    <div className="flex items-center gap-1">
+                      {isAdmin && (
+                        <span className="flex items-center gap-0.5 bg-yellow-400 text-black px-1 py-0.5 rounded text-[7px] font-black uppercase tracking-widest">
+                          <ShieldCheck className="w-2 h-2" /> Admin
+                        </span>
+                      )}
+                      <span className={`text-xs font-bold leading-tight max-w-[90px] truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.name}</span>
+                    </div>
+                  </div>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
                 </button>
+
+                {profileOpen && (
+                  <div className={`absolute right-0 top-full mt-2 w-56 rounded-2xl border shadow-2xl overflow-hidden z-50 ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-slate-200'}`}>
+                    {/* User info */}
+                    <div className={`px-4 py-3 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm ${isDark ? 'bg-zinc-700 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                          {user?.name?.[0]?.toUpperCase() ?? 'U'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className={`text-xs font-black truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.name}</p>
+                          <p className="text-[10px] text-slate-500 font-medium truncate">{user?.email}</p>
+                        </div>
+                      </div>
+                      {isAdmin && (
+                        <span className="mt-2 inline-flex items-center gap-1 bg-yellow-400 text-black px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">
+                          <ShieldCheck className="w-2.5 h-2.5" /> Admin
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Menu items */}
+                    <div className="py-1.5">
+                      {[
+                        { to: '/profile', icon: User, label: 'My Profile' },
+                        { to: '/profile?tab=orders', icon: Package, label: 'My Orders' },
+                        { to: '/rfqs', icon: FileText, label: 'Quote Requests' },
+                        ...(isAdmin ? [{ to: '/admin', icon: Settings, label: 'Admin Panel' }] : []),
+                      ].map(({ to, icon: Icon, label }) => (
+                        <Link
+                          key={to}
+                          to={to}
+                          onClick={() => setProfileOpen(false)}
+                          className={`flex items-center gap-3 px-4 py-2.5 text-xs font-semibold transition-colors ${isDark ? 'text-slate-300 hover:bg-white/5 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+                        >
+                          <Icon className="w-3.5 h-3.5 text-slate-400" />
+                          {label}
+                        </Link>
+                      ))}
+                    </div>
+
+                    {/* Logout */}
+                    <div className={`border-t py-1.5 ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                      <button
+                        onClick={() => { setProfileOpen(false); logout(); }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold transition-colors text-red-400 ${isDark ? 'hover:bg-red-400/10' : 'hover:bg-red-50'}`}
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <Link to="/auth" className="flex flex-col cursor-pointer group text-right">
