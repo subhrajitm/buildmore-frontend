@@ -118,7 +118,7 @@ function ProductsTab({ isDark, token, input, card, showToast }: {
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Category *</label>
-                <input required value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={`w-full px-4 py-3 rounded-xl border text-xs font-bold outline-none transition-colors ${input}`} placeholder="Industrial Tools" />
+                <input required value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={`w-full px-4 py-3 rounded-xl border text-xs font-bold outline-none transition-colors ${input}`} placeholder="e.g. Cement & Concrete" />
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Price (INR) *</label>

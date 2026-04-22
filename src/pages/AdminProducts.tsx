@@ -17,7 +17,21 @@ const EMPTY_FORM = {
   productName: '', desc: '', category: '', price: '', stock: '', materialSpecifications: '',
 };
 
-const CATEGORIES = ['Industrial Tools', 'Bulk Materials', 'Safety Gear', 'Electrical Kits', 'Machinery', 'Plumbing', 'HVAC', 'Steel & Metal'];
+const CATEGORIES = [
+  'Cement & Concrete',
+  'Tiles & Flooring',
+  'Paints & Finishes',
+  'Construction Chemicals',
+  'Plywood, Laminates & Boards',
+  'Electrical',
+  'Lighting & Fans',
+  'Electrical Infrastructure',
+  'Plumbing & Sanitary',
+  'Hardware & Fittings',
+  'Kitchen & Wardrobe Solutions',
+  'Doors & Windows',
+  'Tools & Equipment',
+];
 
 export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
   const navigate = useNavigate();
