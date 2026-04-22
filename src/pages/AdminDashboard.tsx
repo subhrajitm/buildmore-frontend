@@ -86,7 +86,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark }) => {
                     <p className={`text-[10px] ${mutedClass}`}>{order.items.length} items</p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-black ${textClass}`}>${order.totalAmount.toFixed(2)}</p>
+                    <p className={`text-sm font-black ${textClass}`}>₹{order.totalAmount.toFixed(2)}</p>
                     <p className={`text-[10px] font-black uppercase ${order.status === 'PENDING' ? 'text-yellow-400' : 'text-green-400'}`}>{order.status}</p>
                   </div>
                 </div>
@@ -111,7 +111,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark }) => {
                     <p className={`text-[10px] ${mutedClass}`}>{rfq.items.length} items</p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-black ${textClass}`}>${rfq.totalEstimatedValue.toFixed(2)}</p>
+                    <p className={`text-sm font-black ${textClass}`}>₹{rfq.totalEstimatedValue.toFixed(2)}</p>
                     <p className={`text-[10px] font-black uppercase text-yellow-400`}>{rfq.status}</p>
                   </div>
                 </div>

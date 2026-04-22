@@ -81,7 +81,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ isDark }) => {
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className={`text-lg font-black ${textClass}`}>${order.totalAmount.toFixed(2)}</p>
+                <p className={`text-lg font-black ${textClass}`}>₹{order.totalAmount.toFixed(2)}</p>
               </div>
               {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />}
             </div>
@@ -92,7 +92,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ isDark }) => {
                   {order.items.map((item, i) => (
                     <div key={i} className={`flex items-center justify-between px-4 py-2 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
                       <span className={`text-xs font-bold ${textClass}`}>{item.productName}</span>
-                      <span className="text-[9px] text-slate-500 font-bold">×{item.quantity} @ ${item.price?.toFixed(2)}</span>
+                      <span className="text-[9px] text-slate-500 font-bold">×{item.quantity} @ ₹{item.price?.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>

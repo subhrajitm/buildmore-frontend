@@ -211,7 +211,7 @@ function ProductsTab({ isDark, token, input, card, showToast }: {
                           </div>
                         </td>
                         <td className="px-4 py-4"><span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded ${isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>{p.category}</span></td>
-                        <td className="px-4 py-4 text-right"><span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${p.price.toFixed(2)}</span></td>
+                        <td className="px-4 py-4 text-right"><span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>₹{p.price.toFixed(2)}</span></td>
                         <td className="px-4 py-4 text-right">
                           {stockEditing === p._id ? (
                             <div className="flex items-center justify-end gap-2">
@@ -304,7 +304,7 @@ function OrdersTab({ isDark, token, input, card, showToast }: {
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${order.totalAmount.toFixed(2)}</p>
+                <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>₹{order.totalAmount.toFixed(2)}</p>
               </div>
               {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />}
             </div>
@@ -315,7 +315,7 @@ function OrdersTab({ isDark, token, input, card, showToast }: {
                   {order.items.map((item, i) => (
                     <div key={i} className={`flex items-center justify-between px-4 py-2 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
                       <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.productName}</span>
-                      <span className="text-[9px] text-slate-500 font-bold">×{item.quantity} @ ${item.price?.toFixed(2)}</span>
+                      <span className="text-[9px] text-slate-500 font-bold">×{item.quantity} @ ₹{item.price?.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -411,7 +411,7 @@ function RFQsTab({ isDark, token, input, card, showToast }: {
                   <span className="text-[9px] font-black uppercase tracking-widest text-yellow-400">{rfq.status}</span>
                 </div>
                 <p className={`text-sm font-black uppercase truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{rfq.notes || 'No description'}</p>
-                <p className="text-[9px] text-slate-500 font-bold mt-0.5">{rfq.items.length} item(s) · ${rfq.totalEstimatedValue.toFixed(2)} est.</p>
+                <p className="text-[9px] text-slate-500 font-bold mt-0.5">{rfq.items.length} item(s) · ₹{rfq.totalEstimatedValue.toFixed(2)} est.</p>
               </div>
               {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />}
             </div>
@@ -425,12 +425,12 @@ function RFQsTab({ isDark, token, input, card, showToast }: {
                       <div key={item._id} className={`flex items-center justify-between px-4 py-2 rounded-xl gap-4 ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
                         <div>
                           <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.productName}</p>
-                          <p className="text-[9px] text-slate-500 font-bold">Qty: {item.quantity} · Target: ${item.targetPrice ?? '—'}</p>
+                          <p className="text-[9px] text-slate-500 font-bold">Qty: {item.quantity} · Target: ₹{item.targetPrice ?? '—'}</p>
                         </div>
                         <input
                           type="number"
                           min="0"
-                          placeholder={item.quotedPrice != null ? String(item.quotedPrice) : 'Quote $'}
+                          placeholder={item.quotedPrice != null ? String(item.quotedPrice) : 'Quote ₹'}
                           value={quotedPrices[rfq._id]?.[item._id] ?? ''}
                           onChange={e => setQuotedPrices(p => ({ ...p, [rfq._id]: { ...p[rfq._id], [item._id]: e.target.value } }))}
                           className={`w-28 px-3 py-1.5 rounded-lg border text-xs font-bold outline-none transition-colors ${input}`}

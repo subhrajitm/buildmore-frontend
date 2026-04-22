@@ -267,7 +267,7 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total RFQ Value', value: `$${(totalValue / 1000).toFixed(1)}K`, sub: `${rfqs.length} requests` },
+          { label: 'Total RFQ Value', value: `₹${(totalValue / 1000).toFixed(1)}K`, sub: `${rfqs.length} requests` },
           { label: 'Pending Review', value: pendingCount, sub: 'awaiting response' },
           { label: 'Accepted', value: acceptedCount, sub: 'all time' },
         ].map((s, i) => (
@@ -346,7 +346,7 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${rfq.totalEstimatedValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                  <p className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>₹{rfq.totalEstimatedValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Est. Value</p>
                 </div>
                 {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />}
@@ -372,7 +372,7 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
                                     <input type="number" min="1" value={editItemForm.quantity} onChange={e => setEditItemForm(f => ({ ...f, quantity: e.target.value }))} className={`w-full px-2 py-1.5 rounded-lg border text-xs font-bold outline-none ${inp}`} />
                                   </div>
                                   <div className="space-y-1">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Target ($)</label>
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Target (₹)</label>
                                     <input type="number" min="0" value={editItemForm.targetPrice} onChange={e => setEditItemForm(f => ({ ...f, targetPrice: e.target.value }))} placeholder="—" className={`w-full px-2 py-1.5 rounded-lg border text-xs font-bold outline-none ${inp}`} />
                                   </div>
                                   <div className="space-y-1">
@@ -393,8 +393,8 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
                                   <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.productName}</p>
                                   <div className="flex items-center gap-3 mt-0.5">
                                     <span className="text-[9px] text-slate-500 font-bold uppercase">Qty: {item.quantity}</span>
-                                    {item.targetPrice != null && <span className="text-[9px] text-slate-500 font-bold uppercase">Target: ${item.targetPrice}</span>}
-                                    {item.quotedPrice != null && <span className="text-[9px] text-yellow-400 font-bold uppercase">Quoted: ${item.quotedPrice}</span>}
+                                    {item.targetPrice != null && <span className="text-[9px] text-slate-500 font-bold uppercase">Target: ₹{item.targetPrice}</span>}
+                                    {item.quotedPrice != null && <span className="text-[9px] text-yellow-400 font-bold uppercase">Quoted: ₹{item.quotedPrice}</span>}
                                     {item.notes && <span className="text-[9px] text-slate-500 italic">{item.notes}</span>}
                                   </div>
                                 </div>
@@ -447,7 +447,7 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Target Price ($)</label>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Target Price (₹)</label>
                           <input
                             type="number"
                             min="0"

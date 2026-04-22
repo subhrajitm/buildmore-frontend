@@ -92,7 +92,7 @@ export const Inventory: React.FC<InventoryProps> = ({ isDark }) => {
         {[
           { label: 'Total Stock Units', value: totalStock.toLocaleString(), icon: Package, color: 'text-yellow-400' },
           { label: 'Low Stock Alerts', value: lowStock, icon: AlertTriangle, color: 'text-red-400' },
-          { label: 'Inventory Value', value: `$${(totalValue / 1000).toFixed(1)}K`, icon: TrendingUp, color: 'text-green-400' },
+          { label: 'Inventory Value', value: `₹${(totalValue / 1000).toFixed(1)}K`, icon: TrendingUp, color: 'text-green-400' },
         ].map((s, i) => (
           <div key={i} className={`p-6 rounded-2xl border flex items-center gap-5 ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-100 shadow-sm'}`}>
             <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
@@ -203,7 +203,7 @@ export const Inventory: React.FC<InventoryProps> = ({ isDark }) => {
                   )}
                 </div>
                 <div className="col-span-2 text-right">
-                  <span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>${item.price.toFixed(2)}</span>
+                  <span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>₹{item.price.toFixed(2)}</span>
                 </div>
               </div>
             );

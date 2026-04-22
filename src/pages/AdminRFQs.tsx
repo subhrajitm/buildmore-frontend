@@ -84,7 +84,7 @@ export const AdminRFQs: React.FC<AdminRFQsProps> = ({ isDark }) => {
                   <span className="text-[9px] font-black uppercase tracking-widest text-yellow-400">{rfq.status}</span>
                 </div>
                 <p className={`text-sm font-black uppercase truncate ${textClass}`}>{rfq.notes || 'No description'}</p>
-                <p className="text-[9px] text-slate-500 font-bold mt-0.5">{rfq.items.length} item(s) · ${rfq.totalEstimatedValue.toFixed(2)} est.</p>
+                <p className="text-[9px] text-slate-500 font-bold mt-0.5">{rfq.items.length} item(s) · ₹{rfq.totalEstimatedValue.toFixed(2)} est.</p>
               </div>
               {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />}
             </div>
@@ -98,12 +98,12 @@ export const AdminRFQs: React.FC<AdminRFQsProps> = ({ isDark }) => {
                       <div key={item._id} className={`flex items-center justify-between px-4 py-2 rounded-xl gap-4 ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
                         <div>
                           <p className={`text-xs font-bold ${textClass}`}>{item.productName}</p>
-                          <p className="text-[9px] text-slate-500 font-bold">Qty: {item.quantity} · Target: ${item.targetPrice ?? '—'}</p>
+                          <p className="text-[9px] text-slate-500 font-bold">Qty: {item.quantity} · Target: ₹{item.targetPrice ?? '—'}</p>
                         </div>
                         <input
                           type="number"
                           min="0"
-                          placeholder={item.quotedPrice != null ? String(item.quotedPrice) : 'Quote $'}
+                          placeholder={item.quotedPrice != null ? String(item.quotedPrice) : 'Quote ₹'}
                           value={quotedPrices[rfq._id]?.[item._id] ?? ''}
                           onChange={e => setQuotedPrices(p => ({ ...p, [rfq._id]: { ...p[rfq._id], [item._id]: e.target.value } }))}
                           className={`w-28 px-3 py-1.5 rounded-lg border text-xs font-bold outline-none ${isDark ? 'border-white/10 bg-zinc-900 text-white' : 'border-slate-200 bg-white text-slate-900'}`}
