@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, ArrowRight, ChevronRight } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { getCategoryMeta, TOP_CATEGORIES, ALL_CATEGORIES } from '../utils/categoryMeta';
 
@@ -14,7 +14,7 @@ const totalSubcategories = ALL_CATEGORIES.reduce(
 export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
   const { pathname, search } = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTopIdx, setActiveTopIdx] = useState(0);
+  const [activeCategory, setActiveCategory] = useState(ALL_CATEGORIES[0]);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setIsMenuOpen(false); }, [pathname, search]);
@@ -29,7 +29,7 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
     return () => document.removeEventListener('mousedown', handler);
   }, [isMenuOpen]);
 
-  const activeTop = TOP_CATEGORIES[activeTopIdx];
+  const activeMeta = getCategoryMeta(activeCategory);
 
   return (
     <div className="relative font-primary" ref={menuRef}>
@@ -47,33 +47,20 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
 
           <div className={`w-px h-4 shrink-0 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
 
-          {/* Top categories */}
+          {/* Top department links */}
           <div className={`flex items-center gap-1 text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            {TOP_CATEGORIES.map((top, idx) => {
-              const isActive = isMenuOpen && activeTopIdx === idx;
-              return (
-                <button
-                  key={top.slug}
-                  onMouseEnter={() => { if (isMenuOpen) setActiveTopIdx(idx); }}
-                  onClick={() => {
-                    if (isMenuOpen && activeTopIdx === idx) {
-                      setIsMenuOpen(false);
-                    } else {
-                      setActiveTopIdx(idx);
-                      setIsMenuOpen(true);
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
-                    isActive
-                      ? 'bg-yellow-400 text-black'
-                      : isDark ? 'hover:bg-white/5 hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                  }`}
-                >
-                  <top.icon className="w-3 h-3" />
-                  {top.shortName}
-                </button>
-              );
-            })}
+            {TOP_CATEGORIES.map(top => (
+              <Link
+                key={top.slug}
+                to={`/products?group=${top.slug}`}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                  isDark ? 'hover:bg-white/5 hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                }`}
+              >
+                <top.icon className="w-3 h-3" />
+                {top.shortName}
+              </Link>
+            ))}
           </div>
 
           <div className={`w-px h-4 shrink-0 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
@@ -93,100 +80,87 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
         <>
           <div className="fixed inset-0 bg-black/30 z-[40] pointer-events-auto" onClick={() => setIsMenuOpen(false)} />
           <div className={`absolute top-full left-0 right-0 z-[42] border-b shadow-2xl ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-200'} rounded-b-2xl overflow-hidden`}>
-            <div className="max-w-[1920px] mx-auto flex" style={{ minHeight: 360 }}>
+            <div className="max-w-[1920px] mx-auto flex" style={{ minHeight: 340 }}>
 
-              {/* Left — top category tabs */}
-              <div className={`w-[220px] shrink-0 border-r flex flex-col ${isDark ? 'bg-black/30 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-                <div className="px-4 pt-4 pb-2 text-[9px] font-black uppercase tracking-[0.2em] text-yellow-400">
-                  Departments
+              {/* Left — all leaf categories list (compact) */}
+              <div className={`w-[168px] shrink-0 border-r flex flex-col ${isDark ? 'bg-black/30 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                <div className="px-3 pt-3 pb-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-yellow-400">
+                  Categories
                 </div>
-                <div className="flex-1 py-2 space-y-0.5 px-2">
-                  {TOP_CATEGORIES.map((top, idx) => {
-                    const isActive = idx === activeTopIdx;
-                    const leafCount = top.categories.length;
-                    const subCount = top.categories.reduce((s, c) => s + getCategoryMeta(c).subcategories.length, 0);
+                <div className="flex-1 py-0.5 overflow-y-auto">
+                  {ALL_CATEGORIES.map(catName => {
+                    const meta = getCategoryMeta(catName);
+                    const isActive = catName === activeCategory;
                     return (
                       <button
-                        key={top.slug}
-                        onMouseEnter={() => setActiveTopIdx(idx)}
-                        onClick={() => setActiveTopIdx(idx)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-left ${
+                        key={catName}
+                        onMouseEnter={() => setActiveCategory(catName)}
+                        onClick={() => setActiveCategory(catName)}
+                        className={`w-full flex items-center gap-2 px-2.5 py-1.5 transition-all text-left ${
                           isActive
                             ? isDark ? 'bg-yellow-400/10' : 'bg-yellow-50'
                             : isDark ? 'hover:bg-white/5' : 'hover:bg-white'
                         }`}
                       >
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${isActive ? 'bg-yellow-400 text-black' : isDark ? 'bg-white/5 text-slate-400' : 'bg-white text-slate-400'}`}>
-                          <top.icon className="w-3.5 h-3.5" />
+                        <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all ${
+                          isActive ? 'bg-yellow-400 text-black' : isDark ? 'bg-white/5 text-slate-500' : 'bg-white text-slate-400'
+                        }`}>
+                          <meta.icon className="w-2.5 h-2.5" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-[11px] font-bold leading-tight ${isActive ? 'text-yellow-400' : isDark ? 'text-slate-300' : 'text-slate-700'}`}>{top.name}</p>
-                          <p className={`text-[9px] mt-0.5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{leafCount} categories · {subCount} types</p>
-                        </div>
-                        <ChevronRight className={`w-3 h-3 shrink-0 transition-all ${isActive ? 'text-yellow-400' : 'opacity-0'}`} />
+                        <span className={`text-[10px] font-semibold leading-tight flex-1 min-w-0 truncate ${
+                          isActive ? 'text-yellow-400' : isDark ? 'text-slate-400' : 'text-slate-600'
+                        }`}>{catName}</span>
+                        <span className={`text-[8px] font-black px-1 py-px rounded shrink-0 ${
+                          isActive ? 'text-yellow-400' : isDark ? 'text-slate-600' : 'text-slate-400'
+                        }`}>{meta.subcategories.length}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Center — leaf categories of active top */}
-              <div className="flex-1 p-5 overflow-y-auto">
-                <div className={`flex items-center justify-between mb-4 pb-3 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-yellow-400 flex items-center justify-center">
-                      <activeTop.icon className="w-3 h-3 text-black" />
+              {/* Center — subcategories of active category */}
+              <div className="flex-1 p-6 overflow-y-auto">
+                <div className={`flex items-center justify-between mb-5 pb-4 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-yellow-400 flex items-center justify-center">
+                      <activeMeta.icon className="w-4.5 h-4.5 text-black" />
                     </div>
-                    <h3 className={`text-xs font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{activeTop.name}</h3>
+                    <div>
+                      <h3 className={`text-sm font-black leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{activeCategory}</h3>
+                      <p className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{activeMeta.desc} · {activeMeta.subcategories.length} types</p>
+                    </div>
                   </div>
                   <Link
-                    to={`/products?group=${activeTop.slug}`}
+                    to={`/products?category=${encodeURIComponent(activeCategory)}`}
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-yellow-400 hover:text-yellow-300 transition-colors"
+                    className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-yellow-400 hover:text-yellow-300 transition-colors"
                   >
-                    Browse all <ArrowRight className="w-2.5 h-2.5" />
+                    Browse all <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
 
-                {/* Leaf categories grid */}
-                <div className={`grid gap-4 ${activeTop.categories.length <= 3 ? 'grid-cols-3' : 'grid-cols-2 lg:grid-cols-3'}`}>
-                  {activeTop.categories.map(catName => {
-                    const meta = getCategoryMeta(catName);
-                    return (
-                      <div key={catName} className={`rounded-xl p-3 border ${isDark ? 'border-white/5 bg-white/[0.02]' : 'border-slate-100 bg-slate-50/50'}`}>
-                        <Link
-                          to={`/products?category=${encodeURIComponent(catName)}`}
-                          onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center gap-2 mb-2 group"
-                        >
-                          <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-all ${isDark ? 'bg-white/5 text-slate-400 group-hover:bg-yellow-400 group-hover:text-black' : 'bg-white text-slate-400 group-hover:bg-yellow-400 group-hover:text-black'}`}>
-                            <meta.icon className="w-3 h-3" />
-                          </div>
-                          <span className={`text-[11px] font-black leading-tight transition-colors group-hover:text-yellow-400 ${isDark ? 'text-white' : 'text-slate-900'}`}>{catName}</span>
-                        </Link>
-                        <div className="flex flex-wrap gap-1">
-                          {meta.subcategories.slice(0, 5).map(sub => (
-                            <Link
-                              key={sub}
-                              to={`/products?category=${encodeURIComponent(catName)}`}
-                              onClick={() => setIsMenuOpen(false)}
-                              className={`text-[9px] font-medium px-1.5 py-0.5 rounded transition-colors ${isDark ? 'text-slate-500 hover:text-slate-200' : 'text-slate-400 hover:text-slate-700'}`}
-                            >
-                              {sub}
-                            </Link>
-                          ))}
-                          {meta.subcategories.length > 5 && (
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>+{meta.subcategories.length - 5}</span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                {/* Subcategory pills grid */}
+                <div className="grid grid-cols-3 gap-2.5">
+                  {activeMeta.subcategories.map(sub => (
+                    <Link
+                      key={sub}
+                      to={`/products?category=${encodeURIComponent(activeCategory)}`}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={`px-4 py-3 rounded-xl border text-xs font-semibold text-center transition-all ${
+                        isDark
+                          ? 'border-white/8 bg-white/[0.02] text-slate-300 hover:border-yellow-400/40 hover:text-yellow-400 hover:bg-yellow-400/5'
+                          : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-yellow-400/50 hover:text-yellow-600 hover:bg-yellow-50'
+                      }`}
+                    >
+                      {sub}
+                    </Link>
+                  ))}
                 </div>
               </div>
 
               {/* Right — stats */}
-              <div className={`w-[180px] shrink-0 border-l p-5 flex flex-col gap-4 ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+              <div className={`w-[190px] shrink-0 border-l p-5 flex flex-col gap-4 ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
                 <div className="space-y-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Catalog</p>
                   <div className={`p-3 rounded-xl space-y-2.5 ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
