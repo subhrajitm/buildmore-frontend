@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowRight, ChevronRight, Loader2, Plus, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Hero } from '../components/Hero';
 import { CategoryGrid } from '../components/CategoryGrid';
-import { ProductCard } from '../components/ProductCard';
 import { TrustSignals } from '../components/TrustSignals';
 import { productApi, BackendProduct } from '../api';
 import { normalizeProduct } from '../utils/normalizeProduct';
+import { TOP_CATEGORIES } from '../utils/categoryMeta';
+import { formatPrice } from '../utils/currency';
+import { useCart } from '../context/CartContext';
 
 interface LandingProps {
   isDark: boolean;
@@ -42,16 +44,123 @@ const FLASH_OFFERS = [
   },
 ];
 
+// ── Blinkit-style compact product card ────────────────────────────────────────
+const HomeProductCard: React.FC<{ product: ReturnType<typeof normalizeProduct>; isDark: boolean }> = ({ product, isDark }) => {
+  const { addItem } = useCart();
+  const [added, setAdded] = useState(false);
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    addItem(product as any);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
+  };
+
+  return (
+    <Link to={`/products/${product.id}`} className="shrink-0 w-[148px] group">
+      <div className={`rounded-xl border overflow-hidden transition-all duration-200 hover:shadow-md ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-slate-200'}`}>
+        {/* Image */}
+        <div className={`relative h-[130px] flex items-center justify-center p-3 ${isDark ? 'bg-zinc-800' : 'bg-slate-50'}`}>
+          {product.discount && (
+            <span className="absolute top-2 left-2 bg-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded">
+              {product.discount}% OFF
+            </span>
+          )}
+          <img
+            src={product.image}
+            alt={product.name}
+            className="h-full w-full object-contain"
+            referrerPolicy="no-referrer"
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        </div>
+
+        {/* Info */}
+        <div className="p-2.5">
+          <p className={`text-xs font-semibold leading-snug line-clamp-2 mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            {product.name}
+          </p>
+          <p className={`text-[10px] mb-2.5 truncate ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+          </p>
+          <div className="flex items-center justify-between">
+            <span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              {formatPrice(product.price)}
+            </span>
+            <button
+              onClick={handleAdd}
+              className={`flex items-center justify-center w-8 h-8 rounded-lg border-2 font-black text-xs transition-all active:scale-95 ${
+                added
+                  ? 'bg-green-500 border-green-500 text-white'
+                  : isDark
+                  ? 'border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black'
+                  : 'border-yellow-400 text-yellow-600 hover:bg-yellow-400 hover:text-black'
+              }`}
+            >
+              {added ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+// ── Category row with horizontal scroll ───────────────────────────────────────
+const HomeCategoryRow: React.FC<{ title: string; slug: string; products: BackendProduct[]; isDark: boolean }> = ({ title, slug, products, isDark }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  if (products.length === 0) return null;
+
+  return (
+    <section className="py-2">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h2>
+        <Link
+          to={`/products?group=${slug}`}
+          className="text-xs font-bold text-yellow-500 hover:text-yellow-400 flex items-center gap-0.5 transition-colors"
+        >
+          see all <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
+      {/* Scroll row */}
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          className="flex gap-3 overflow-x-auto pb-1"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {products.map(p => (
+            <HomeProductCard key={p._id} product={normalizeProduct(p)} isDark={isDark} />
+          ))}
+          {/* "See all" end card */}
+          <Link
+            to={`/products?group=${slug}`}
+            className={`shrink-0 w-[148px] rounded-xl border flex flex-col items-center justify-center gap-2 transition-all hover:border-yellow-400 ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-slate-50 border-slate-200'}`}
+            style={{ minHeight: 210 }}
+          >
+            <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center">
+              <ChevronRight className="w-5 h-5 text-black" />
+            </div>
+            <span className={`text-[11px] font-bold text-center px-3 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>See all</span>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export const Landing: React.FC<LandingProps> = ({ isDark }) => {
-  const [featured, setFeatured] = useState<BackendProduct[]>([]);
-  const [loadingFeatured, setLoadingFeatured] = useState(true);
-  const [featuredError, setFeaturedError] = useState('');
+  const [allProducts, setAllProducts] = useState<BackendProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     productApi.getAll()
-      .then(res => setFeatured((res.products || []).slice(0, 8)))
-      .catch(() => setFeaturedError('Could not load products. Please try again later.'))
-      .finally(() => setLoadingFeatured(false));
+      .then(res => setAllProducts(res.products || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -60,43 +169,28 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
 
       <CategoryGrid isDark={isDark} />
 
-      <section className="space-y-6">
-        <div className="flex items-end justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-8 h-[2px] bg-yellow-400"></span>
-              <span className="text-xs font-bold text-yellow-400">Featured Deals</span>
-            </div>
-            <h2 className={`text-4xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Best Infrastructure Offers</h2>
-          </div>
-          <div className="flex items-center gap-6">
-             <Link to="/products" className={`text-xs font-bold hover:text-yellow-400 transition-all flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              Browse All <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
+      <div className={`border-t my-2 ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
 
-        {loadingFeatured ? (
-          <div className={`flex items-center justify-center py-24 rounded-2xl border ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
-            <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
-          </div>
-        ) : featuredError ? (
-          <div className={`flex items-center justify-center gap-3 py-20 rounded-2xl border ${isDark ? 'border-white/5 text-slate-500' : 'border-slate-100 text-slate-400'}`}>
-            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-            <p className="text-[10px] font-black uppercase tracking-widest text-red-400">{featuredError}</p>
-          </div>
-        ) : featured.length === 0 ? (
-          <div className={`flex items-center justify-center py-24 rounded-2xl border ${isDark ? 'border-white/5 text-slate-600' : 'border-slate-100 text-slate-400'}`}>
-            <p className="text-[10px] font-black uppercase tracking-widest">No products yet</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featured.map(product => (
-              <ProductCard key={product._id} product={normalizeProduct(product)} isDark={isDark} />
-            ))}
-          </div>
-        )}
-      </section>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-7 h-7 animate-spin text-yellow-400" />
+        </div>
+      ) : (
+        <div className="space-y-6 py-4">
+          {TOP_CATEGORIES.map(top => {
+            const catProducts = allProducts.filter(p => top.categories.includes(p.category));
+            return (
+              <HomeCategoryRow
+                key={top.slug}
+                title={top.name}
+                slug={top.slug}
+                products={catProducts}
+                isDark={isDark}
+              />
+            );
+          })}
+        </div>
+      )}
 
       <TrustSignals isDark={isDark} />
 
