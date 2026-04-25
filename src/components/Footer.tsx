@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, Mail, Phone, MapPin, Globe, Linkedin, Twitter, Github, Youtube, ArrowUpRight, Shield, Award, Zap } from 'lucide-react';
+import { BarChart3, Mail, Phone, MapPin, Globe, Linkedin, Twitter, Github, Youtube, ArrowUpRight, Shield, Award, Zap, Instagram } from 'lucide-react';
 
 interface FooterProps {
   isDark: boolean;
@@ -20,7 +20,7 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isHome }) => (
             </div>
             <div className="flex flex-col">
               <span className={`text-2xl font-black tracking-tighter uppercase leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>Build<span className="text-yellow-400">More</span></span>
-              <span className="text-[9px] font-black uppercase tracking-[0.4em] text-yellow-400">Infra Operating System</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-yellow-400">Infra Mart</span>
             </div>
           </div>
           <p className="text-sm font-medium leading-relaxed max-w-sm">
@@ -87,14 +87,14 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isHome }) => (
             <div className="flex items-start gap-4">
               <MapPin className="w-5 h-5 text-yellow-400 shrink-0" />
               <div className="flex flex-col">
-                <span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Innovation Hub (UK)</span>
-                <p className="text-xs font-medium">BuildMore House, Canary Wharf, London E14 5LB, United Kingdom</p>
+                <span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Innovation Hub (India)</span>
+                <p className="text-xs font-medium">Rajpur Road, Dehradun, Uttarakhand, India</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className={`p-4 rounded-xl border flex items-center gap-3 ${isDark ? 'bg-white/5 border-white/5' : 'bg-white border-slate-100 shadow-sm'}`}>
                 <Phone className="w-4 h-4 text-yellow-400" />
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">+44 (0) 20 7946 0123</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">+91 9259618288</span>
               </div>
               <div className={`p-4 rounded-xl border flex items-center gap-3 ${isDark ? 'bg-white/5 border-white/5' : 'bg-white border-slate-100 shadow-sm'}`}>
                 <Globe className="w-4 h-4 text-yellow-400" />
@@ -128,11 +128,12 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isHome }) => (
         </div>
 
         <div className="flex items-center gap-4">
-          {[Linkedin, Twitter, Github, Youtube].map((Icon, i) => (
-            <a key={i} href="#" className={`p-2.5 rounded-lg border transition-all ${isDark ? 'bg-white/5 border-white/5 hover:border-yellow-400/50 hover:bg-white/10 text-slate-500 hover:text-yellow-400' : 'bg-white border-slate-200 hover:border-slate-400 hover:shadow-md text-slate-400 hover:text-slate-900'}`}>
-              <Icon className="w-4 h-4" />
-            </a>
-          ))}
+          <a href="https://www.linkedin.com/in/build-more-infra-mart" target="_blank" rel="noopener noreferrer" className={`p-2.5 rounded-lg border transition-all ${isDark ? 'bg-white/5 border-white/5 hover:border-yellow-400/50 hover:bg-white/10 text-slate-500 hover:text-yellow-400' : 'bg-white border-slate-200 hover:border-slate-400 hover:shadow-md text-slate-400 hover:text-slate-900'}`}>
+            <Linkedin className="w-4 h-4" />
+          </a>
+          <a href="https://www.instagram.com/buildmore.inframart" target="_blank" rel="noopener noreferrer" className={`p-2.5 rounded-lg border transition-all ${isDark ? 'bg-white/5 border-white/5 hover:border-yellow-400/50 hover:bg-white/10 text-slate-500 hover:text-yellow-400' : 'bg-white border-slate-200 hover:border-slate-400 hover:shadow-md text-slate-400 hover:text-slate-900'}`}>
+            <Instagram className="w-4 h-4" />
+          </a>
         </div>
       </div>
     </div>

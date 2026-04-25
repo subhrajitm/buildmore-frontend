@@ -181,6 +181,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
   const [selectedTopSlug, setSelectedTopSlug] = useState<string | null>(
     () => searchParams.get('group') || null
   );
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -203,6 +204,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
   const clearFilters = () => {
     setSelectedCategory(null);
     setSelectedTopSlug(null);
+    setSelectedSubcategory(null);
     setSearch('');
   };
 
@@ -226,6 +228,14 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
       if (top) result = result.filter(p => top.categories.includes(p.category));
     }
 
+    if (selectedSubcategory) {
+      const sub = selectedSubcategory.toLowerCase();
+      result = result.filter(p =>
+        p.productName.toLowerCase().includes(sub) ||
+        (p.desc && p.desc.toLowerCase().includes(sub))
+      );
+    }
+
     switch (sortBy) {
       case 'price_asc': result.sort((a, b) => a.price - b.price); break;
       case 'price_desc': result.sort((a, b) => b.price - a.price); break;
@@ -234,7 +244,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
     }
 
     return result;
-  }, [search, selectedCategory, selectedTopSlug, sortBy, products]);
+  }, [search, selectedCategory, selectedTopSlug, selectedSubcategory, sortBy, products]);
 
   const scrollCat = (dir: 'left' | 'right') => {
     catScrollRef.current?.scrollBy({ left: dir === 'left' ? -320 : 320, behavior: 'smooth' });
@@ -327,7 +337,10 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
             return (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(isSelected ? null : cat)}
+                onClick={() => {
+                  setSelectedCategory(isSelected ? null : cat);
+                  setSelectedSubcategory(null);
+                }}
                 className="flex flex-col items-center gap-2.5 shrink-0 group"
               >
                 <div className={`w-[88px] h-[88px] rounded-full flex items-center justify-center transition-all border-2 ${
@@ -348,7 +361,48 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
         </div>
       </div>
 
-      <div className={`border-t mx-6 ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
+      {/* ── Subcategory pills (shown when a category is selected) ── */}
+      {selectedCategory && (() => {
+        const subs = getCategoryMeta(selectedCategory).subcategories;
+        return (
+          <div className={`border-t px-6 py-4 ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+            <div
+              className="flex items-center gap-2 overflow-x-auto"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <button
+                onClick={() => setSelectedSubcategory(null)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                  !selectedSubcategory
+                    ? 'bg-yellow-400 border-yellow-400 text-black'
+                    : isDark
+                    ? 'border-white/15 text-slate-400 hover:border-yellow-400/50 hover:text-yellow-400'
+                    : 'border-slate-200 text-slate-500 hover:border-yellow-400 hover:text-yellow-600'
+                }`}
+              >
+                All
+              </button>
+              {subs.map(sub => (
+                <button
+                  key={sub}
+                  onClick={() => setSelectedSubcategory(selectedSubcategory === sub ? null : sub)}
+                  className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                    selectedSubcategory === sub
+                      ? 'bg-yellow-400 border-yellow-400 text-black'
+                      : isDark
+                      ? 'border-white/15 text-slate-400 hover:border-yellow-400/50 hover:text-yellow-400'
+                      : 'border-slate-200 text-slate-500 hover:border-yellow-400 hover:text-yellow-600'
+                  }`}
+                >
+                  {sub}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {!selectedCategory && <div className={`border-t mx-6 ${isDark ? 'border-white/10' : 'border-slate-100'}`} />}
 
       {/* ── Loading ── */}
       {loading ? (
@@ -361,9 +415,19 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
         /* ── Filtered grid view ── */
         <div className="px-6 pt-7">
           <div className="mb-5">
-            <h2 className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              {selectedCategory ?? (selectedTopSlug ? (TOP_CATEGORIES.find(t => t.slug === selectedTopSlug)?.name ?? 'Results') : 'Search Results')}
-            </h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                {selectedCategory ?? (selectedTopSlug ? (TOP_CATEGORIES.find(t => t.slug === selectedTopSlug)?.name ?? 'Results') : 'Search Results')}
+              </h2>
+              {selectedSubcategory && (
+                <span className="flex items-center gap-1.5 bg-yellow-400 text-black text-xs font-black px-3 py-1 rounded-full">
+                  {selectedSubcategory}
+                  <button onClick={() => setSelectedSubcategory(null)} className="hover:opacity-70">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+            </div>
             <p className={`text-xs font-medium mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
               {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
             </p>
