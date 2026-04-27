@@ -1,21 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { getCategoryMeta, TOP_CATEGORIES, ALL_CATEGORIES } from '../utils/categoryMeta';
+import { getCategoryMeta } from '../utils/categoryMeta';
+import { categoryApi, Category } from '../api';
 
 interface SubNavProps {
   isDark: boolean;
 }
 
-const totalSubcategories = ALL_CATEGORIES.reduce(
-  (sum, name) => sum + getCategoryMeta(name).subcategories.length, 0
-);
 
 export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
   const { pathname, search } = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState(ALL_CATEGORIES[0]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCategory, setActiveCategory] = useState<Category | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    categoryApi.getAll().then(res => {
+      setCategories(res.categories || []);
+      if (res.categories && res.categories.length > 0) {
+        setActiveCategory(res.categories[0]);
+      }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => { setIsMenuOpen(false); }, [pathname, search]);
 
@@ -29,7 +37,8 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
     return () => document.removeEventListener('mousedown', handler);
   }, [isMenuOpen]);
 
-  const activeMeta = getCategoryMeta(activeCategory);
+  const totalSubcategories = categories.reduce((sum, cat) => sum + (cat.subcategories?.length || 0), 0);
+  const activeMeta = activeCategory ? getCategoryMeta(activeCategory.name) : null;
 
   return (
     <div className="relative font-primary" ref={menuRef}>
@@ -49,18 +58,21 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
 
           {/* Top department links */}
           <div className={`flex items-center gap-1 text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            {TOP_CATEGORIES.map(top => (
-              <Link
-                key={top.slug}
-                to={`/products?group=${top.slug}`}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
-                  isDark ? 'hover:bg-white/5 hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                }`}
-              >
-                <top.icon className="w-3 h-3" />
-                {top.shortName}
-              </Link>
-            ))}
+            {categories.slice(0, 5).map(cat => {
+              const meta = getCategoryMeta(cat.name);
+              return (
+                <Link
+                  key={cat._id}
+                  to={`/products?category=${encodeURIComponent(cat.name)}`}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                    isDark ? 'hover:bg-white/5 hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <meta.icon className="w-3 h-3" />
+                  {cat.name}
+                </Link>
+              );
+            })}
           </div>
 
           <div className={`w-px h-4 shrink-0 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
@@ -88,14 +100,14 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
                   Categories
                 </div>
                 <div className="flex-1 py-0.5 overflow-y-auto">
-                  {ALL_CATEGORIES.map(catName => {
-                    const meta = getCategoryMeta(catName);
-                    const isActive = catName === activeCategory;
+                  {categories.map(cat => {
+                    const meta = getCategoryMeta(cat.name);
+                    const isActive = activeCategory?._id === cat._id;
                     return (
                       <button
-                        key={catName}
-                        onMouseEnter={() => setActiveCategory(catName)}
-                        onClick={() => setActiveCategory(catName)}
+                        key={cat._id}
+                        onMouseEnter={() => setActiveCategory(cat)}
+                        onClick={() => setActiveCategory(cat)}
                         className={`w-full flex items-center gap-2 px-2.5 py-1.5 transition-all text-left ${
                           isActive
                             ? isDark ? 'bg-yellow-400/10' : 'bg-yellow-50'
@@ -109,10 +121,10 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
                         </div>
                         <span className={`text-[10px] font-semibold leading-tight flex-1 min-w-0 truncate ${
                           isActive ? 'text-yellow-400' : isDark ? 'text-slate-400' : 'text-slate-600'
-                        }`}>{catName}</span>
+                        }`}>{cat.name}</span>
                         <span className={`text-[8px] font-black px-1 py-px rounded shrink-0 ${
                           isActive ? 'text-yellow-400' : isDark ? 'text-slate-600' : 'text-slate-400'
-                        }`}>{meta.subcategories.length}</span>
+                        }`}>{cat.subcategories?.length || 0}</span>
                       </button>
                     );
                   })}
@@ -121,42 +133,46 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
 
               {/* Center — subcategories of active category */}
               <div className="flex-1 p-6 overflow-y-auto">
-                <div className={`flex items-center justify-between mb-5 pb-4 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-yellow-400 flex items-center justify-center">
-                      <activeMeta.icon className="w-4.5 h-4.5 text-black" />
+                {activeCategory && activeMeta && (
+                  <>
+                    <div className={`flex items-center justify-between mb-5 pb-4 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-yellow-400 flex items-center justify-center">
+                          <activeMeta.icon className="w-4.5 h-4.5 text-black" />
+                        </div>
+                        <div>
+                          <h3 className={`text-sm font-black leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{activeCategory.name}</h3>
+                          <p className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{activeCategory.description || activeMeta.desc} · {activeCategory.subcategories?.length || 0} types</p>
+                        </div>
+                      </div>
+                      <Link
+                        to={`/products?category=${encodeURIComponent(activeCategory.name)}`}
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-yellow-400 hover:text-yellow-300 transition-colors"
+                      >
+                        Browse all <ArrowRight className="w-3 h-3" />
+                      </Link>
                     </div>
-                    <div>
-                      <h3 className={`text-sm font-black leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{activeCategory}</h3>
-                      <p className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{activeMeta.desc} · {activeMeta.subcategories.length} types</p>
-                    </div>
-                  </div>
-                  <Link
-                    to={`/products?category=${encodeURIComponent(activeCategory)}`}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-yellow-400 hover:text-yellow-300 transition-colors"
-                  >
-                    Browse all <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
 
-                {/* Subcategory pills grid */}
-                <div className="grid grid-cols-3 gap-2.5">
-                  {activeMeta.subcategories.map(sub => (
-                    <Link
-                      key={sub}
-                      to={`/products?category=${encodeURIComponent(activeCategory)}`}
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`px-4 py-3 rounded-xl border text-xs font-semibold text-center transition-all ${
-                        isDark
-                          ? 'border-white/8 bg-white/[0.02] text-slate-300 hover:border-yellow-400/40 hover:text-yellow-400 hover:bg-yellow-400/5'
-                          : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-yellow-400/50 hover:text-yellow-600 hover:bg-yellow-50'
-                      }`}
-                    >
-                      {sub}
-                    </Link>
-                  ))}
-                </div>
+                    {/* Subcategory pills grid */}
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {activeCategory.subcategories?.map(sub => (
+                        <Link
+                          key={sub._id}
+                          to={`/products?category=${encodeURIComponent(activeCategory.name)}`}
+                          onClick={() => setIsMenuOpen(false)}
+                          className={`px-4 py-3 rounded-xl border text-xs font-semibold text-center transition-all ${
+                            isDark
+                              ? 'border-white/8 bg-white/[0.02] text-slate-300 hover:border-yellow-400/40 hover:text-yellow-400 hover:bg-yellow-400/5'
+                              : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-yellow-400/50 hover:text-yellow-600 hover:bg-yellow-50'
+                          }`}
+                        >
+                          {sub.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Right — stats */}
@@ -165,11 +181,7 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Catalog</p>
                   <div className={`p-3 rounded-xl space-y-2.5 ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
                     <div>
-                      <p className={`text-xl font-black leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>{TOP_CATEGORIES.length}</p>
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Departments</p>
-                    </div>
-                    <div className={`border-t pt-2.5 ${isDark ? 'border-white/5' : 'border-slate-200'}`}>
-                      <p className={`text-xl font-black leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>{ALL_CATEGORIES.length}</p>
+                      <p className={`text-xl font-black leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>{categories.length}</p>
                       <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Categories</p>
                     </div>
                     <div className={`border-t pt-2.5 ${isDark ? 'border-white/5' : 'border-slate-200'}`}>

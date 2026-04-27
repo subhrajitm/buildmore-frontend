@@ -215,17 +215,25 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      result = result.filter(p =>
-        p.productName.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q)
-      );
+      result = result.filter(p => {
+        const pCat = typeof p.category === 'object' && p.category ? (p.category as any).name : p.category;
+        return p.productName.toLowerCase().includes(q) || (pCat && pCat.toLowerCase().includes(q));
+      });
     }
 
     if (selectedCategory) {
-      result = result.filter(p => p.category?.trim().toLowerCase() === selectedCategory.trim().toLowerCase());
+      result = result.filter(p => {
+        const pCat = typeof p.category === 'object' && p.category ? (p.category as any).name : p.category;
+        return pCat?.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
+      });
     } else if (selectedTopSlug) {
       const top = TOP_CATEGORIES.find(t => t.slug === selectedTopSlug);
-      if (top) result = result.filter(p => top.categories.some(c => c.trim().toLowerCase() === p.category?.trim().toLowerCase()));
+      if (top) {
+        result = result.filter(p => {
+          const pCat = typeof p.category === 'object' && p.category ? (p.category as any).name : p.category;
+          return top.categories.some(c => c.trim().toLowerCase() === pCat?.trim().toLowerCase());
+        });
+      }
     }
 
     if (selectedSubcategory) {
@@ -451,7 +459,10 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
         /* ── Default: horizontal scroll sections per TOP_CATEGORY ── */
         <div>
           {TOP_CATEGORIES.map((top, idx) => {
-            const catProducts = products.filter(p => top.categories.some(c => c.trim().toLowerCase() === p.category?.trim().toLowerCase()));
+            const catProducts = products.filter(p => {
+              const pCat = typeof p.category === 'object' && p.category ? (p.category as any).name : p.category;
+              return top.categories.some(c => c.trim().toLowerCase() === pCat?.trim().toLowerCase());
+            });
             if (catProducts.length === 0) return null;
             return (
               <React.Fragment key={top.slug}>
