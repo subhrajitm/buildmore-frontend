@@ -96,8 +96,17 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
 
               {/* Left — all leaf categories list (compact) */}
               <div className={`w-[168px] shrink-0 border-r flex flex-col ${isDark ? 'bg-black/30 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-                <div className="px-3 pt-3 pb-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-yellow-400">
-                  Categories
+                <div className="flex items-center justify-between px-3 py-4 border-b border-dashed border-white/5">
+                  <div className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Categories
+                  </div>
+                  <Link 
+                    to="/products/categories" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-[9px] font-black uppercase tracking-widest text-yellow-400 hover:underline"
+                  >
+                    View All
+                  </Link>
                 </div>
                 <div className="flex-1 py-0.5 overflow-y-auto">
                   {categories.map(cat => {
@@ -146,11 +155,11 @@ export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
                         </div>
                       </div>
                       <Link
-                        to={`/products?category=${encodeURIComponent(activeCategory.name)}`}
+                        to={`/products/${activeCategory.slug}`}
                         onClick={() => setIsMenuOpen(false)}
-                        className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-yellow-400 hover:text-yellow-300 transition-colors"
+                        className="flex items-center gap-1.5 bg-yellow-400 text-black px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-400/20"
                       >
-                        Browse all <ArrowRight className="w-3 h-3" />
+                        Explore All <ArrowRight className="w-3 h-3" />
                       </Link>
                     </div>
 

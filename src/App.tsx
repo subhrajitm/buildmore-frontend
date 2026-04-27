@@ -27,6 +27,7 @@ import { Logistics } from './pages/Logistics';
 import { Compliance } from './pages/Compliance';
 import { Specs } from './pages/Specs';
 import { RFQs } from './pages/RFQs';
+import { AllCategories } from './pages/AllCategories';
 import { NotFound } from './pages/NotFound';
 
 export default function App() {
@@ -44,6 +45,16 @@ export default function App() {
                 </MainLayout>
               } />
               <Route path="/products" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <Products isDark={isDark} />
+                </MainLayout>
+              } />
+              <Route path="/products/categories" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <AllCategories isDark={isDark} />
+                </MainLayout>
+              } />
+              <Route path="/products/:categorySlug" element={
                 <MainLayout isDark={isDark} setIsDark={setIsDark}>
                   <Products isDark={isDark} />
                 </MainLayout>

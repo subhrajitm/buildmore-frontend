@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, ChevronLeft, ChevronRight, X, Star, ChevronDown, Heart } from 'lucide-react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { productApi, BackendProduct } from '../api';
+import { useSearchParams, Link, useParams } from 'react-router-dom';
+import { productApi, categoryApi, BackendProduct, Category } from '../api';
 import { normalizeProduct } from '../utils/normalizeProduct';
 import { getCategoryMeta, TOP_CATEGORIES, ALL_CATEGORIES } from '../utils/categoryMeta';
 import { formatPrice } from '../utils/currency';
@@ -167,39 +167,53 @@ function ScrollSection({ title, isDark, children }: { title: string; isDark: boo
 
 // ─── Main component ────────────────────────────────────────────────────────────
 export const Products: React.FC<ProductsProps> = ({ isDark }) => {
+  const { categorySlug } = useParams<{ categorySlug: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<BackendProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const catScrollRef = useRef<HTMLDivElement>(null);
 
   const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('featured');
   const [sortOpen, setSortOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    () => searchParams.get('category') || null
-  );
-  const [selectedTopSlug, setSelectedTopSlug] = useState<string | null>(
-    () => searchParams.get('group') || null
-  );
+  
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTopSlug, setSelectedTopSlug] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    productApi.getAll()
-      .then(res => setProducts(res.products || []))
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false));
+    Promise.all([
+      productApi.getAll(),
+      categoryApi.getAll()
+    ]).then(([prodRes, catRes]) => {
+      setProducts(prodRes.products || []);
+      setCategories(catRes.categories || []);
+    })
+    .catch(() => {})
+    .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    const cat = searchParams.get('category');
-    const group = searchParams.get('group');
+    const catParam = searchParams.get('category');
+    const groupParam = searchParams.get('group');
     const q = searchParams.get('search');
-    if (cat) setSelectedCategory(cat);
-    if (group) setSelectedTopSlug(group);
+    
+    if (categorySlug) {
+      const found = categories.find(c => c.slug === categorySlug);
+      if (found) setSelectedCategory(found.name);
+    } else if (catParam) {
+      setSelectedCategory(catParam);
+    } else {
+      setSelectedCategory(null);
+    }
+
+    if (groupParam) setSelectedTopSlug(groupParam);
+    else setSelectedTopSlug(null);
+
     if (q) setSearch(q);
-    if (cat || group || q) setSearchParams({}, { replace: true });
-  }, [searchParams]);
+  }, [categorySlug, categories, searchParams]);
 
   const clearFilters = () => {
     setSelectedCategory(null);

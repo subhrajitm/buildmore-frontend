@@ -118,7 +118,7 @@ const HomeCategoryRow: React.FC<{ title: string; slug: string; products: Backend
       <div className="flex items-center justify-between mb-4">
         <h2 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h2>
         <Link
-          to={`/products?group=${slug}`}
+          to={`/products/${slug}`}
           className="text-xs font-bold text-yellow-500 hover:text-yellow-400 flex items-center gap-0.5 transition-colors"
         >
           see all <ChevronRight className="w-3.5 h-3.5" />
@@ -137,7 +137,7 @@ const HomeCategoryRow: React.FC<{ title: string; slug: string; products: Backend
           ))}
           {/* "See all" end card */}
           <Link
-            to={`/products?group=${slug}`}
+            to={`/products/${slug}`}
             className={`shrink-0 w-[148px] rounded-xl border flex flex-col items-center justify-center gap-2 transition-all hover:border-yellow-400 ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-slate-50 border-slate-200'}`}
             style={{ minHeight: 210 }}
           >

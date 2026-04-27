@@ -35,7 +35,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ isDark }) => {
               return (
                 <Link
                   key={cat._id}
-                  to={`/products?category=${encodeURIComponent(cat.name)}`}
+                  to={`/products/${cat.slug}`}
                   className="flex flex-col items-center gap-2 group"
                 >
                   <div className={`relative w-full aspect-square rounded-2xl flex items-center justify-center transition-all duration-200 border-2 overflow-hidden ${
