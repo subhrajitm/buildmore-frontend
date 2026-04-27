@@ -11,6 +11,7 @@ export function normalizeProduct(p: BackendProduct) {
     name: p.productName,
     price: p.price,
     category: p.category,
+    subcategory: p.subcategory ?? null,
     image: p.productImages && p.productImages.length > 0 && p.productImages[0].startsWith('http')
       ? p.productImages[0]
       : PLACEHOLDER_IMAGE,

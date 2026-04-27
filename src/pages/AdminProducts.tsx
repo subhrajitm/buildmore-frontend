@@ -8,6 +8,7 @@ import {
   List, IndianRupee, Box, Eye, EyeOff, RefreshCw, PlusCircle, MinusCircle
 } from 'lucide-react';
 import { formatPrice, formatINR } from '../utils/currency';
+import { getCategoryMeta, ALL_CATEGORIES } from '../utils/categoryMeta';
 
 interface AdminProductsProps {
   isDark: boolean;
@@ -281,7 +282,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                     <p className={`text-[10px] font-bold ${p.stock === 0 ? 'text-red-400' : mutedClass}`}>{p.stock} in stock</p>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => { setEditingId(p._id); setEditForm({}); }} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}><Pencil className="w-4 h-4" /></button>
+                    <button onClick={() => { setEditingId(p._id); setEditForm({ productName: p.productName, category: p.category, subcategory: p.subcategory ?? '', price: p.price, materialSpecifications: p.materialSpecifications ?? '' }); }} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}><Pencil className="w-4 h-4" /></button>
                     <button onClick={() => handleDelete(p._id)} className={`p-2 rounded-lg ${isDark ? 'hover:bg-red-500/10 text-slate-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`}><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
@@ -311,7 +312,15 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                         <td className="px-6 py-4" colSpan={4}>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <input value={editForm.productName ?? p.productName} onChange={e => setEditForm(f => ({ ...f, productName: e.target.value }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`} placeholder="Name" />
-                            <input value={editForm.category ?? p.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`} placeholder="Category" />
+                            <select value={editForm.category ?? p.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value, subcategory: '' }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`}>
+                              {ALL_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            </select>
+                            <select value={editForm.subcategory ?? p.subcategory ?? ''} onChange={e => setEditForm(f => ({ ...f, subcategory: e.target.value }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`}>
+                              <option value="">No Subcategory</option>
+                              {getCategoryMeta(editForm.category ?? p.category).subcategories.map(sub => (
+                                <option key={sub} value={sub}>{sub}</option>
+                              ))}
+                            </select>
                             <input type="number" value={editForm.price ?? p.price} onChange={e => setEditForm(f => ({ ...f, price: Number(e.target.value) }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`} placeholder="Price" />
                             <input value={editForm.materialSpecifications ?? p.materialSpecifications ?? ''} onChange={e => setEditForm(f => ({ ...f, materialSpecifications: e.target.value }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`} placeholder="Specs" />
                           </div>
@@ -337,7 +346,10 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>{p.category}</span>
+                          <div className="flex flex-col gap-1">
+                            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>{p.category}</span>
+                            {p.subcategory && <span className={`text-[9px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-lg ${isDark ? 'bg-yellow-400/10 text-yellow-400' : 'bg-yellow-50 text-yellow-600'}`}>{p.subcategory}</span>}
+                          </div>
                         </td>
                         <td className="px-4 py-4 text-right">
                           <span className={`text-base font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatPrice(p.price)}</span>
@@ -366,7 +378,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => { setEditingId(p._id); setEditForm({}); }} className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-white/5 text-slate-400 hover:text-yellow-400' : 'hover:bg-slate-100 text-slate-500 hover:text-yellow-500'}`}><Pencil className="w-4 h-4" /></button>
+                            <button onClick={() => { setEditingId(p._id); setEditForm({ productName: p.productName, category: p.category, subcategory: p.subcategory ?? '', price: p.price, materialSpecifications: p.materialSpecifications ?? '' }); }} className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-white/5 text-slate-400 hover:text-yellow-400' : 'hover:bg-slate-100 text-slate-500 hover:text-yellow-500'}`}><Pencil className="w-4 h-4" /></button>
                             <button onClick={() => handleDelete(p._id)} className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-red-500/10 text-slate-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`}><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>

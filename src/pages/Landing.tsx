@@ -178,7 +178,7 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
       ) : (
         <div className="space-y-6 py-4">
           {TOP_CATEGORIES.map(top => {
-            const catProducts = allProducts.filter(p => top.categories.includes(p.category));
+            const catProducts = allProducts.filter(p => top.categories.some(c => c.trim().toLowerCase() === p.category?.trim().toLowerCase()));
             return (
               <HomeCategoryRow
                 key={top.slug}

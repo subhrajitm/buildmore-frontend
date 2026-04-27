@@ -64,11 +64,13 @@ export interface BackendProduct {
   productName: string;
   desc?: string;
   category: string;
+  subcategory?: string | null;
   price: number;
   productImages: string[];
   materialSpecifications?: string;
   stock: number;
   availability: boolean;
+  createdAt?: string;
 }
 
 export interface ProductsResponse {
@@ -89,10 +91,11 @@ export interface CategoriesResponse {
 // ── Public Product API ────────────────────────────────────────────────────────
 
 export const productApi = {
-  getAll: (params?: { search?: string; category?: string }) => {
+  getAll: (params?: { search?: string; category?: string; subcategory?: string }) => {
     const qs = new URLSearchParams();
     if (params?.search) qs.set('search', params.search);
     if (params?.category) qs.set('category', params.category);
+    if (params?.subcategory) qs.set('subcategory', params.subcategory);
     const query = qs.toString() ? `?${qs.toString()}` : '';
     return request<ProductsResponse>(`/api/products${query}`);
   },

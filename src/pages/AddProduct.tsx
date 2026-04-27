@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminApi } from '../api';
-import { 
-  Plus, Check, X, 
+import { getCategoryMeta } from '../utils/categoryMeta';
+import {
+  Plus, Check, X,
   Upload, AlertCircle, Loader2, ArrowLeft
 } from 'lucide-react';
 
@@ -12,7 +13,7 @@ interface AddProductProps {
 }
 
 const EMPTY_FORM = {
-  productName: '', desc: '', category: '', price: '', stock: '', materialSpecifications: '',
+  productName: '', desc: '', category: '', subcategory: '', price: '', stock: '', materialSpecifications: '',
 };
 
 const CATEGORIES = [
@@ -64,6 +65,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ isDark }) => {
       fd.append('productName', form.productName);
       fd.append('desc', form.desc);
       fd.append('category', form.category);
+      if (form.subcategory) fd.append('subcategory', form.subcategory);
       fd.append('price', form.price);
       fd.append('stock', form.stock);
       fd.append('materialSpecifications', form.materialSpecifications);
@@ -109,12 +111,22 @@ export const AddProduct: React.FC<AddProductProps> = ({ isDark }) => {
               
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Category *</label>
-                <select required value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={input}>
+                <select required value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value, subcategory: '' }))} className={input}>
                   <option value="">Select Category</option>
                   {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
               </div>
-              
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Subcategory</label>
+                <select value={form.subcategory} onChange={e => setForm(f => ({ ...f, subcategory: e.target.value }))} className={input} disabled={!form.category}>
+                  <option value="">Select Subcategory</option>
+                  {form.category && getCategoryMeta(form.category).subcategories.map(sub => (
+                    <option key={sub} value={sub}>{sub}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Price (INR) *</label>
                 <input required type="number" min="0" step="0.01" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className={input} placeholder="0.00" />

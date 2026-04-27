@@ -222,18 +222,14 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
     }
 
     if (selectedCategory) {
-      result = result.filter(p => p.category === selectedCategory);
+      result = result.filter(p => p.category?.trim().toLowerCase() === selectedCategory.trim().toLowerCase());
     } else if (selectedTopSlug) {
       const top = TOP_CATEGORIES.find(t => t.slug === selectedTopSlug);
-      if (top) result = result.filter(p => top.categories.includes(p.category));
+      if (top) result = result.filter(p => top.categories.some(c => c.trim().toLowerCase() === p.category?.trim().toLowerCase()));
     }
 
     if (selectedSubcategory) {
-      const sub = selectedSubcategory.toLowerCase();
-      result = result.filter(p =>
-        p.productName.toLowerCase().includes(sub) ||
-        (p.desc && p.desc.toLowerCase().includes(sub))
-      );
+      result = result.filter(p => p.subcategory === selectedSubcategory);
     }
 
     switch (sortBy) {
@@ -455,7 +451,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
         /* ── Default: horizontal scroll sections per TOP_CATEGORY ── */
         <div>
           {TOP_CATEGORIES.map((top, idx) => {
-            const catProducts = products.filter(p => top.categories.includes(p.category));
+            const catProducts = products.filter(p => top.categories.some(c => c.trim().toLowerCase() === p.category?.trim().toLowerCase()));
             if (catProducts.length === 0) return null;
             return (
               <React.Fragment key={top.slug}>
