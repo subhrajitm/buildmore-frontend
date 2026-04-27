@@ -68,7 +68,8 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.productName.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          p.desc?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !filterCategory || p.category === filterCategory;
+    const pCatName = typeof p.category === 'object' && p.category ? (p.category as any).name : p.category;
+    const matchesCategory = !filterCategory || pCatName === filterCategory;
     const matchesAvailability = filterAvailability === 'all' || 
                                (filterAvailability === 'available' && p.availability) ||
                                (filterAvailability === 'unavailable' && !p.availability);
@@ -269,7 +270,9 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-black truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.productName}</p>
-                    <p className={`text-[10px] font-bold uppercase ${mutedClass}`}>{p.category}</p>
+                    <p className={`text-[10px] font-bold uppercase ${mutedClass}`}>
+                      {typeof p.category === 'object' && p.category ? (p.category as any).name : p.category}
+                    </p>
                   </div>
                   <button onClick={() => handleToggleAvailability(p._id)} className={`p-1.5 rounded-lg ${p.availability ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
                     {p.availability ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Package, MapPin, BarChart, Plus, Pencil, Trash2, Check, LogOut, Mail, Phone, Calendar, TrendingUp, Truck, Clock } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Package, MapPin, BarChart, Plus, Pencil, Trash2, Check, LogOut, Mail, Phone, Calendar, TrendingUp, Truck, Clock, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { userApi, orderApi, shipmentApi, UserProfile, Order, Address } from '../api';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { formatPrice } from '../utils/currency';
 
 interface ProfileProps {
@@ -20,13 +20,14 @@ type Tab = 'overview' | 'orders' | 'addresses' | 'account';
 
 export const Profile: React.FC<ProfileProps> = ({ isDark }) => {
   const { token, logout, updateUser } = useAuth();
+  const [searchParams] = useSearchParams();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [activeTab, setActiveTab] = useState<Tab>((searchParams.get('tab') as Tab) || 'overview');
 
   const [showAddrForm, setShowAddrForm] = useState(false);
   const [editingAddrId, setEditingAddrId] = useState<string | null>(null);
@@ -49,18 +50,26 @@ export const Profile: React.FC<ProfileProps> = ({ isDark }) => {
     { id: 'account', label: 'Account', icon: Mail },
   ];
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     if (!token) return;
-    Promise.all([
+    setLoading(true);
+    setLoadError('');
+    Promise.allSettled([
       userApi.getProfile(token),
       orderApi.getAll(token),
       shipmentApi.getAll(token),
     ]).then(([p, o, s]) => {
-      setProfile(p.user);
-      setOrders(o.orders);
-      setShipments(s.shipments);
-    }).catch(() => setLoadError('Failed to load')).finally(() => setLoading(false));
+      if (p.status === 'rejected') {
+        setLoadError((p.reason as Error)?.message || 'Failed to load profile');
+        return;
+      }
+      setProfile(p.value.user);
+      if (o.status === 'fulfilled') setOrders(o.value.orders);
+      if (s.status === 'fulfilled') setShipments(s.value.shipments);
+    }).finally(() => setLoading(false));
   }, [token]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const openAddAddr = () => { setAddrForm({ ...EMPTY_ADDR }); setEditingAddrId(null); setAddrError(''); setShowAddrForm(true); };
   const openEditAddr = (a: Address) => { setAddrForm({ building: a.building || '', area: a.area, landmark: a.landmark || '', city: a.city, state: a.state, pincode: a.pincode, country: a.country, alternatephone: a.alternatephone || '' }); setEditingAddrId(a._id!); setAddrError(''); setShowAddrForm(true); };
@@ -117,7 +126,14 @@ export const Profile: React.FC<ProfileProps> = ({ isDark }) => {
   }
 
   if (loadError) {
-    return <div className="flex items-center justify-center py-24 text-red-400 text-sm">{loadError}</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4">
+        <p className="text-red-400 text-sm">{loadError}</p>
+        <button onClick={fetchData} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-400 text-black text-xs font-black uppercase">
+          <RefreshCw className="w-3.5 h-3.5" /> Retry
+        </button>
+      </div>
+    );
   }
 
   return (

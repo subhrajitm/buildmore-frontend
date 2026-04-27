@@ -38,13 +38,18 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ isDark }) => {
                   to={`/products?category=${encodeURIComponent(cat.name)}`}
                   className="flex flex-col items-center gap-2 group"
                 >
-                  <div className={`w-full aspect-square rounded-2xl flex items-center justify-center transition-all duration-200 border-2 ${
+                  <div className={`relative w-full aspect-square rounded-2xl flex items-center justify-center transition-all duration-200 border-2 overflow-hidden ${
                     isDark
                       ? 'bg-zinc-800 border-transparent group-hover:border-yellow-400/50 group-hover:bg-zinc-700'
                       : 'bg-slate-100 border-transparent group-hover:border-yellow-300 group-hover:bg-yellow-50'
                   }`}>
                     {cat.image
-                      ? <img src={cat.image} alt={cat.name} className="w-8 h-8 object-contain" />
+                      ? (
+                        <>
+                          <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                        </>
+                      )
                       : <meta.icon className={`w-8 h-8 transition-colors ${isDark ? 'text-slate-300 group-hover:text-yellow-400' : 'text-slate-600 group-hover:text-yellow-500'}`} />
                     }
                   </div>

@@ -5,6 +5,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, FileText, Truck, 
   LogOut, Settings, ChevronRight, Building2, Layers
 } from 'lucide-react';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 const navItems = [
   { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -97,7 +98,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ isDark }) => {
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         <div className="p-8">
-          <Outlet />
+          <ErrorBoundary isDark={isDark}>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
     </div>
