@@ -57,7 +57,7 @@ const HomeProductCard: React.FC<{ product: ReturnType<typeof normalizeProduct>; 
   };
 
   return (
-    <Link to={`/products/${product.id}`} className="shrink-0 w-[148px] group">
+    <Link to={`/product/${product.id}`} className="shrink-0 w-[148px] group">
       <div className={`rounded-xl border overflow-hidden transition-all duration-200 hover:shadow-md ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-slate-200'}`}>
         {/* Image */}
         <div className={`relative h-[130px] flex items-center justify-center p-3 ${isDark ? 'bg-zinc-800' : 'bg-slate-50'}`}>
@@ -178,7 +178,10 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
       ) : (
         <div className="space-y-6 py-4">
           {TOP_CATEGORIES.map(top => {
-            const catProducts = allProducts.filter(p => top.categories.some(c => c.trim().toLowerCase() === p.category?.trim().toLowerCase()));
+            const catProducts = allProducts.filter(p => {
+              const pCat = typeof p.category === 'object' && p.category ? (p.category as any).name : p.category;
+              return top.categories.some(c => c.trim().toLowerCase() === pCat?.trim().toLowerCase());
+            });
             return (
               <HomeCategoryRow
                 key={top.slug}

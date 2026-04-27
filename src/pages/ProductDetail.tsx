@@ -332,7 +332,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
           {activeTab === 'specs' && (
             <div className="max-w-3xl space-y-4">
               {[
-                { label: 'Category', value: raw.category },
+                { label: 'Category', value: product.category },
                 { label: 'Material', value: raw.materialSpecifications || 'Standard' },
                 { label: 'Availability', value: raw.availability ? 'In Stock' : 'Out of Stock' },
                 { label: 'Stock', value: `${raw.stock} units` },

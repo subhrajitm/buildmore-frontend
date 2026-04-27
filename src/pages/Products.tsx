@@ -52,7 +52,7 @@ const ProductCard: React.FC<{ product: any; isDark: boolean; className?: string 
   };
 
   return (
-    <Link to={`/products/${product.id}`} className={`group ${className}`}>
+    <Link to={`/product/${product.id}`} className={`group ${className}`}>
       <div className={`rounded-2xl overflow-hidden border transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${isDark ? 'bg-zinc-900 border-white/10 hover:border-yellow-400/20' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
 
         {/* Image with overlay */}
