@@ -53,7 +53,10 @@ export const authApi = {
   login: (body: { email: string; password: string }) =>
     request<AuthResponse>('/api/user/login', { method: 'POST', body }),
 
-  forgotPassword: (body: { email: string; password: string }) =>
+  requestReset: (body: { email: string }) =>
+    request<AuthResponse>('/api/user/requestreset', { method: 'POST', body }),
+
+  forgotPassword: (body: { email: string; resetCode?: string; password: string }) =>
     request<AuthResponse>('/api/user/forgetpassword', { method: 'POST', body }),
 };
 
@@ -105,6 +108,9 @@ export const productApi = {
 
   getCategories: () =>
     request<CategoriesResponse>('/api/products/categories/all'),
+
+  getSubcategories: (category: string) =>
+    request<{ success: boolean; subcategories: string[] }>(`/api/products/categories/subcategories?category=${encodeURIComponent(category)}`),
 };
 
 // ── Admin Product API ─────────────────────────────────────────────────────────
@@ -285,6 +291,9 @@ export const rfqApi = {
   submit: (id: string, token: string) =>
     request<{ success: boolean; rfq: RFQ }>(`/api/rfqs/${id}/submit`, { method: 'PATCH', token }),
 
+  respond: (id: string, action: 'ACCEPT' | 'REJECT', token: string) =>
+    request<{ success: boolean; rfq: RFQ }>(`/api/rfqs/${id}/respond`, { method: 'PATCH', body: { action }, token }),
+
   adminGetAll: (token: string, status?: string) =>
     request<{ success: boolean; rfqs: RFQ[] }>(`/api/rfqs/admin/all${status ? `?status=${status}` : ''}`, { token }),
 
@@ -372,6 +381,9 @@ export const complianceApi = {
     return request<{ success: boolean; docs: ComplianceDoc[] }>(`/api/compliance${query}`, { token });
   },
 
+  getById: (id: string, token: string) =>
+    request<{ success: boolean; doc: ComplianceDoc }>(`/api/compliance/${id}`, { token }),
+
   delete: (id: string, token: string) =>
     request<{ success: boolean; message: string }>(`/api/compliance/${id}`, { method: 'DELETE', token }),
 
@@ -382,6 +394,12 @@ export const complianceApi = {
     const query = qs.toString() ? `?${qs.toString()}` : '';
     return request<{ success: boolean; docs: ComplianceDoc[] }>(`/api/compliance/admin/all${query}`, { token });
   },
+
+  adminUpdate: (id: string, body: { adminNotes?: string; issuedBy?: string; issuedAt?: string; expiresAt?: string }, token: string) =>
+    request<{ success: boolean; doc: ComplianceDoc }>(`/api/compliance/admin/${id}`, { method: 'PATCH', body, token }),
+
+  adminDelete: (id: string, token: string) =>
+    request<{ success: boolean; message: string }>(`/api/compliance/admin/${id}`, { method: 'DELETE', token }),
 };
 
 // ── Specs API ─────────────────────────────────────────────────────────────────
