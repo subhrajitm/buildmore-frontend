@@ -45,17 +45,17 @@ export default function App() {
                 </MainLayout>
               } />
               <Route path="/products" element={
-                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                <MainLayout isDark={isDark} setIsDark={setIsDark} noPadding>
                   <Products isDark={isDark} />
                 </MainLayout>
               } />
               <Route path="/products/categories" element={
-                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                <MainLayout isDark={isDark} setIsDark={setIsDark} noPadding>
                   <AllCategories isDark={isDark} />
                 </MainLayout>
               } />
               <Route path="/products/:categorySlug" element={
-                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                <MainLayout isDark={isDark} setIsDark={setIsDark} noPadding>
                   <Products isDark={isDark} />
                 </MainLayout>
               } />
