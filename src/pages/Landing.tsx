@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Hero } from '../components/Hero';
 import { CategoryGrid } from '../components/CategoryGrid';
 import { TrustSignals } from '../components/TrustSignals';
-import { productApi, BackendProduct } from '../api';
+import { productApi, BackendProduct, categoryApi, Category } from '../api';
 import { normalizeProduct } from '../utils/normalizeProduct';
 import { TOP_CATEGORIES } from '../utils/categoryMeta';
 import { formatPrice } from '../utils/currency';
@@ -154,11 +154,18 @@ const HomeCategoryRow: React.FC<{ title: string; slug: string; products: Backend
 
 export const Landing: React.FC<LandingProps> = ({ isDark }) => {
   const [allProducts, setAllProducts] = useState<BackendProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    productApi.getAll()
-      .then(res => setAllProducts(res.products || []))
+    Promise.all([
+      productApi.getAll().then(res => res.products || []),
+      categoryApi.getAll().then(res => res.categories || []),
+    ])
+      .then(([prods, cats]) => {
+        setAllProducts(prods);
+        setCategories(cats);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -177,16 +184,16 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
         </div>
       ) : (
         <div className="space-y-6 py-4">
-          {TOP_CATEGORIES.map(top => {
+          {categories.map(cat => {
             const catProducts = allProducts.filter(p => {
               const pCat = typeof p.category === 'object' && p.category ? (p.category as any).name : p.category;
-              return top.categories.some(c => c.trim().toLowerCase() === pCat?.trim().toLowerCase());
+              return pCat?.trim().toLowerCase() === cat.name.trim().toLowerCase();
             });
             return (
               <HomeCategoryRow
-                key={top.slug}
-                title={top.name}
-                slug={top.slug}
+                key={cat._id}
+                title={cat.name}
+                slug={cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-')}
                 products={catProducts}
                 isDark={isDark}
               />
