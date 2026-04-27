@@ -14,6 +14,7 @@ import { AddProduct } from './pages/AddProduct';
 import { AdminOrders } from './pages/AdminOrders';
 import { AdminRFQs } from './pages/AdminRFQs';
 import { AdminShipments } from './pages/AdminShipments';
+import { AdminCategories } from './pages/AdminCategories';
 
 import { Landing } from './pages/Landing';
 import { Products } from './pages/Products';
@@ -101,6 +102,7 @@ export default function App() {
                 <Route path="login" element={<AdminLogin isDark={isDark} />} />
                 <Route path="dashboard" element={<AdminProtectedRoute><AdminDashboard isDark={isDark} /></AdminProtectedRoute>} />
                 <Route path="products" element={<AdminProtectedRoute><AdminProducts isDark={isDark} /></AdminProtectedRoute>} />
+                <Route path="categories" element={<AdminProtectedRoute><AdminCategories isDark={isDark} /></AdminProtectedRoute>} />
                 <Route path="products/add" element={<AdminProtectedRoute><AddProduct isDark={isDark} /></AdminProtectedRoute>} />
                 <Route path="orders" element={<AdminProtectedRoute><AdminOrders isDark={isDark} /></AdminProtectedRoute>} />
                 <Route path="rfqs" element={<AdminProtectedRoute><AdminRFQs isDark={isDark} /></AdminProtectedRoute>} />

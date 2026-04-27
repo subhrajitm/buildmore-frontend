@@ -10,7 +10,7 @@ export function normalizeProduct(p: BackendProduct) {
     id: p._id,
     name: p.productName,
     price: p.price,
-    category: p.category,
+    category: typeof p.category === 'object' && p.category ? (p.category as any).name : p.category,
     subcategory: p.subcategory ?? null,
     image: p.productImages && p.productImages.length > 0 && p.productImages[0].startsWith('http')
       ? p.productImages[0]

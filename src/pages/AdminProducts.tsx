@@ -8,7 +8,6 @@ import {
   List, IndianRupee, Box, Eye, EyeOff, RefreshCw, PlusCircle, MinusCircle
 } from 'lucide-react';
 import { formatPrice, formatINR } from '../utils/currency';
-import { getCategoryMeta, ALL_CATEGORIES } from '../utils/categoryMeta';
 
 interface AdminProductsProps {
   isDark: boolean;
@@ -18,26 +17,7 @@ const EMPTY_FORM = {
   productName: '', desc: '', category: '', price: '', stock: '', materialSpecifications: '',
 };
 
-const CATEGORIES = [
-  // Civil & Interiors
-  'Cement & Concrete',
-  'Tiles & Flooring',
-  'Paints & Finishes',
-  'Construction Chemicals',
-  'Plywood, Laminates & Boards',
-  'Doors & Windows',
-  // Furniture & Architectural Hardware
-  'Hardware & Fittings',
-  'Kitchen & Wardrobe Solutions',
-  'Tools & Equipment',
-  // Electrical
-  'Electrical',
-  'Lighting & Fans',
-  'Electrical Infrastructure',
-  // Plumbing, Sanitary & Bath
-  'Plumbing',
-  'Sanitary & Bath',
-];
+
 
 export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
   const navigate = useNavigate();
@@ -60,6 +40,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
   const [files, setFiles] = useState<FileList | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState('');
+  const [categoriesList, setCategoriesList] = useState<any[]>([]);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
   const input = `w-full px-4 py-3 rounded-xl border text-sm font-bold outline-none transition-colors ${
@@ -78,6 +59,9 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
     if (!adminToken) return;
     setLoading(true);
     adminApi.getAll(adminToken).then(r => setProducts(r.products || [])).catch(() => setError('Failed to load')).finally(() => setLoading(false));
+    import('../api').then(({ categoryApi }) => {
+      categoryApi.getAll().then(r => setCategoriesList(r.categories || [])).catch(() => {});
+    });
   };
   useEffect(load, [adminToken]);
 
@@ -105,7 +89,8 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
     setSubmitting(true); setError('');
     const fd = new FormData();
     fd.append('productName', form.productName); fd.append('desc', form.desc);
-    fd.append('category', form.category); fd.append('price', form.price);
+    fd.append('categoryId', form.category); fd.append('price', form.price);
+    if (form.subcategory) fd.append('subcategory', form.subcategory);
     fd.append('stock', form.stock); fd.append('materialSpecifications', form.materialSpecifications);
     Array.from(files as FileList).forEach((f: File) => fd.append('images', f));
     try {
@@ -119,7 +104,21 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
 
   const handleUpdate = async (id: string) => {
     if (!adminToken) return;
-    try { await adminApi.update(id, editForm, adminToken); setEditingId(null); showToast('Product updated'); load(); }
+    try { 
+      const updateData = { ...editForm };
+      if (updateData.category) {
+        // Find the categoryId for the selected category name, or if it's already an ID, use it.
+        const cat = categoriesList.find(c => c.name === updateData.category || c._id === updateData.category);
+        if (cat) {
+          updateData.categoryId = cat._id;
+          delete updateData.category;
+        }
+      }
+      await adminApi.update(id, updateData, adminToken); 
+      setEditingId(null); 
+      showToast('Product updated'); 
+      load(); 
+    }
     catch (err: any) { showToast('Update failed: ' + err.message); }
   };
 
@@ -211,7 +210,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
               className={`px-4 py-3 rounded-xl border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'}`}
             >
               <option value="">All Categories</option>
-              {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              {categoriesList.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
             </select>
             <select
               value={filterAvailability}
@@ -282,7 +281,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                     <p className={`text-[10px] font-bold ${p.stock === 0 ? 'text-red-400' : mutedClass}`}>{p.stock} in stock</p>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => { setEditingId(p._id); setEditForm({ productName: p.productName, category: p.category, subcategory: p.subcategory ?? '', price: p.price, materialSpecifications: p.materialSpecifications ?? '' }); }} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}><Pencil className="w-4 h-4" /></button>
+                    <button onClick={() => { setEditingId(p._id); setEditForm({ productName: p.productName, category: typeof p.category === 'object' && p.category ? (p.category as any)._id : p.category, subcategory: p.subcategory ?? '', price: p.price, materialSpecifications: p.materialSpecifications ?? '' }); }} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}><Pencil className="w-4 h-4" /></button>
                     <button onClick={() => handleDelete(p._id)} className={`p-2 rounded-lg ${isDark ? 'hover:bg-red-500/10 text-slate-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`}><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
@@ -312,13 +311,13 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                         <td className="px-6 py-4" colSpan={4}>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <input value={editForm.productName ?? p.productName} onChange={e => setEditForm(f => ({ ...f, productName: e.target.value }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`} placeholder="Name" />
-                            <select value={editForm.category ?? p.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value, subcategory: '' }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`}>
-                              {ALL_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            <select value={editForm.category ?? (typeof p.category === 'object' && p.category ? (p.category as any)._id : p.category)} onChange={e => setEditForm(f => ({ ...f, category: e.target.value, subcategory: '' }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`}>
+                              {categoriesList.map(cat => <option key={cat._id} value={cat._id}>{cat.name}</option>)}
                             </select>
                             <select value={editForm.subcategory ?? p.subcategory ?? ''} onChange={e => setEditForm(f => ({ ...f, subcategory: e.target.value }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`}>
                               <option value="">No Subcategory</option>
-                              {getCategoryMeta(editForm.category ?? p.category).subcategories.map(sub => (
-                                <option key={sub} value={sub}>{sub}</option>
+                              {(categoriesList.find(c => c._id === (editForm.category ?? (typeof p.category === 'object' && p.category ? (p.category as any)._id : p.category)) || c.name === (editForm.category ?? (typeof p.category === 'object' && p.category ? (p.category as any).name : p.category)))?.subcategories || []).map((sub: any) => (
+                                <option key={sub._id} value={sub.name}>{sub.name}</option>
                               ))}
                             </select>
                             <input type="number" value={editForm.price ?? p.price} onChange={e => setEditForm(f => ({ ...f, price: Number(e.target.value) }))} className={`px-3 py-2 rounded-lg border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200'}`} placeholder="Price" />
@@ -347,7 +346,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex flex-col gap-1">
-                            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>{p.category}</span>
+                            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>{typeof p.category === 'object' && p.category ? (p.category as any).name : p.category}</span>
                             {p.subcategory && <span className={`text-[9px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-lg ${isDark ? 'bg-yellow-400/10 text-yellow-400' : 'bg-yellow-50 text-yellow-600'}`}>{p.subcategory}</span>}
                           </div>
                         </td>
@@ -378,7 +377,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => { setEditingId(p._id); setEditForm({ productName: p.productName, category: p.category, subcategory: p.subcategory ?? '', price: p.price, materialSpecifications: p.materialSpecifications ?? '' }); }} className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-white/5 text-slate-400 hover:text-yellow-400' : 'hover:bg-slate-100 text-slate-500 hover:text-yellow-500'}`}><Pencil className="w-4 h-4" /></button>
+                            <button onClick={() => { setEditingId(p._id); setEditForm({ productName: p.productName, category: typeof p.category === 'object' && p.category ? (p.category as any)._id : p.category, subcategory: p.subcategory ?? '', price: p.price, materialSpecifications: p.materialSpecifications ?? '' }); }} className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-white/5 text-slate-400 hover:text-yellow-400' : 'hover:bg-slate-100 text-slate-500 hover:text-yellow-500'}`}><Pencil className="w-4 h-4" /></button>
                             <button onClick={() => handleDelete(p._id)} className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-red-500/10 text-slate-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`}><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>

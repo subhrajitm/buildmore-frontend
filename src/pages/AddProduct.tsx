@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { adminApi } from '../api';
-import { getCategoryMeta } from '../utils/categoryMeta';
+import { adminApi, categoryApi, Category } from '../api';
 import {
   Plus, Check, X,
   Upload, AlertCircle, Loader2, ArrowLeft
@@ -16,36 +15,20 @@ const EMPTY_FORM = {
   productName: '', desc: '', category: '', subcategory: '', price: '', stock: '', materialSpecifications: '',
 };
 
-const CATEGORIES = [
-  // Civil & Interiors
-  'Cement & Concrete',
-  'Tiles & Flooring',
-  'Paints & Finishes',
-  'Construction Chemicals',
-  'Plywood, Laminates & Boards',
-  'Doors & Windows',
-  // Furniture & Architectural Hardware
-  'Hardware & Fittings',
-  'Kitchen & Wardrobe Solutions',
-  'Tools & Equipment',
-  // Electrical
-  'Electrical',
-  'Lighting & Fans',
-  'Electrical Infrastructure',
-  // Plumbing, Sanitary & Bath
-  'Plumbing',
-  'Sanitary & Bath',
-];
-
 export const AddProduct: React.FC<AddProductProps> = ({ isDark }) => {
   const navigate = useNavigate();
   const { adminToken } = useAdminAuth();
   
+  const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [files, setFiles] = useState<FileList | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const fileRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    categoryApi.getAll().then(r => setCategories(r.categories || [])).catch(() => {});
+  }, []);
 
   const input = `w-full px-4 py-3 rounded-xl border text-sm font-bold outline-none transition-colors ${
     isDark ? 'bg-zinc-900 border-white/10 text-white placeholder-slate-500 focus:border-yellow-400/50' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-yellow-400'
@@ -64,7 +47,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ isDark }) => {
       const fd = new FormData();
       fd.append('productName', form.productName);
       fd.append('desc', form.desc);
-      fd.append('category', form.category);
+      fd.append('categoryId', form.category); // backend expects categoryId
       if (form.subcategory) fd.append('subcategory', form.subcategory);
       fd.append('price', form.price);
       fd.append('stock', form.stock);
@@ -113,7 +96,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ isDark }) => {
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Category *</label>
                 <select required value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value, subcategory: '' }))} className={input}>
                   <option value="">Select Category</option>
-                  {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  {categories.map(cat => <option key={cat._id} value={cat._id}>{cat.name}</option>)}
                 </select>
               </div>
 
@@ -121,8 +104,8 @@ export const AddProduct: React.FC<AddProductProps> = ({ isDark }) => {
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Subcategory</label>
                 <select value={form.subcategory} onChange={e => setForm(f => ({ ...f, subcategory: e.target.value }))} className={input} disabled={!form.category}>
                   <option value="">Select Subcategory</option>
-                  {form.category && getCategoryMeta(form.category).subcategories.map(sub => (
-                    <option key={sub} value={sub}>{sub}</option>
+                  {form.category && categories.find(c => c._id === form.category)?.subcategories.map(sub => (
+                    <option key={sub._id} value={sub.name}>{sub.name}</option>
                   ))}
                 </select>
               </div>

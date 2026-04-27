@@ -25,9 +25,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return data as T;
 }
 
-async function requestFormData<T>(path: string, formData: FormData, token: string): Promise<T> {
+async function requestFormData<T>(path: string, formData: FormData, token: string, method: string = 'POST'): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
+    method,
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
@@ -86,31 +86,51 @@ export interface ProductResponse {
   product: BackendProduct;
 }
 
+export interface Subcategory {
+  _id: string;
+  name: string;
+  slug: string;
+}
+
+export interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+  subcategories: Subcategory[];
+}
+
 export interface CategoriesResponse {
   success: boolean;
-  categories: string[];
+  categories: Category[];
 }
 
 // ── Public Product API ────────────────────────────────────────────────────────
 
 export const productApi = {
-  getAll: (params?: { search?: string; category?: string; subcategory?: string }) => {
+  getAll: (params?: { search?: string; category?: string; subcategory?: string; categoryId?: string; page?: number; limit?: number }) => {
     const qs = new URLSearchParams();
     if (params?.search) qs.set('search', params.search);
     if (params?.category) qs.set('category', params.category);
+    if (params?.categoryId) qs.set('categoryId', params.categoryId);
     if (params?.subcategory) qs.set('subcategory', params.subcategory);
+    if (params?.page) qs.set('page', params.page.toString());
+    if (params?.limit) qs.set('limit', params.limit.toString());
     const query = qs.toString() ? `?${qs.toString()}` : '';
     return request<ProductsResponse>(`/api/products${query}`);
   },
 
   getById: (id: string) =>
     request<ProductResponse>(`/api/products/${id}`),
+};
 
-  getCategories: () =>
-    request<CategoriesResponse>('/api/products/categories/all'),
+export const categoryApi = {
+  getAll: () =>
+    request<CategoriesResponse>('/api/categories'),
 
-  getSubcategories: (category: string) =>
-    request<{ success: boolean; subcategories: string[] }>(`/api/products/categories/subcategories?category=${encodeURIComponent(category)}`),
+  getById: (id: string) =>
+    request<{ success: boolean; category: Category }>(`/api/categories/${id}`),
 };
 
 // ── Admin Product API ─────────────────────────────────────────────────────────
@@ -132,9 +152,9 @@ export const adminApi = {
     request<AdminProductsResponse>('/api/admin/products', { token }),
 
   add: (formData: FormData, token: string) =>
-    requestFormData<AdminProductResponse>('/api/admin/products', formData, token),
+    requestFormData<AdminProductResponse>('/api/admin/products', formData, token, 'POST'),
 
-  update: (id: string, body: Partial<BackendProduct>, token: string) =>
+  update: (id: string, body: Partial<BackendProduct> & { categoryId?: string }, token: string) =>
     request<AdminProductResponse>(`/api/admin/products/${id}`, {
       method: 'PUT',
       body,
@@ -159,6 +179,23 @@ export const adminApi = {
       method: 'PATCH',
       token,
     }),
+};
+
+export const adminCategoryApi = {
+  create: (formData: FormData, token: string) =>
+    requestFormData<{ success: boolean; category: Category }>('/api/admin/categories', formData, token, 'POST'),
+
+  update: (id: string, formData: FormData, token: string) =>
+    requestFormData<{ success: boolean; category: Category }>(`/api/admin/categories/${id}`, formData, token, 'PUT'),
+
+  delete: (id: string, token: string) =>
+    request<{ success: boolean; message: string }>(`/api/admin/categories/${id}`, { method: 'DELETE', token }),
+
+  addSubcategory: (categoryId: string, body: { name: string }, token: string) =>
+    request<{ success: boolean; category: Category }>(`/api/admin/categories/${categoryId}/subcategories`, { method: 'POST', body, token }),
+
+  removeSubcategory: (categoryId: string, subId: string, token: string) =>
+    request<{ success: boolean; category: Category }>(`/api/admin/categories/${categoryId}/subcategories/${subId}`, { method: 'DELETE', token }),
 };
 
 // ── Shared types ──────────────────────────────────────────────────────────────
@@ -430,7 +467,7 @@ export const specsApi = {
     request<{ success: boolean; specs: SpecSheet[] }>(`/api/specs/product/${productId}`),
 
   adminUpload: (formData: FormData, token: string) =>
-    requestFormData<{ success: boolean; spec: SpecSheet }>('/api/specs/admin', formData, token),
+    requestFormData<{ success: boolean; spec: SpecSheet }>('/api/specs/admin', formData, token, 'POST'),
 
   adminDelete: (id: string, token: string) =>
     request<{ success: boolean; message: string }>(`/api/specs/admin/${id}`, { method: 'DELETE', token }),

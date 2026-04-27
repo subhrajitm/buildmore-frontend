@@ -3,12 +3,13 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { 
   LayoutDashboard, Package, ShoppingCart, FileText, Truck, 
-  LogOut, Settings, ChevronRight, Building2 
+  LogOut, Settings, ChevronRight, Building2, Layers
 } from 'lucide-react';
 
 const navItems = [
   { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/admin/products', icon: Package, label: 'Products' },
+  { path: '/admin/categories', icon: Layers, label: 'Categories' },
   { path: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
   { path: '/admin/rfqs', icon: FileText, label: 'RFQs' },
   { path: '/admin/shipments', icon: Truck, label: 'Shipments' },

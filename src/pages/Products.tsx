@@ -20,7 +20,7 @@ const SORT_OPTIONS = [
 ];
 
 // ─── Swiggy-style product card ─────────────────────────────────────────────────
-function ProductCard({ product, isDark, className = '' }: { product: any; isDark: boolean; className?: string }) {
+const ProductCard: React.FC<{ product: any; isDark: boolean; className?: string }> = ({ product, isDark, className = '' }) => {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(() => {
