@@ -253,8 +253,11 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
             <div className="flex gap-3">
               <button
                 onClick={handleAdd}
+                disabled={raw.stock === 0}
                 className={`flex-1 py-4 rounded-xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                  added
+                  raw.stock === 0
+                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed dark:bg-zinc-700 dark:text-zinc-500'
+                    : added
                     ? 'bg-green-500 text-white'
                     : 'bg-yellow-400 text-black hover:bg-yellow-300'
                 }`}

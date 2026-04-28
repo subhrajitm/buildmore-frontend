@@ -59,8 +59,8 @@ export const Auth: React.FC<AuthProps> = ({ isDark }) => {
       setError('Password must be at least 8 characters.');
       return;
     }
-    if (phone.length > 10) {
-      setError('Phone number must be at most 10 digits.');
+    if (phone.length !== 10) {
+      setError('Phone number must be exactly 10 digits.');
       return;
     }
     setLoading(true);

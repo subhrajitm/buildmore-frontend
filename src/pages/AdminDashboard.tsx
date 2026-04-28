@@ -17,15 +17,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark }) => {
 
   useEffect(() => {
     if (!adminToken) return;
-    Promise.all([
+    Promise.allSettled([
       adminApi.getAll(adminToken).then(r => r.products?.length || 0),
       orderApi.adminGetAll(adminToken).then(r => r.orders || []),
       rfqApi.adminGetAll(adminToken).then(r => r.rfqs || []),
       shipmentApi.adminGetAll(adminToken).then(r => r.shipments || []),
     ]).then(([products, orders, rfqs, shipments]) => {
-      setStats({ products, orders: orders.length, rfqs: rfqs.length, shipments: shipments.length });
-      setRecentOrders(orders.slice(0, 5));
-      setRecentRfqs(rfqs.slice(0, 5));
+      const p = products.status === 'fulfilled' ? products.value as number : 0;
+      const o = orders.status === 'fulfilled' ? orders.value as Order[] : [];
+      const r = rfqs.status === 'fulfilled' ? rfqs.value as RFQ[] : [];
+      const s = shipments.status === 'fulfilled' ? shipments.value as Shipment[] : [];
+      setStats({ products: p, orders: o.length, rfqs: r.length, shipments: s.length });
+      setRecentOrders(o.slice(0, 5));
+      setRecentRfqs(r.slice(0, 5));
     }).finally(() => setLoading(false));
   }, [adminToken]);
 

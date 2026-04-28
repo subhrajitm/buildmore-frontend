@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Package, MapPin, BarChart, Plus, Pencil, Trash2, Check, LogOut, Mail, Phone, Calendar, TrendingUp, Truck, Clock, RefreshCw } from 'lucide-react';
+import { Package, MapPin, BarChart, Plus, Pencil, Trash2, Check, LogOut, Mail, Phone, Calendar, TrendingUp, Truck, Clock, RefreshCw, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { userApi, orderApi, shipmentApi, UserProfile, Order, Address } from '../api';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -37,6 +37,11 @@ export const Profile: React.FC<ProfileProps> = ({ isDark }) => {
 
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [cancelReasonMap, setCancelReasonMap] = useState<Record<string, string>>({});
+
+  const [editingAccount, setEditingAccount] = useState(false);
+  const [accountForm, setAccountForm] = useState({ name: '', phone: '' });
+  const [accountSaving, setAccountSaving] = useState(false);
+  const [accountError, setAccountError] = useState('');
 
   const card = isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-100';
   const input = isDark
@@ -110,6 +115,24 @@ export const Profile: React.FC<ProfileProps> = ({ isDark }) => {
       alert(e.message || 'Failed to cancel');
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const saveAccount = async () => {
+    if (!token) return;
+    if (!accountForm.name.trim()) { setAccountError('Name is required'); return; }
+    if (accountForm.phone && accountForm.phone.length !== 10) { setAccountError('Phone must be 10 digits'); return; }
+    setAccountSaving(true);
+    setAccountError('');
+    try {
+      const res = await userApi.updateProfile({ name: accountForm.name.trim(), phone: accountForm.phone || undefined }, token);
+      setProfile(p => p ? { ...p, name: res.user.name, phone: res.user.phone } : p);
+      updateUser({ name: res.user.name });
+      setEditingAccount(false);
+    } catch (e: any) {
+      setAccountError(e.message || 'Failed to save');
+    } finally {
+      setAccountSaving(false);
     }
   };
 
@@ -341,47 +364,68 @@ export const Profile: React.FC<ProfileProps> = ({ isDark }) => {
 
       {activeTab === 'account' && (
         <div className={`p-6 rounded-2xl ${card}`}>
-          <h3 className={`text-sm font-black uppercase mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>Account Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-sm font-black uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>Account Information</h3>
+            {!editingAccount && (
+              <button
+                onClick={() => { setAccountForm({ name: profile?.name || '', phone: profile?.phone || '' }); setAccountError(''); setEditingAccount(true); }}
+                className="flex items-center gap-1 bg-yellow-400 text-black px-3 py-1.5 rounded-lg text-[9px] font-black uppercase"
+              >
+                <Pencil className="w-3 h-3" /> Edit
+              </button>
+            )}
+          </div>
+          {editingAccount ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-                  <Mail className="w-4 h-4 text-slate-500" />
+              {accountError && <p className="text-xs text-red-400 font-bold">{accountError}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Full Name *</label>
+                  <input
+                    value={accountForm.name}
+                    onChange={e => setAccountForm(f => ({ ...f, name: e.target.value }))}
+                    className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-colors ${input}`}
+                  />
                 </div>
-                <div>
-                  <p className="text-[9px] text-slate-500 uppercase">Email</p>
-                  <p className={`text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{profile?.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-                  <Phone className="w-4 h-4 text-slate-500" />
-                </div>
-                <div>
-                  <p className="text-[9px] text-slate-500 uppercase">Phone</p>
-                  <p className={`text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{profile?.phone}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-                  <BarChart className="w-4 h-4 text-slate-500" />
-                </div>
-                <div>
-                  <p className="text-[9px] text-slate-500 uppercase">Role</p>
-                  <p className={`text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{profile?.role}</p>
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Phone (10 digits)</label>
+                  <input
+                    value={accountForm.phone}
+                    onChange={e => setAccountForm(f => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                    placeholder="10-digit mobile number"
+                    className={`w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-colors ${input}`}
+                  />
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-                  <Calendar className="w-4 h-4 text-slate-500" />
-                </div>
-                <div>
-                  <p className="text-[9px] text-slate-500 uppercase">Member Since</p>
-                  <p className={`text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '-'}</p>
-                </div>
+              <div className="flex gap-2">
+                <button onClick={saveAccount} disabled={accountSaving} className="flex items-center gap-2 bg-yellow-400 text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase">
+                  {accountSaving ? '...' : <><Check className="w-3 h-3" /> Save Changes</>}
+                </button>
+                <button onClick={() => setEditingAccount(false)} className={`flex items-center gap-1 px-4 py-2 rounded-lg text-[10px] font-black uppercase ${isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                  <X className="w-3 h-3" /> Cancel
+                </button>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              {[
+                { icon: Mail, label: 'Email', value: profile?.email },
+                { icon: Phone, label: 'Phone', value: profile?.phone },
+                { icon: BarChart, label: 'Role', value: profile?.role },
+                { icon: Calendar, label: 'Member Since', value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '-' },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+                    <Icon className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-500 uppercase">{label}</p>
+                    <p className={`text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

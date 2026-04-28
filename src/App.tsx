@@ -32,7 +32,14 @@ import { Wishlist } from './pages/Wishlist';
 import { NotFound } from './pages/NotFound';
 
 export default function App() {
-  const [isDark, setIsDark] = React.useState(true);
+  const [isDark, setIsDark] = React.useState(() => {
+    const stored = localStorage.getItem('buildmore_theme');
+    return stored !== null ? stored === 'dark' : true;
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('buildmore_theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
 
   return (
     <AuthProvider>

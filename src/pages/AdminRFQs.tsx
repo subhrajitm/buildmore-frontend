@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { rfqApi, RFQ } from '../api';
-import { ChevronDown, ChevronUp, Loader2, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const ITEMS_PER_PAGE = 10;
 
 interface AdminRFQsProps {
   isDark: boolean;
@@ -18,6 +20,8 @@ export const AdminRFQs: React.FC<AdminRFQsProps> = ({ isDark }) => {
   const [quotedPrices, setQuotedPrices] = useState<Record<string, Record<string, string>>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -58,6 +62,11 @@ export const AdminRFQs: React.FC<AdminRFQsProps> = ({ isDark }) => {
     }
   };
 
+  const filtered = statusFilter === 'All' ? rfqs : rfqs.filter(r => r.status === statusFilter);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedRfqs = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+
   if (loading) return <div className="flex items-center justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-yellow-400" /></div>;
 
   return (
@@ -67,13 +76,21 @@ export const AdminRFQs: React.FC<AdminRFQsProps> = ({ isDark }) => {
           {toast}
         </div>
       )}
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{rfqs.length} Total RFQs</p>
-      {rfqs.length === 0 && (
+      <div className="flex flex-wrap items-center gap-2">
+        {['All', ...RFQ_ADMIN_STATUSES].map(s => (
+          <button key={s} onClick={() => { setStatusFilter(s); setCurrentPage(1); }}
+            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${statusFilter === s ? 'bg-yellow-400 text-black' : isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}>
+            {s === 'UNDER_REVIEW' ? 'Review' : s}
+          </button>
+        ))}
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-auto">{filtered.length} RFQs</p>
+      </div>
+      {filtered.length === 0 && (
         <div className={`flex flex-col items-center justify-center py-16 gap-4 rounded-2xl border border-dashed ${isDark ? 'border-white/10 text-slate-500' : 'border-slate-200 text-slate-400'}`}>
-          <p className="text-[10px] font-black uppercase tracking-widest">No RFQs submitted</p>
+          <p className="text-[10px] font-black uppercase tracking-widest">No RFQs found</p>
         </div>
       )}
-      {rfqs.map(rfq => {
+      {paginatedRfqs.map(rfq => {
         const isExpanded = expandedId === rfq._id;
         return (
           <div key={rfq._id} className={`rounded-2xl border transition-all ${cardBg}`}>
@@ -138,6 +155,19 @@ export const AdminRFQs: React.FC<AdminRFQsProps> = ({ isDark }) => {
           </div>
         );
       })}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className={`p-2 rounded-lg disabled:opacity-30 ${isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}>
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+            Page {safePage} of {totalPages}
+          </span>
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className={`p-2 rounded-lg disabled:opacity-30 ${isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

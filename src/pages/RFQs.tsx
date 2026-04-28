@@ -52,6 +52,9 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState('');
 
+  // Accept/Reject state
+  const [responding, setResponding] = useState<string | null>(null);
+
   // Inline item edit
   const [editingItem, setEditingItem] = useState<{ rfqId: string; itemId: string } | null>(null);
   const [editItemForm, setEditItemForm] = useState({ quantity: '1', targetPrice: '', notes: '' });
@@ -142,6 +145,19 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
       // keep editing open so user can retry
     } finally {
       setSavingItem(false);
+    }
+  };
+
+  const handleRespond = async (rfqId: string, action: 'ACCEPT' | 'REJECT') => {
+    if (!token) return;
+    setResponding(rfqId);
+    try {
+      const res = await rfqApi.respond(rfqId, action, token);
+      setRfqs(prev => prev.map(r => r._id === rfqId ? res.rfq : r));
+    } catch (err: any) {
+      // keep current state
+    } finally {
+      setResponding(null);
     }
   };
 
@@ -474,6 +490,29 @@ export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
                     <div className={`px-4 py-3 rounded-xl ${isDark ? 'bg-yellow-400/5 border border-yellow-400/20' : 'bg-yellow-50 border border-yellow-200'}`}>
                       <p className="text-[9px] font-black uppercase tracking-widest text-yellow-400 mb-1">Admin Notes</p>
                       <p className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{rfq.adminNotes}</p>
+                    </div>
+                  )}
+
+                  {/* Accept/Reject — only for QUOTED */}
+                  {rfq.status === 'QUOTED' && (
+                    <div className={`px-4 py-4 rounded-xl border space-y-3 ${isDark ? 'bg-green-400/5 border-green-400/20' : 'bg-green-50 border-green-200'}`}>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-green-400">Quote Received — Your Response</p>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => handleRespond(rfq._id, 'ACCEPT')}
+                          disabled={responding === rfq._id}
+                          className="flex items-center gap-1.5 bg-green-500 text-white px-4 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-green-400 disabled:opacity-50 transition-all"
+                        >
+                          {responding === rfq._id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Accept Quote
+                        </button>
+                        <button
+                          onClick={() => handleRespond(rfq._id, 'REJECT')}
+                          disabled={responding === rfq._id}
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest disabled:opacity-50 transition-all ${isDark ? 'bg-white/5 text-red-400 hover:bg-red-400/10' : 'bg-slate-100 text-red-500 hover:bg-red-50'}`}
+                        >
+                          Reject Quote
+                        </button>
+                      </div>
                     </div>
                   )}
 

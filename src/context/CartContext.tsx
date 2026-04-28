@@ -57,7 +57,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       removeItem(id);
       return;
     }
-    setItems(prev => prev.map(i => (i.id === id ? { ...i, quantity } : i)));
+    setItems(prev => prev.map(i => {
+      if (i.id !== id) return i;
+      const maxQty = i.stock != null ? Math.min(quantity, i.stock) : quantity;
+      return { ...i, quantity: maxQty };
+    }));
   };
 
   const clearCart = () => setItems([]);

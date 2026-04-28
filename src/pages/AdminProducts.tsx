@@ -8,7 +8,7 @@ import {
   List, IndianRupee, Box, Eye, EyeOff, RefreshCw, PlusCircle, MinusCircle,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { formatPrice, formatINR } from '../utils/currency';
+import { formatPrice } from '../utils/currency';
 
 interface AdminProductsProps {
   isDark: boolean;
@@ -276,7 +276,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
               <IndianRupee className="w-5 h-5 text-blue-500" />
             </div>
           </div>
-          <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatINR(stats.totalValue)}</p>
+          <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatPrice(stats.totalValue)}</p>
           <p className={`text-[10px] font-black uppercase tracking-widest ${mutedClass}`}>Total Value</p>
         </div>
       </div>

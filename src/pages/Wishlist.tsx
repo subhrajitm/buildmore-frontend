@@ -58,7 +58,7 @@ export const Wishlist: React.FC<WishlistProps> = ({ isDark }) => {
             My Wishlist
           </h1>
           <p className={`text-xs font-bold uppercase tracking-widest ${mutedClass}`}>
-            {wishlistIds.length} saved {wishlistIds.length === 1 ? 'item' : 'items'}
+            {products.length} saved {products.length === 1 ? 'item' : 'items'}
           </p>
         </div>
       </div>

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { shipmentApi, Shipment } from '../api';
-import { ChevronDown, ChevronUp, Loader2, Plus, X, Send } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Plus, X, Send, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const ITEMS_PER_PAGE = 10;
 
 interface AdminShipmentsProps {
   isDark: boolean;
@@ -18,6 +20,8 @@ export const AdminShipments: React.FC<AdminShipmentsProps> = ({ isDark }) => {
   const [creating, setCreating] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [createForm, setCreateForm] = useState({ orderId: '', userId: '', carrier: '', origin: '', destination: '', estimatedDelivery: '', freightClass: '', weight: '' });
   const [eventForms, setEventForms] = useState<Record<string, { status: string; location: string; description: string }>>({});
@@ -100,6 +104,15 @@ export const AdminShipments: React.FC<AdminShipmentsProps> = ({ isDark }) => {
     }
   };
 
+  const filtered = shipments.filter(s =>
+    s.trackingNumber?.toLowerCase().includes(search.toLowerCase()) ||
+    s.carrier?.toLowerCase().includes(search.toLowerCase()) ||
+    s.order?.orderNumber?.toLowerCase().includes(search.toLowerCase())
+  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedShipments = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+
   if (loading) return <div className="flex items-center justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-yellow-400" /></div>;
 
   return (
@@ -109,8 +122,18 @@ export const AdminShipments: React.FC<AdminShipmentsProps> = ({ isDark }) => {
           {toast}
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{shipments.length} Shipments</p>
+      <div className="flex items-center justify-between gap-4">
+        <div className={`relative flex items-center border rounded-lg ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-200'}`}>
+          <Search className="absolute left-3 w-3.5 h-3.5 text-slate-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+            placeholder="Search shipments..."
+            className={`pl-9 pr-4 py-2.5 text-[10px] font-bold uppercase tracking-widest outline-none bg-transparent w-52 ${isDark ? 'text-white placeholder:text-slate-600' : 'text-slate-900 placeholder:text-slate-400'}`}
+          />
+        </div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{filtered.length} Shipments</p>
         <button onClick={() => setShowCreate(v => !v)} className="bg-yellow-400 text-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-300 flex items-center gap-2">
           {showCreate ? <><X className="w-4 h-4" /> Cancel</> : <><Plus className="w-4 h-4" /> Create Shipment</>}
         </button>
@@ -149,12 +172,12 @@ export const AdminShipments: React.FC<AdminShipmentsProps> = ({ isDark }) => {
       )}
 
       <div className="space-y-3">
-        {shipments.length === 0 && (
+        {filtered.length === 0 && (
           <div className={`flex flex-col items-center justify-center py-16 gap-4 rounded-2xl border border-dashed ${isDark ? 'border-white/10 text-slate-500' : 'border-slate-200 text-slate-400'}`}>
-            <p className="text-[10px] font-black uppercase tracking-widest">No shipments yet</p>
+            <p className="text-[10px] font-black uppercase tracking-widest">No shipments found</p>
           </div>
         )}
-        {shipments.map(ship => {
+        {paginatedShipments.map(ship => {
           const isExpanded = expandedId === ship._id;
           const ev = eventForms[ship._id] ?? { status: '', location: '', description: '' };
           return (
@@ -219,6 +242,19 @@ export const AdminShipments: React.FC<AdminShipmentsProps> = ({ isDark }) => {
           );
         })}
       </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className={`p-2 rounded-lg disabled:opacity-30 ${isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}>
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+            Page {safePage} of {totalPages}
+          </span>
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className={`p-2 rounded-lg disabled:opacity-30 ${isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

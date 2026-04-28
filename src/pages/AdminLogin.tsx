@@ -165,16 +165,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ isDark }) => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-slate-500 bg-transparent text-yellow-400 focus:ring-yellow-400" />
-                <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Remember this device</span>
-              </label>
-              <button type="button" className="text-xs font-bold text-yellow-400 hover:text-yellow-300 transition-colors">
-                Forgot access key?
-              </button>
-            </div>
-
             <button
               type="submit"
               disabled={loading}

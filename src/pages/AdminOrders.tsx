@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { orderApi, Order } from '../api';
-import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const ITEMS_PER_PAGE = 10;
 
 interface AdminOrdersProps {
   isDark: boolean;
@@ -20,6 +22,9 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ isDark }) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -49,6 +54,15 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ isDark }) => {
     }
   };
 
+  const filtered = orders.filter(o => {
+    const matchSearch = o.orderNumber.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === 'All' || o.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedOrders = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+
   if (loading) return <div className="flex items-center justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-yellow-400" /></div>;
 
   return (
@@ -58,13 +72,36 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ isDark }) => {
           {toast}
         </div>
       )}
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{orders.length} Total Orders</p>
-      {orders.length === 0 && (
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className={`relative flex items-center border rounded-lg ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-200'}`}>
+          <Search className="absolute left-3 w-3.5 h-3.5 text-slate-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+            placeholder="Search orders..."
+            className={`pl-9 pr-4 py-2.5 text-[10px] font-bold uppercase tracking-widest outline-none bg-transparent w-56 ${isDark ? 'text-white placeholder:text-slate-600' : 'text-slate-900 placeholder:text-slate-400'}`}
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {['All', ...ORDER_STATUSES].map(s => (
+            <button
+              key={s}
+              onClick={() => { setStatusFilter(s); setCurrentPage(1); }}
+              className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${statusFilter === s ? 'bg-yellow-400 text-black' : isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-auto">{filtered.length} Orders</p>
+      </div>
+      {filtered.length === 0 && (
         <div className={`flex flex-col items-center justify-center py-16 gap-4 rounded-2xl border border-dashed ${isDark ? 'border-white/10 text-slate-500' : 'border-slate-200 text-slate-400'}`}>
-          <p className="text-[10px] font-black uppercase tracking-widest">No orders yet</p>
+          <p className="text-[10px] font-black uppercase tracking-widest">No orders found</p>
         </div>
       )}
-      {orders.map(order => {
+      {paginatedOrders.map(order => {
         const isExpanded = expandedId === order._id;
         const statusColor = ORDER_STATUS_COLORS[order.status] ?? 'text-slate-400';
         return (
@@ -121,6 +158,19 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ isDark }) => {
           </div>
         );
       })}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className={`p-2 rounded-lg disabled:opacity-30 ${isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}>
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+            Page {safePage} of {totalPages}
+          </span>
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className={`p-2 rounded-lg disabled:opacity-30 ${isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

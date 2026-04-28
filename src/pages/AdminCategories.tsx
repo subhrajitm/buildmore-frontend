@@ -32,7 +32,6 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({ isDark }) => {
   const [editCatImage, setEditCatImage] = useState<File | null>(null);
 
   // Subcategories
-  const [subcatFormOpen, setSubcatFormOpen] = useState<string | null>(null);
   const [newSubcatName, setNewSubcatName] = useState('');
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -121,7 +120,6 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({ isDark }) => {
     try {
       await adminCategoryApi.addSubcategory(categoryId, { name: newSubcatName }, adminToken);
       setNewSubcatName('');
-      setSubcatFormOpen(null);
       showToast('Subcategory added');
       load();
     } catch (err: any) {
