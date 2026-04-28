@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck, User, Package, FileText, Settings } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck, User, Package, FileText, Settings, Heart } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -149,6 +149,7 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
                       {[
                         { to: '/profile', icon: User, label: 'My Profile' },
                         { to: '/profile?tab=orders', icon: Package, label: 'My Orders' },
+                        { to: '/wishlist', icon: Heart, label: 'My Wishlist' },
                         { to: '/rfqs', icon: FileText, label: 'Quote Requests' },
                         ...(isAdmin ? [{ to: '/admin', icon: Settings, label: 'Admin Panel' }] : []),
                       ].map(({ to, icon: Icon, label }) => (

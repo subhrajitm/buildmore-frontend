@@ -193,7 +193,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
   }
 
   return (
-    <div className={`max-w-[1920px] mx-auto flex flex-col h-[calc(100vh-140px)] overflow-hidden border ${borderClass} ${bgClass} shadow-2xl relative`}>
+    <div className={`max-w-[1920px] mx-auto flex flex-col h-[calc(100vh-80px)] overflow-hidden border ${borderClass} ${bgClass} shadow-2xl relative`}>
       {/* ── Control Bar ── */}
       <div className={`px-6 py-2 border-b ${borderClass} ${isDark ? 'bg-[#050505]' : 'bg-white'} flex items-center justify-between z-30`}>
         {/* Left: Breadcrumbs */}

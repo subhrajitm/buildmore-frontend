@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminApi, BackendProduct } from '../api';
-import { 
-  Plus, Pencil, Trash2, Package, ToggleLeft, ToggleRight, Check, X, 
-  Upload, AlertCircle, ChevronDown, Loader2, Search, Filter, Grid3X3, 
-  List, IndianRupee, Box, Eye, EyeOff, RefreshCw, PlusCircle, MinusCircle
+import {
+  Plus, Pencil, Trash2, Package, ToggleLeft, ToggleRight, Check, X,
+  Upload, AlertCircle, ChevronDown, Loader2, Search, Filter, Grid3X3,
+  List, IndianRupee, Box, Eye, EyeOff, RefreshCw, PlusCircle, MinusCircle,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { formatPrice, formatINR } from '../utils/currency';
 
@@ -99,6 +100,8 @@ const EMPTY_FORM = {
   productName: '', desc: '', category: '', price: '', stock: '', materialSpecifications: '',
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
   const navigate = useNavigate();
   const { adminToken } = useAdminAuth();
@@ -112,6 +115,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterAvailability, setFilterAvailability] = useState<'all' | 'available' | 'unavailable'>('all');
   
+  const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<BackendProduct>>({});
   const [stockEditing, setStockEditing] = useState<string | null>(null);
@@ -146,15 +150,21 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
   useEffect(load, [adminToken]);
 
   const filteredProducts = products.filter(p => {
-    const matchesSearch = p.productName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesSearch = p.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          p.desc?.toLowerCase().includes(searchQuery.toLowerCase());
     const pCatName = typeof p.category === 'object' && p.category ? (p.category as any).name : p.category;
     const matchesCategory = !filterCategory || pCatName === filterCategory;
-    const matchesAvailability = filterAvailability === 'all' || 
+    const matchesAvailability = filterAvailability === 'all' ||
                                (filterAvailability === 'available' && p.availability) ||
                                (filterAvailability === 'unavailable' && !p.availability);
     return matchesSearch && matchesCategory && matchesAvailability;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedProducts = filteredProducts.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+
+  const handleFilterChange = (fn: () => void) => { fn(); setCurrentPage(1); };
 
   const stats = {
     total: products.length,
@@ -280,14 +290,14 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
               type="text"
               placeholder="Search products by name or description..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={e => handleFilterChange(() => setSearchQuery(e.target.value))}
               className={`w-full pl-12 pr-4 py-3 rounded-xl border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white placeholder-slate-500' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'}`}
             />
           </div>
           <div className="flex gap-2">
             <select
               value={filterCategory}
-              onChange={e => setFilterCategory(e.target.value)}
+              onChange={e => handleFilterChange(() => setFilterCategory(e.target.value))}
               className={`px-4 py-3 rounded-xl border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'}`}
             >
               <option value="">All Categories</option>
@@ -295,7 +305,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
             </select>
             <select
               value={filterAvailability}
-              onChange={e => setFilterAvailability(e.target.value as any)}
+              onChange={e => handleFilterChange(() => setFilterAvailability(e.target.value as any))}
               className={`px-4 py-3 rounded-xl border text-sm font-bold outline-none ${isDark ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'}`}
             >
               <option value="all">All Status</option>
@@ -323,7 +333,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
       {/* Results Count */}
       <div className="flex items-center justify-between">
         <p className={`text-sm font-bold ${mutedClass}`}>
-          Showing {filteredProducts.length} of {products.length} products
+          Showing {Math.min((safePage - 1) * ITEMS_PER_PAGE + 1, filteredProducts.length)}–{Math.min(safePage * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} products
         </p>
         <button onClick={load} className={`flex items-center gap-2 text-sm font-bold ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`}>
           <RefreshCw className="w-4 h-4" /> Refresh
@@ -341,7 +351,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredProducts.map(p => (
+          {paginatedProducts.map(p => (
             <div key={p._id} className={`rounded-2xl border overflow-hidden ${card} hover:border-yellow-400/30 transition-all`}>
               <div className={`h-32 ${isDark ? 'bg-white/5' : 'bg-slate-100'} flex items-center justify-center`}>
                 <Package className="w-12 h-12 text-slate-400" />
@@ -387,7 +397,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.03]">
-                {filteredProducts.map(p => (
+                {paginatedProducts.map(p => (
                   <tr key={p._id} className={`transition-colors ${isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -446,6 +456,69 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
           </div>
         </div>
       )}
+      {/* Pagination */}
+      {!loading && filteredProducts.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className={`text-xs font-bold ${mutedClass}`}>
+            Page {safePage} of {totalPages}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={safePage === 1}
+              className={`px-3 py-2 rounded-lg text-xs font-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+            >
+              First
+            </button>
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className={`p-2 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(n => n === 1 || n === totalPages || Math.abs(n - safePage) <= 2)
+              .reduce<(number | '...')[]>((acc, n, i, arr) => {
+                if (i > 0 && n - (arr[i - 1] as number) > 1) acc.push('...');
+                acc.push(n);
+                return acc;
+              }, [])
+              .map((n, i) =>
+                n === '...' ? (
+                  <span key={`ellipsis-${i}`} className={`px-2 py-2 text-xs font-bold ${mutedClass}`}>…</span>
+                ) : (
+                  <button
+                    key={n}
+                    onClick={() => setCurrentPage(n as number)}
+                    className={`min-w-[36px] h-9 rounded-lg text-xs font-black transition-colors ${
+                      safePage === n
+                        ? 'bg-yellow-400 text-black'
+                        : isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                )
+              )}
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className={`p-2 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={safePage === totalPages}
+              className={`px-3 py-2 rounded-lg text-xs font-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+            >
+              Last
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Edit Product Modal */}
       <EditProductModal
         isOpen={editingId !== null}

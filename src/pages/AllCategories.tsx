@@ -60,7 +60,7 @@ export const AllCategories: React.FC<AllCategoriesProps> = ({ isDark }) => {
   });
 
   return (
-    <div className={`max-w-[1920px] mx-auto flex h-[calc(100vh-180px)] overflow-hidden rounded-3xl border ${borderClass} ${cardBg}`}>
+    <div className={`max-w-[1920px] mx-auto flex h-[calc(100vh-120px)] overflow-hidden rounded-3xl border ${borderClass} ${cardBg}`}>
       {/* Sidebar */}
       <aside className={`w-72 flex-shrink-0 border-r ${borderClass} ${sidebarBg} overflow-y-auto`}>
         <div className="p-6 space-y-4 border-b border-dashed border-white/5">

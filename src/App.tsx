@@ -28,6 +28,7 @@ import { Compliance } from './pages/Compliance';
 import { Specs } from './pages/Specs';
 import { RFQs } from './pages/RFQs';
 import { AllCategories } from './pages/AllCategories';
+import { Wishlist } from './pages/Wishlist';
 import { NotFound } from './pages/NotFound';
 
 export default function App() {
@@ -104,6 +105,11 @@ export default function App() {
               <Route path="/rfqs" element={
                 <MainLayout isDark={isDark} setIsDark={setIsDark}>
                   <ProtectedRoute><RFQs isDark={isDark} /></ProtectedRoute>
+                </MainLayout>
+              } />
+              <Route path="/wishlist" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <ProtectedRoute><Wishlist isDark={isDark} /></ProtectedRoute>
                 </MainLayout>
               } />
               
