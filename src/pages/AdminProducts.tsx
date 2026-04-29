@@ -112,27 +112,18 @@ const EditProductModal: React.FC<{
     if (!product || !validate()) return;
     setSaving(true); setSaveError('');
     try {
-      const updateData: any = {
-        productName: form.productName.trim(),
-        desc: form.desc,
-        categoryId: form.category,
-        subcategory: form.subcategory,
-        price: Number(form.price),
-        materialSpecifications: form.materialSpecifications,
-      };
-      if (form.stock !== '') updateData.stock = Number(form.stock);
-      if (keptImages.length > 0) updateData.keepImages = keptImages;
-      if (newPreviews.length > 0) {
-        const fd = new FormData();
-        Object.entries(updateData).forEach(([k, v]) => { if (v !== undefined) fd.append(k, String(v)); });
-        keptImages.forEach(url => fd.append('keepImages', url));
-        newPreviews.forEach(p => fd.append('images', p.file));
-        const res = await adminApi.updateFormData(product._id, fd, adminToken);
-        onSaved(res.product);
-      } else {
-        const res = await adminApi.update(product._id, updateData, adminToken);
-        onSaved(res.product);
-      }
+      const fd = new FormData();
+      fd.append('productName', form.productName.trim());
+      fd.append('desc', form.desc);
+      fd.append('categoryId', form.category);
+      fd.append('subcategory', form.subcategory);
+      fd.append('price', form.price);
+      if (form.stock !== '') fd.append('stock', form.stock);
+      fd.append('materialSpecifications', form.materialSpecifications);
+      keptImages.forEach(url => fd.append('keepImages', url));
+      newPreviews.forEach(p => fd.append('images', p.file));
+      const res = await adminApi.updateFormData(product._id, fd, adminToken);
+      onSaved(res.product);
     } catch (err: any) {
       setSaveError(err.message || 'Save failed');
     } finally {
