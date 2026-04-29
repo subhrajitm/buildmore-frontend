@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminApi, BackendProduct } from '../api';
@@ -6,7 +6,7 @@ import {
   Plus, Pencil, Trash2, Package, ToggleLeft, ToggleRight, Check, X,
   Upload, AlertCircle, ChevronDown, Loader2, Search, Filter, Grid3X3,
   List, IndianRupee, Box, Eye, EyeOff, RefreshCw, PlusCircle, MinusCircle,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Image as ImageIcon, FileText, Tag, Layers,
 } from 'lucide-react';
 import { formatPrice } from '../utils/currency';
 
@@ -16,78 +16,387 @@ interface AdminProductsProps {
 
 
 // ── Edit Product Modal ───────────────────────────────────────────────────────────
+const MAX_EDIT_IMAGES = 5;
+const MAX_EDIT_NAME = 120;
+const MAX_EDIT_DESC = 1000;
+
+interface EditModalForm {
+  productName: string;
+  desc: string;
+  category: string;
+  subcategory: string;
+  price: string;
+  stock: string;
+  materialSpecifications: string;
+}
+
 const EditProductModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
-  onSave: (id: string) => void;
-  editForm: any;
-  setEditForm: any;
+  onSaved: (updated: BackendProduct) => void;
+  product: BackendProduct | null;
   categoriesList: any[];
   isDark: boolean;
-  productId: string | null;
-  products: any[];
-}> = ({ isOpen, onClose, onSave, editForm, setEditForm, categoriesList, isDark, productId, products }) => {
-  if (!isOpen || !productId) return null;
+  adminToken: string;
+}> = ({ isOpen, onClose, onSaved, product, categoriesList, isDark, adminToken }) => {
+  const [form, setForm] = useState<EditModalForm>({ productName: '', desc: '', category: '', subcategory: '', price: '', stock: '', materialSpecifications: '' });
+  const [newPreviews, setNewPreviews] = useState<{ file: File; url: string }[]>([]);
+  const [keptImages, setKeptImages] = useState<string[]>([]);
+  const [dragOver, setDragOver] = useState(false);
+  const [errors, setErrors] = useState<Partial<EditModalForm & { images: string }>>({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const product = products.find(p => p._id === productId);
-  if (!product) return null;
+  // Initialise form when product changes
+  useEffect(() => {
+    if (!product) return;
+    const catId = typeof product.category === 'object' && product.category ? (product.category as any)._id : (product.category ?? '');
+    setForm({
+      productName: product.productName ?? '',
+      desc: product.desc ?? '',
+      category: catId,
+      subcategory: product.subcategory ?? '',
+      price: String(product.price ?? ''),
+      stock: String(product.stock ?? ''),
+      materialSpecifications: product.materialSpecifications ?? '',
+    });
+    setKeptImages(product.productImages ?? []);
+    setNewPreviews([]);
+    setErrors({});
+    setSaveError('');
+  }, [product?._id]);
 
-  const inputClass = `w-full px-4 py-3 rounded-xl border text-sm font-bold outline-none transition-colors ${
-    isDark ? 'bg-zinc-950 border-white/10 text-white placeholder-slate-500 focus:border-yellow-400/50' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-yellow-400'
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  // Cleanup new preview URLs on unmount
+  useEffect(() => () => newPreviews.forEach(p => URL.revokeObjectURL(p.url)), []);
+
+  const addFiles = useCallback((fileList: FileList) => {
+    const slots = MAX_EDIT_IMAGES - keptImages.length - newPreviews.length;
+    if (slots <= 0) return;
+    const toAdd = Array.from(fileList).slice(0, slots).filter(f => f.type.startsWith('image/'));
+    const mapped = toAdd.map(f => ({ file: f, url: URL.createObjectURL(f) }));
+    setNewPreviews(p => [...p, ...mapped]);
+    setErrors(e => ({ ...e, images: undefined }));
+  }, [newPreviews.length, keptImages.length]);
+
+  const removeExistingImage = (url: string) => {
+    setKeptImages(prev => prev.filter(u => u !== url));
+  };
+
+  const removeNewPreview = (idx: number) => {
+    setNewPreviews(p => {
+      URL.revokeObjectURL(p[idx].url);
+      return p.filter((_, i) => i !== idx);
+    });
+  };
+
+  const validate = (): boolean => {
+    const e: Partial<EditModalForm & { images: string }> = {};
+    if (!form.productName.trim()) e.productName = 'Required';
+    else if (form.productName.length > MAX_EDIT_NAME) e.productName = `Max ${MAX_EDIT_NAME} chars`;
+    if (!form.category) e.category = 'Required';
+    if (!form.price || isNaN(Number(form.price)) || Number(form.price) < 0) e.price = 'Valid price required';
+    if (form.stock !== '' && (isNaN(Number(form.stock)) || Number(form.stock) < 0)) e.stock = 'Valid stock required';
+    if (form.desc.length > MAX_EDIT_DESC) e.desc = `Max ${MAX_EDIT_DESC} chars`;
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!product || !validate()) return;
+    setSaving(true); setSaveError('');
+    try {
+      const fd = new FormData();
+      fd.append('productName', form.productName.trim());
+      fd.append('desc', form.desc);
+      fd.append('categoryId', form.category);
+      fd.append('subcategory', form.subcategory);
+      fd.append('price', form.price);
+      if (form.stock !== '') fd.append('stock', form.stock);
+      fd.append('materialSpecifications', form.materialSpecifications);
+      keptImages.forEach(url => fd.append('keepImages', url));
+      newPreviews.forEach(p => fd.append('images', p.file));
+      const res = await adminApi.updateFormData(product._id, fd, adminToken);
+      onSaved(res.product);
+    } catch (err: any) {
+      setSaveError(err.message || 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen || !product) return null;
+
+  const inp = `w-full px-3 py-2.5 rounded-xl border text-sm font-bold outline-none transition-colors ${
+    isDark
+      ? 'bg-zinc-800 border-white/10 text-white placeholder-slate-500 focus:border-yellow-400/50'
+      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-yellow-400'
   }`;
+  const lbl = `text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`;
+  const errCls = 'text-[9px] font-bold text-red-400 mt-0.5';
+
+  const selectedCat = categoriesList.find(c => c._id === form.category);
+  const subcats: any[] = selectedCat?.subcategories ?? [];
+  const priceNum = Number(form.price);
+  const stockNum = Number(form.stock);
+  const totalImages = keptImages.length + newPreviews.length;
+
+  const stockLabel = form.stock === '' ? null
+    : stockNum === 0 ? { text: 'Out of stock', color: 'text-red-400' }
+    : stockNum <= 10 ? { text: 'Low stock', color: 'text-orange-400' }
+    : { text: 'In stock', color: 'text-green-400' };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full max-w-2xl rounded-3xl border shadow-2xl overflow-hidden ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-slate-200'}`}>
-        <div className="px-8 py-6 border-b border-dashed flex items-center justify-between">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className={`relative w-full max-w-4xl my-8 rounded-3xl border shadow-2xl overflow-hidden ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-slate-200'}`}>
+
+        {/* Header */}
+        <div className={`px-8 py-5 border-b flex items-center justify-between ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
           <div>
-            <h2 className={`text-xl font-black uppercase tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Edit Product</h2>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Update product information and inventory</p>
+            <h2 className={`text-lg font-black uppercase tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Edit Product</h2>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Update information, images, and inventory</p>
           </div>
           <button onClick={onClose} className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-8 space-y-6 overflow-y-auto max-h-[70vh]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Product Name</label>
-              <input value={editForm.productName ?? product.productName} onChange={e => setEditForm((f: any) => ({ ...f, productName: e.target.value }))} className={inputClass} placeholder="Enter product name" />
+        {/* Two-panel body */}
+        <div className="flex flex-col lg:flex-row gap-0 divide-y lg:divide-y-0 lg:divide-x divide-white/5">
+
+          {/* LEFT — form fields */}
+          <div className="flex-1 p-6 space-y-4 overflow-y-auto max-h-[75vh]">
+
+            {/* Name */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className={lbl}><Tag className="inline w-3 h-3 mr-1" />Product Name</label>
+                <span className={`text-[9px] font-bold ${form.productName.length > MAX_EDIT_NAME ? 'text-red-400' : 'text-slate-500'}`}>{form.productName.length}/{MAX_EDIT_NAME}</span>
+              </div>
+              <input
+                value={form.productName}
+                onChange={e => { setForm(f => ({ ...f, productName: e.target.value })); setErrors(er => ({ ...er, productName: undefined })); }}
+                className={`${inp} ${errors.productName ? 'border-red-400/50' : ''}`}
+                placeholder="E.g. TMT Steel Bar Fe500"
+                maxLength={MAX_EDIT_NAME + 10}
+              />
+              {errors.productName && <p className={errCls}>{errors.productName}</p>}
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Category</label>
-              <select value={editForm.category ?? (typeof product.category === 'object' && product.category ? (product.category as any)._id : product.category)} onChange={e => setEditForm((f: any) => ({ ...f, category: e.target.value, subcategory: '' }))} className={inputClass}>
-                {categoriesList.map(cat => <option key={cat._id} value={cat._id}>{cat.name}</option>)}
-              </select>
+
+            {/* Category + Subcategory */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={`${lbl} mb-1 block`}><Layers className="inline w-3 h-3 mr-1" />Category</label>
+                <select
+                  value={form.category}
+                  onChange={e => { setForm(f => ({ ...f, category: e.target.value, subcategory: '' })); setErrors(er => ({ ...er, category: undefined })); }}
+                  className={`${inp} ${errors.category ? 'border-red-400/50' : ''}`}
+                >
+                  <option value="">Select category</option>
+                  {categoriesList.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                </select>
+                {errors.category && <p className={errCls}>{errors.category}</p>}
+              </div>
+              <div>
+                <label className={`${lbl} mb-1 block`}>Subcategory</label>
+                <select
+                  value={form.subcategory}
+                  onChange={e => setForm(f => ({ ...f, subcategory: e.target.value }))}
+                  className={inp}
+                  disabled={subcats.length === 0}
+                >
+                  <option value="">None</option>
+                  {subcats.map((s: any) => <option key={s._id} value={s.name}>{s.name}</option>)}
+                </select>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Subcategory</label>
-              <select value={editForm.subcategory ?? product.subcategory ?? ''} onChange={e => setEditForm((f: any) => ({ ...f, subcategory: e.target.value }))} className={inputClass}>
-                <option value="">No Subcategory</option>
-                {(categoriesList.find(c => c._id === (editForm.category ?? (typeof product.category === 'object' && product.category ? (product.category as any)._id : product.category)) || c.name === (editForm.category ?? (typeof product.category === 'object' && product.category ? (product.category as any).name : product.category)))?.subcategories || []).map((sub: any) => (
-                  <option key={sub._id} value={sub.name}>{sub.name}</option>
-                ))}
-              </select>
+
+            {/* Price + Stock */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={`${lbl} mb-1 block`}><IndianRupee className="inline w-3 h-3 mr-1" />Price (₹)</label>
+                <input
+                  type="number" min="0" step="0.01"
+                  value={form.price}
+                  onChange={e => { setForm(f => ({ ...f, price: e.target.value })); setErrors(er => ({ ...er, price: undefined })); }}
+                  className={`${inp} ${errors.price ? 'border-red-400/50' : ''}`}
+                  placeholder="0.00"
+                />
+                {errors.price
+                  ? <p className={errCls}>{errors.price}</p>
+                  : priceNum > 0 && <p className="text-[9px] font-bold text-yellow-400 mt-0.5">{formatPrice(priceNum)}</p>
+                }
+              </div>
+              <div>
+                <label className={`${lbl} mb-1 block`}><Box className="inline w-3 h-3 mr-1" />Stock (units)</label>
+                <input
+                  type="number" min="0"
+                  value={form.stock}
+                  onChange={e => { setForm(f => ({ ...f, stock: e.target.value })); setErrors(er => ({ ...er, stock: undefined })); }}
+                  className={`${inp} ${errors.stock ? 'border-red-400/50' : ''}`}
+                  placeholder={String(product.stock)}
+                />
+                {errors.stock
+                  ? <p className={errCls}>{errors.stock}</p>
+                  : stockLabel && <p className={`text-[9px] font-bold mt-0.5 ${stockLabel.color}`}>{stockLabel.text}</p>
+                }
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Price (₹)</label>
-              <input type="number" value={editForm.price ?? product.price} onChange={e => setEditForm((f: any) => ({ ...f, price: Number(e.target.value) }))} className={inputClass} placeholder="0.00" />
+
+            {/* Description */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className={lbl}><FileText className="inline w-3 h-3 mr-1" />Description</label>
+                <span className={`text-[9px] font-bold ${form.desc.length > MAX_EDIT_DESC ? 'text-red-400' : 'text-slate-500'}`}>{form.desc.length}/{MAX_EDIT_DESC}</span>
+              </div>
+              <textarea
+                rows={3}
+                value={form.desc}
+                onChange={e => { setForm(f => ({ ...f, desc: e.target.value })); setErrors(er => ({ ...er, desc: undefined })); }}
+                className={`${inp} resize-none ${errors.desc ? 'border-red-400/50' : ''}`}
+                placeholder="Short product description..."
+                maxLength={MAX_EDIT_DESC + 10}
+              />
+              {errors.desc && <p className={errCls}>{errors.desc}</p>}
+            </div>
+
+            {/* Material Specs */}
+            <div>
+              <label className={`${lbl} mb-1 block`}>Material Specifications</label>
+              <textarea
+                rows={3}
+                value={form.materialSpecifications}
+                onChange={e => setForm(f => ({ ...f, materialSpecifications: e.target.value }))}
+                className={`${inp} resize-none`}
+                placeholder="Technical specifications, grades, tolerances..."
+              />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Material Specifications</label>
-            <textarea value={editForm.materialSpecifications ?? product.materialSpecifications ?? ''} onChange={e => setEditForm((f: any) => ({ ...f, materialSpecifications: e.target.value }))} className={`${inputClass} min-h-[100px] resize-none`} placeholder="Enter technical specifications..." />
+          {/* RIGHT — images + preview */}
+          <div className="w-full lg:w-72 xl:w-80 p-6 space-y-4 overflow-y-auto max-h-[75vh]">
+
+            {/* Existing images */}
+            {keptImages.length > 0 && (
+              <div>
+                <p className={`${lbl} mb-2`}>Current Images ({keptImages.length}) — hover to remove</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {keptImages.map((url, i) => (
+                    <div key={url} className="relative aspect-square rounded-lg overflow-hidden group">
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      {i === 0 && <span className="absolute bottom-0.5 left-0.5 text-[7px] font-black bg-yellow-400 text-black px-1 rounded">Main</span>}
+                      <button
+                        onClick={() => removeExistingImage(url)}
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                      >
+                        <X className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* New image drop zone */}
+            <div>
+              <p className={`${lbl} mb-2`}>Add New Images ({newPreviews.length}/{MAX_EDIT_IMAGES - keptImages.length} slots)</p>
+              {totalImages < MAX_EDIT_IMAGES && (
+                <div
+                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={e => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files); }}
+                  onClick={() => fileRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center gap-1.5 cursor-pointer transition-colors ${
+                    dragOver
+                      ? 'border-yellow-400 bg-yellow-400/5'
+                      : isDark ? 'border-white/10 hover:border-white/20' : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <Upload className={`w-5 h-5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Drop or click</p>
+                  <input ref={fileRef} type="file" multiple accept="image/*" className="hidden"
+                    onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }} />
+                </div>
+              )}
+
+              {/* New preview thumbnails */}
+              {newPreviews.length > 0 && (
+                <div className="grid grid-cols-3 gap-1.5 mt-2">
+                  {newPreviews.map((p, i) => (
+                    <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
+                      <img src={p.url} alt="" className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => removeNewPreview(i)}
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                      >
+                        <X className="w-4 h-4 text-white" />
+                      </button>
+                      <span className="absolute bottom-0.5 right-0.5 text-[7px] font-bold bg-black/60 text-white px-1 rounded">
+                        {(p.file.size / 1024).toFixed(0)}KB
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {errors.images && <p className={errCls}>{errors.images}</p>}
+            </div>
+
+            {/* Live preview card */}
+            <div>
+              <p className={`${lbl} mb-2`}>Listing Preview</p>
+              <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-zinc-800 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`h-24 flex items-center justify-center ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
+                  {newPreviews[0]
+                    ? <img src={newPreviews[0].url} alt="" className="h-full w-full object-cover" />
+                    : keptImages[0]
+                    ? <img src={keptImages[0]} alt="" className="h-full w-full object-cover" />
+                    : <ImageIcon className="w-8 h-8 text-slate-400" />}
+                </div>
+                <div className="p-3 space-y-0.5">
+                  {selectedCat && <p className="text-[8px] font-bold text-yellow-500 uppercase tracking-widest">{selectedCat.name}{form.subcategory ? ` / ${form.subcategory}` : ''}</p>}
+                  <p className={`text-xs font-black truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{form.productName || 'Product Name'}</p>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{priceNum > 0 ? formatPrice(priceNum) : '₹—'}</span>
+                    {stockLabel && <span className={`text-[8px] font-black uppercase ${stockLabel.color}`}>{stockLabel.text}</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="px-8 py-6 border-t border-dashed bg-slate-50/50 dark:bg-white/[0.02] flex items-center justify-end gap-3">
-          <button onClick={onClose} className={`px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-colors ${isDark ? 'text-slate-400 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-100'}`}>Cancel</button>
-          <button onClick={() => onSave(productId)} className="px-8 py-3 bg-yellow-400 text-black rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-300 shadow-lg shadow-yellow-400/20 transition-all flex items-center gap-2">
-            <Check className="w-4 h-4" /> Save Changes
-          </button>
+        {/* Footer */}
+        <div className={`px-8 py-5 border-t flex items-center justify-between gap-4 ${isDark ? 'border-white/5 bg-zinc-900/50' : 'border-slate-100 bg-slate-50'}`}>
+          <div className="flex items-center gap-3 flex-wrap">
+            {[
+              { ok: form.productName.trim().length > 0, label: 'Name' },
+              { ok: !!form.category, label: 'Category' },
+              { ok: priceNum > 0, label: 'Price' },
+              { ok: totalImages > 0, label: 'Images' },
+            ].map(item => (
+              <span key={item.label} className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-widest ${item.ok ? 'text-green-400' : 'text-slate-600'}`}>
+                {item.ok ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}{item.label}
+              </span>
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            {saveError && <p className="text-[9px] font-bold text-red-400">{saveError}</p>}
+            <button onClick={onClose} className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-colors ${isDark ? 'text-slate-400 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-100'}`}>Cancel</button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-6 py-2.5 bg-yellow-400 text-black rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-300 shadow-lg shadow-yellow-400/20 transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Save Changes
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -95,10 +404,6 @@ const EditProductModal: React.FC<{
 };
 
 
-
-const EMPTY_FORM = {
-  productName: '', desc: '', category: '', price: '', stock: '', materialSpecifications: '',
-};
 
 const ITEMS_PER_PAGE = 10;
 
@@ -109,23 +414,17 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
   const [products, setProducts] = useState<BackendProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterAvailability, setFilterAvailability] = useState<'all' | 'available' | 'unavailable'>('all');
   
   const [currentPage, setCurrentPage] = useState(1);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<BackendProduct>>({});
+  const [editingProduct, setEditingProduct] = useState<BackendProduct | null>(null);
   const [stockEditing, setStockEditing] = useState<string | null>(null);
   const [stockValue, setStockValue] = useState('');
-  const [form, setForm] = useState({ ...EMPTY_FORM });
-  const [files, setFiles] = useState<FileList | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState('');
   const [categoriesList, setCategoriesList] = useState<any[]>([]);
-  const fileRef = React.useRef<HTMLInputElement>(null);
 
   const input = `w-full px-4 py-3 rounded-xl border text-sm font-bold outline-none transition-colors ${
     isDark ? 'bg-zinc-900 border-white/10 text-white placeholder-slate-500 focus:border-yellow-400/50' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-yellow-400'
@@ -171,46 +470,6 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
     available: products.filter(p => p.availability).length,
     outOfStock: products.filter(p => p.stock === 0).length,
     totalValue: products.reduce((sum, p) => sum + (p.price * p.stock), 0)
-  };
-
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!files || files.length === 0) { setError('At least one product image is required'); return; }
-    if (!adminToken) return;
-    setSubmitting(true); setError('');
-    const fd = new FormData();
-    fd.append('productName', form.productName); fd.append('desc', form.desc);
-    fd.append('categoryId', form.category); fd.append('price', form.price);
-    if (form.subcategory) fd.append('subcategory', form.subcategory);
-    fd.append('stock', form.stock); fd.append('materialSpecifications', form.materialSpecifications);
-    Array.from(files as FileList).forEach((f: File) => fd.append('images', f));
-    try {
-      await adminApi.add(fd, adminToken);
-      setForm({ ...EMPTY_FORM }); setFiles(null);
-      if (fileRef.current) fileRef.current.value = '';
-      setShowAddForm(false); showToast('Product added successfully'); load();
-    } catch (err: any) { setError(err.message || 'Failed to add product'); }
-    finally { setSubmitting(false); }
-  };
-
-  const handleUpdate = async (id: string) => {
-    if (!adminToken) return;
-    try { 
-      const updateData = { ...editForm };
-      if (updateData.category) {
-        // Find the categoryId for the selected category name, or if it's already an ID, use it.
-        const cat = categoriesList.find(c => c.name === updateData.category || c._id === updateData.category);
-        if (cat) {
-          updateData.categoryId = cat._id;
-          delete updateData.category;
-        }
-      }
-      await adminApi.update(id, updateData, adminToken); 
-      setEditingId(null); 
-      showToast('Product updated'); 
-      load(); 
-    }
-    catch (err: any) { showToast('Update failed: ' + err.message); }
   };
 
   const handleDelete = async (id: string) => {
@@ -353,8 +612,10 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {paginatedProducts.map(p => (
             <div key={p._id} className={`rounded-2xl border overflow-hidden ${card} hover:border-yellow-400/30 transition-all`}>
-              <div className={`h-32 ${isDark ? 'bg-white/5' : 'bg-slate-100'} flex items-center justify-center`}>
-                <Package className="w-12 h-12 text-slate-400" />
+              <div className={`h-32 ${isDark ? 'bg-white/5' : 'bg-slate-100'} flex items-center justify-center overflow-hidden`}>
+                {p.productImages?.[0]
+                  ? <img src={p.productImages[0]} alt={p.productName} className="w-full h-full object-cover" />
+                  : <Package className="w-12 h-12 text-slate-400" />}
               </div>
               <div className="p-4 space-y-3">
                 <div className="flex items-start justify-between">
@@ -374,7 +635,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                     <p className={`text-[10px] font-bold ${p.stock === 0 ? 'text-red-400' : mutedClass}`}>{p.stock} in stock</p>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => { setEditingId(p._id); setEditForm({ productName: p.productName, category: typeof p.category === 'object' && p.category ? (p.category as any)._id : p.category, subcategory: p.subcategory ?? '', price: p.price, materialSpecifications: p.materialSpecifications ?? '' }); }} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}><Pencil className="w-4 h-4" /></button>
+                    <button onClick={() => { setEditingProduct(p); }} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}><Pencil className="w-4 h-4" /></button>
                     <button onClick={() => handleDelete(p._id)} className={`p-2 rounded-lg ${isDark ? 'hover:bg-red-500/10 text-slate-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`}><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
@@ -445,7 +706,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => { setEditingId(p._id); setEditForm({ productName: p.productName, category: typeof p.category === 'object' && p.category ? (p.category as any)._id : p.category, subcategory: p.subcategory ?? '', price: p.price, materialSpecifications: p.materialSpecifications ?? '' }); }} className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-white/5 text-slate-400 hover:text-yellow-400' : 'hover:bg-slate-100 text-slate-500 hover:text-yellow-500'}`}><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => { setEditingProduct(p); }} className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-white/5 text-slate-400 hover:text-yellow-400' : 'hover:bg-slate-100 text-slate-500 hover:text-yellow-500'}`}><Pencil className="w-4 h-4" /></button>
                         <button onClick={() => handleDelete(p._id)} className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-red-500/10 text-slate-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`}><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
@@ -521,15 +782,17 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
 
       {/* Edit Product Modal */}
       <EditProductModal
-        isOpen={editingId !== null}
-        onClose={() => { setEditingId(null); setEditForm({}); }}
-        onSave={handleUpdate}
-        editForm={editForm}
-        setEditForm={setEditForm}
+        isOpen={editingProduct !== null}
+        onClose={() => setEditingProduct(null)}
+        onSaved={(updated) => {
+          setProducts(prev => prev.map(p => p._id === updated._id ? updated : p));
+          setEditingProduct(null);
+          showToast('Product updated');
+        }}
+        product={editingProduct}
         categoriesList={categoriesList}
         isDark={isDark}
-        productId={editingId}
-        products={products}
+        adminToken={adminToken ?? ''}
       />
     </div>
   );

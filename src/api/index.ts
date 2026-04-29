@@ -161,6 +161,9 @@ export const adminApi = {
       token,
     }),
 
+  updateFormData: (id: string, formData: FormData, token: string) =>
+    requestFormData<AdminProductResponse>(`/api/admin/products/${id}`, formData, token, 'PUT'),
+
   delete: (id: string, token: string) =>
     request<{ success: boolean; message: string }>(`/api/admin/products/${id}`, {
       method: 'DELETE',
