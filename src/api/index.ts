@@ -237,7 +237,7 @@ export interface Order {
 }
 
 export const orderApi = {
-  create: (body: { items: { product: string; quantity: number }[]; shippingAddress: Omit<Address, '_id'>; notes?: string }, token: string) =>
+  create: (body: { items: { product: string; quantity: number }[]; shippingAddress: Omit<Address, '_id'>; paymentMethod?: 'ONLINE' | 'COD'; notes?: string }, token: string) =>
     request<{ success: boolean; order: Order }>('/api/orders', { method: 'POST', body, token }),
 
   getAll: (token: string) =>

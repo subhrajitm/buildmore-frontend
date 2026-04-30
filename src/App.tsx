@@ -20,6 +20,7 @@ import { Landing } from './pages/Landing';
 import { Products } from './pages/Products';
 import { ProductDetail } from './pages/ProductDetail';
 import { Cart } from './pages/Cart';
+import { Checkout } from './pages/Checkout';
 import { Profile } from './pages/Profile';
 import { Auth } from './pages/Auth';
 import { Inventory } from './pages/Inventory';
@@ -92,6 +93,11 @@ export default function App() {
               <Route path="/cart" element={
                 <MainLayout isDark={isDark} setIsDark={setIsDark}>
                   <ProtectedRoute><Cart isDark={isDark} /></ProtectedRoute>
+                </MainLayout>
+              } />
+              <Route path="/checkout" element={
+                <MainLayout isDark={isDark} setIsDark={setIsDark}>
+                  <ProtectedRoute><Checkout isDark={isDark} /></ProtectedRoute>
                 </MainLayout>
               } />
               <Route path="/profile" element={
