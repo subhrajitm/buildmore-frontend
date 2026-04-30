@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { authApi } from '../api';
+import { parseNameFromEmail, decodeTokenRole, isTokenExpired } from '../utils/authUtils';
 
 interface AdminUser {
   email: string;
@@ -16,32 +17,6 @@ interface AdminAuthContextType {
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | null>(null);
-
-function parseNameFromEmail(email: string) {
-  return email
-    .split('@')[0]
-    .replace(/[._]/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase());
-}
-
-function decodeTokenRole(token: string): 'ADMIN' | 'USER' {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload?.role?.toUpperCase() === 'ADMIN' ? 'ADMIN' : 'USER';
-  } catch {
-    return 'USER';
-  }
-}
-
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    if (!payload?.exp) return false;
-    return Date.now() / 1000 > payload.exp;
-  } catch {
-    return false;
-  }
-}
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [adminUser, setAdminUser] = useState<AdminUser | null>(() => {
@@ -77,11 +52,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const res = await authApi.login({ email, password });
       const tok = res.token!;
       const role = decodeTokenRole(tok);
-      
+
       if (role !== 'ADMIN') {
         return { success: false, error: 'Access denied. Admin credentials required.' };
       }
-      
+
       const name = parseNameFromEmail(email);
       persistAdminAuth({ email, name, role: 'ADMIN' }, tok);
       return { success: true };

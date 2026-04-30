@@ -3,13 +3,10 @@ import { Menu, X, ArrowRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { getCategoryMeta } from '../utils/categoryMeta';
 import { categoryApi, Category } from '../api';
+import { useTheme } from '../context/ThemeContext';
 
-interface SubNavProps {
-  isDark: boolean;
-}
-
-
-export const SubNav: React.FC<SubNavProps> = ({ isDark }) => {
+export const SubNav: React.FC = () => {
+  const { isDark } = useTheme();
   const { pathname, search } = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);

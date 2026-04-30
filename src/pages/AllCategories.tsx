@@ -6,12 +6,10 @@ import { getCategoryMeta } from '../utils/categoryMeta';
 import { normalizeProduct } from '../utils/normalizeProduct';
 import { formatPrice } from '../utils/currency';
 import { useCart } from '../context/CartContext';
+import { useTheme } from '../context/ThemeContext';
 
-interface AllCategoriesProps {
-  isDark: boolean;
-}
-
-export const AllCategories: React.FC<AllCategoriesProps> = ({ isDark }) => {
+export const AllCategories: React.FC = () => {
+  const { isDark } = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
   const [products, setProducts] = useState<BackendProduct[]>([]);

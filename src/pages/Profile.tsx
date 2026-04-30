@@ -4,10 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { userApi, orderApi, shipmentApi, UserProfile, Order, Address } from '../api';
 import { Link, useSearchParams } from 'react-router-dom';
 import { formatPrice } from '../utils/currency';
-
-interface ProfileProps {
-  isDark: boolean;
-}
+import { useTheme } from '../context/ThemeContext';
 
 const EMPTY_ADDR = { building: '', area: '', landmark: '', city: '', state: '', pincode: '', country: 'India', alternatephone: '' };
 
@@ -18,7 +15,8 @@ const ORDER_STATUS_COLOR: Record<string, string> = {
 
 type Tab = 'overview' | 'orders' | 'addresses' | 'account';
 
-export const Profile: React.FC<ProfileProps> = ({ isDark }) => {
+export const Profile: React.FC = () => {
+  const { isDark } = useTheme();
   const { token, logout, updateUser } = useAuth();
   const [searchParams] = useSearchParams();
 

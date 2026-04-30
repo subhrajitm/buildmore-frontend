@@ -5,10 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { orderApi, userApi, Address } from '../api';
 import { formatPrice } from '../utils/currency';
-
-interface CartProps {
-  isDark: boolean;
-}
+import { useTheme } from '../context/ThemeContext';
 
 const LOGISTICS_FEE = 450;
 
@@ -17,7 +14,8 @@ const EMPTY_ADDR: Omit<Address, '_id'> = {
   building: '', landmark: '', alternatephone: '',
 };
 
-export const Cart: React.FC<CartProps> = ({ isDark }) => {
+export const Cart: React.FC = () => {
+  const { isDark } = useTheme();
   const { items, removeItem, updateQuantity, totalValue, clearCart } = useCart();
   const { token, user } = useAuth();
   const navigate = useNavigate();

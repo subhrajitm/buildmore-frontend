@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Download, CheckCircle, AlertCircle, Clock, Search, FileText, Plus, Trash2, Loader2, Upload, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { complianceApi, ComplianceDoc } from '../api';
-
-interface ComplianceProps {
-  isDark: boolean;
-}
+import { useTheme } from '../context/ThemeContext';
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.FC<{ className?: string }>; color: string; bg: string }> = {
   ACTIVE:        { label: 'Active',        icon: CheckCircle,  color: 'text-green-400',  bg: 'bg-green-400/10 border-green-400/20' },
@@ -15,7 +12,8 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.FC<{ className?
 
 const DOC_TYPES = ['ISO', 'CE', 'RoHS', 'REACH', 'SDS', 'AUDIT', 'OTHER'] as const;
 
-export const Compliance: React.FC<ComplianceProps> = ({ isDark }) => {
+export const Compliance: React.FC = () => {
+  const { isDark } = useTheme();
   const { token, isAdmin } = useAuth();
 
   const [docs, setDocs] = useState<ComplianceDoc[]>([]);

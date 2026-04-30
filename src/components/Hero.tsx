@@ -1,10 +1,9 @@
 import React from 'react';
+import { useTheme } from '../context/ThemeContext';
 
-interface HeroProps {
-  isDark: boolean;
-}
-
-export const Hero: React.FC<HeroProps> = ({ isDark }) => (
+export const Hero: React.FC = () => {
+  const { isDark } = useTheme();
+  return (
   <section className={`relative h-[240px] w-full rounded-xl overflow-hidden border ${isDark ? 'border-white/5' : 'border-slate-100'} transition-all duration-300 shadow-lg`}>
     <div className={`absolute inset-0 bg-gradient-to-r ${isDark ? 'from-zinc-900 via-zinc-900/50' : 'from-slate-900 via-slate-900/50'} to-transparent z-10`}></div>
     <img
@@ -28,4 +27,5 @@ export const Hero: React.FC<HeroProps> = ({ isDark }) => (
       </div>
     </div>
   </section>
-);
+  );
+};

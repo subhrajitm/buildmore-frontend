@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Truck, Package, CheckCircle, Clock, AlertCircle, MapPin, Search, ArrowRight, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { shipmentApi, Shipment } from '../api';
-
-interface LogisticsProps {
-  isDark: boolean;
-}
+import { useTheme } from '../context/ThemeContext';
 
 const STATUS_MAP: Record<string, { label: string; icon: React.FC<{ className?: string }>; color: string; bg: string; progress: number }> = {
   PREPARING:        { label: 'Preparing',        icon: Clock,        color: 'text-slate-400',  bg: 'bg-slate-400/10 border-slate-400/20',  progress: 5   },
@@ -23,7 +20,8 @@ const STATUS_LABELS: Record<string, string> = {
   IN_TRANSIT: 'In Transit', OUT_FOR_DELIVERY: 'Out for Delivery', DELIVERED: 'Delivered', FAILED: 'Failed',
 };
 
-export const Logistics: React.FC<LogisticsProps> = ({ isDark }) => {
+export const Logistics: React.FC = () => {
+  const { isDark } = useTheme();
   const { token } = useAuth();
 
   const [shipments, setShipments] = useState<Shipment[]>([]);
@@ -135,7 +133,7 @@ export const Logistics: React.FC<LogisticsProps> = ({ isDark }) => {
               <p className="text-[9px] font-black uppercase tracking-widest text-yellow-400">Tracked Result</p>
               <button onClick={() => setTrackedShipment(null)} className="text-[9px] font-black uppercase text-slate-500 hover:text-slate-300">Dismiss</button>
             </div>
-            <ShipmentDetail shipment={trackedShipment} isDark={isDark} />
+            <ShipmentDetail shipment={trackedShipment} />
           </div>
         )}
       </div>
@@ -258,7 +256,7 @@ export const Logistics: React.FC<LogisticsProps> = ({ isDark }) => {
         {selected && selectedShipment && (
           <div className={`p-6 rounded-2xl border space-y-6 sticky top-24 h-fit ${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-100 shadow-xl'}`}>
             <h3 className={`text-sm font-black uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-900'}`}>Shipment Detail</h3>
-            <ShipmentDetail shipment={selectedShipment} isDark={isDark} />
+            <ShipmentDetail shipment={selectedShipment} />
           </div>
         )}
       </div>
@@ -266,7 +264,8 @@ export const Logistics: React.FC<LogisticsProps> = ({ isDark }) => {
   );
 };
 
-function ShipmentDetail({ shipment, isDark }: { shipment: Shipment; isDark: boolean }) {
+function ShipmentDetail({ shipment }: { shipment: Shipment }) {
+  const { isDark } = useTheme();
   const [showEvents, setShowEvents] = useState(false);
   const rows = [
     { label: 'Tracking #',    value: shipment.trackingNumber },

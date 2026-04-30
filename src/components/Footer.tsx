@@ -1,13 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { BarChart3, Mail, Phone, MapPin, Globe, Linkedin, Twitter, Github, Youtube, ArrowUpRight, Shield, Award, Zap, Instagram } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 interface FooterProps {
-  isDark: boolean;
   isHome?: boolean;
 }
 
-export const Footer: React.FC<FooterProps> = ({ isDark, isHome }) => (
+export const Footer: React.FC<FooterProps> = ({ isHome }) => {
+  const { isDark } = useTheme();
+  return (
   <footer className={`${isDark ? 'bg-zinc-950 text-slate-400 border-white/5' : 'bg-white text-slate-500 border-slate-200'} border-t transition-colors duration-300`}>
     {/* Top Brand Bar */}
     {isHome && (
@@ -138,4 +140,5 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isHome }) => (
       </div>
     </div>
   </footer>
-);
+  );
+};

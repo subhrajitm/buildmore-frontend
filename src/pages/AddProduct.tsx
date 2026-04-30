@@ -8,10 +8,7 @@ import {
   FileText, Hash, BoxSelect,
 } from 'lucide-react';
 import { formatPrice } from '../utils/currency';
-
-interface AddProductProps {
-  isDark: boolean;
-}
+import { useTheme } from '../context/ThemeContext';
 
 const EMPTY_FORM = {
   productName: '', desc: '', category: '', subcategory: '',
@@ -22,7 +19,8 @@ const MAX_IMAGES = 5;
 const MAX_NAME = 120;
 const MAX_DESC = 1000;
 
-export const AddProduct: React.FC<AddProductProps> = ({ isDark }) => {
+export const AddProduct: React.FC = () => {
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const { adminToken } = useAdminAuth();
 

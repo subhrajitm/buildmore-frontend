@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useTheme } from '../context/ThemeContext';
 import { ShoppingBag, Heart, Star, ArrowRight } from 'lucide-react';
 import { formatPrice } from '../utils/currency';
 
 interface ProductCardProps {
   product: any;
-  isDark: boolean;
   viewMode?: 'grid' | 'list';
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, isDark, viewMode = 'grid' }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' }) => {
   const { addItem } = useCart();
+  const { isDark } = useTheme();
   const [added, setAdded] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(() => {
     try {

@@ -6,10 +6,7 @@ import { normalizeProduct } from '../utils/normalizeProduct';
 import { getCategoryMeta } from '../utils/categoryMeta';
 import { formatPrice } from '../utils/currency';
 import { useCart } from '../context/CartContext';
-
-interface ProductsProps {
-  isDark: boolean;
-}
+import { useTheme } from '../context/ThemeContext';
 
 const SORT_OPTIONS = [
   { label: 'Featured', value: 'featured' },
@@ -20,8 +17,9 @@ const SORT_OPTIONS = [
 ];
 
 // ─── Ultra-Compact Premium Product Card ──────────────────────────────────────
-const ProductCard: React.FC<{ product: any; isDark: boolean; className?: string }> = ({ product, isDark, className = '' }) => {
+const ProductCard: React.FC<{ product: any; className?: string }> = ({ product, className = '' }) => {
   const { addItem } = useCart();
+  const { isDark } = useTheme();
   const [added, setAdded] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(() => {
     try {
@@ -105,7 +103,8 @@ const ProductCard: React.FC<{ product: any; isDark: boolean; className?: string 
 };
 
 // ─── Main Catalog Page ─────────────────────────────────────────────────────────
-export const Products: React.FC<ProductsProps> = ({ isDark }) => {
+export const Products: React.FC = () => {
+  const { isDark } = useTheme();
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<BackendProduct[]>([]);
@@ -113,6 +112,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState(() => searchParams.get('search') || '');
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [sortBy, setSortBy] = useState('featured');
   const [sortOpen, setSortOpen] = useState(false);
   const [subCatOpen, setSubCatOpen] = useState(false);
@@ -147,10 +147,15 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
     if (q) setSearch(q);
   }, [categorySlug, categories, searchParams]);
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
   const filteredProducts = useMemo(() => {
     let result = [...products];
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.trim().toLowerCase();
       result = result.filter(p => {
         const pCat = typeof p.category === 'object' && p.category ? (p.category as any).name : p.category;
         return p.productName.toLowerCase().includes(q) || (pCat && pCat.toLowerCase().includes(q));
@@ -172,7 +177,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
       case 'rating': result.sort((a, b) => ((b as any).rating || 0) - ((a as any).rating || 0)); break;
     }
     return result;
-  }, [search, selectedCategory, selectedSubcategory, sortBy, products]);
+  }, [debouncedSearch, selectedCategory, selectedSubcategory, sortBy, products]);
 
   const activeCategoryObj = categories.find(c => c.name === selectedCategory);
   const currentSort = SORT_OPTIONS.find(o => o.value === sortBy)!;
@@ -336,7 +341,7 @@ export const Products: React.FC<ProductsProps> = ({ isDark }) => {
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 3xl:grid-cols-8 gap-3">
                 {filteredProducts.map(p => (
-                  <ProductCard key={p._id} product={normalizeProduct(p)} isDark={isDark} />
+                  <ProductCard key={p._id} product={normalizeProduct(p)} />
                 ))}
               </div>
             ) : (

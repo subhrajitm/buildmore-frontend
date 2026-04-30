@@ -3,7 +3,6 @@ import { AlertTriangle, RefreshCcw, Home } from 'lucide-react';
 
 interface Props {
   children: React.ReactNode;
-  isDark?: boolean;
 }
 
 interface State {
@@ -13,7 +12,6 @@ interface State {
 
 class ErrorBoundaryClass extends React.Component<Props, State> {
   declare state: State;
-  declare props: Readonly<Props> & Readonly<{ children?: React.ReactNode }>;
 
   constructor(props: Props) {
     super(props);
@@ -30,7 +28,9 @@ class ErrorBoundaryClass extends React.Component<Props, State> {
 
   render() {
     const { hasError, error } = this.state;
-    const isDark = this.props.isDark ?? true;
+    // Read theme directly from localStorage so the error boundary works
+    // even if the ThemeContext is what caused the error
+    const isDark = localStorage.getItem('buildmore_theme') !== 'light';
 
     if (hasError) {
       return (
@@ -75,6 +75,6 @@ class ErrorBoundaryClass extends React.Component<Props, State> {
   }
 }
 
-export const ErrorBoundary: React.FC<Props> = ({ children, isDark }) => (
-  <ErrorBoundaryClass isDark={isDark}>{children}</ErrorBoundaryClass>
+export const ErrorBoundary: React.FC<Props> = ({ children }) => (
+  <ErrorBoundaryClass>{children}</ErrorBoundaryClass>
 );

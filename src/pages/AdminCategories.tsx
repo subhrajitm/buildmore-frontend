@@ -6,16 +6,14 @@ import {
   Search, RefreshCw, Image as ImageIcon, Tag, AlertCircle,
   Hash, Copy, CheckCheck,
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 /** Converts a category name to a URL slug for preview */
 const toSlug = (name: string) =>
   name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-interface AdminCategoriesProps {
-  isDark: boolean;
-}
-
-export const AdminCategories: React.FC<AdminCategoriesProps> = ({ isDark }) => {
+export const AdminCategories: React.FC = () => {
+  const { isDark } = useTheme();
   const { adminToken } = useAdminAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);

@@ -3,14 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { 
   Lock, Loader2, AlertCircle, Shield, BarChart3, Eye, EyeOff, 
-  CheckCircle, Globe, Server, ArrowRight, Building2 
+  CheckCircle, Globe, Server, ArrowRight, Building2
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
-interface AdminLoginProps {
-  isDark: boolean;
-}
-
-export const AdminLogin: React.FC<AdminLoginProps> = ({ isDark }) => {
+export const AdminLogin: React.FC = () => {
+  const { isDark } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

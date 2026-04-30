@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { shipmentApi, Shipment } from '../api';
+import { useTheme } from '../context/ThemeContext';
 import { 
   ChevronDown, ChevronUp, Loader2, Plus, X, Send, Search, ChevronLeft, ChevronRight, 
   Package, Truck, Clock, CheckCircle, AlertCircle, MapPin, User, Phone, Mail, Calendar,
@@ -8,10 +9,6 @@ import {
 } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 10;
-
-interface AdminShipmentsProps {
-  isDark: boolean;
-}
 
 const SHIPMENT_STATUSES: Shipment['status'][] = ['PREPARING', 'PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED', 'FAILED'];
 const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -23,7 +20,8 @@ const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string; b
   FAILED: { label: 'Failed', icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-400/10' },
 };
 
-export const AdminShipments: React.FC<AdminShipmentsProps> = ({ isDark }) => {
+export const AdminShipments: React.FC = () => {
+  const { isDark } = useTheme();
   const { adminToken } = useAdminAuth();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);

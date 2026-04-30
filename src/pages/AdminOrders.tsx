@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { orderApi, Order } from '../api';
+import { useTheme } from '../context/ThemeContext';
 import { 
   ChevronDown, ChevronUp, Loader2, Search, ChevronLeft, ChevronRight, 
   Package, Truck, Clock, CheckCircle, XCircle, AlertCircle,
@@ -9,10 +10,6 @@ import {
 } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 10;
-
-interface AdminOrdersProps {
-  isDark: boolean;
-}
 
 const ORDER_STATUSES: Order['status'][] = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: any }> = {
@@ -24,7 +21,8 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: any }> = 
   CANCELLED: { color: 'text-red-400', bg: 'bg-red-400/10', icon: XCircle },
 };
 
-export const AdminOrders: React.FC<AdminOrdersProps> = ({ isDark }) => {
+export const AdminOrders: React.FC = () => {
+  const { isDark } = useTheme();
   const { adminToken } = useAdminAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);

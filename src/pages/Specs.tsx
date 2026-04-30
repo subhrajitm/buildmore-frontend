@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Download, FileText, ChevronRight, Zap, Loader2, AlertCircle } from 'lucide-react';
 import { specsApi, SpecSheet } from '../api';
-
-interface SpecsProps {
-  isDark: boolean;
-}
+import { useTheme } from '../context/ThemeContext';
 
 const FILE_TYPE_COLORS: Record<string, string> = {
   PDF:   'text-red-400 bg-red-400/10',
@@ -14,7 +11,8 @@ const FILE_TYPE_COLORS: Record<string, string> = {
   OTHER: 'text-slate-400 bg-slate-400/10',
 };
 
-export const Specs: React.FC<SpecsProps> = ({ isDark }) => {
+export const Specs: React.FC = () => {
+  const { isDark } = useTheme();
   const [specs, setSpecs] = useState<SpecSheet[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');

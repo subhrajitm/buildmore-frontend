@@ -3,12 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminApi, BackendProduct, orderApi, Order, rfqApi, RFQ, shipmentApi, Shipment, specsApi, SpecSheet } from '../api';
 import { Plus, Package, ShoppingCart, FileText, Truck, Loader2, ChevronRight, LayoutDashboard } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
-interface AdminDashboardProps {
-  isDark: boolean;
-}
-
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark }) => {
+export const AdminDashboard: React.FC = () => {
+  const { isDark } = useTheme();
   const { adminToken } = useAdminAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ products: 0, orders: 0, rfqs: 0, shipments: 0 });

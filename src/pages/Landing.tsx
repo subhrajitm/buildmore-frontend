@@ -9,10 +9,7 @@ import { normalizeProduct } from '../utils/normalizeProduct';
 import { TOP_CATEGORIES } from '../utils/categoryMeta';
 import { formatPrice } from '../utils/currency';
 import { useCart } from '../context/CartContext';
-
-interface LandingProps {
-  isDark: boolean;
-}
+import { useTheme } from '../context/ThemeContext';
 
 const FLASH_OFFERS = [
   {
@@ -45,8 +42,9 @@ const FLASH_OFFERS = [
 ];
 
 // ── Blinkit-style compact product card ────────────────────────────────────────
-const HomeProductCard: React.FC<{ product: ReturnType<typeof normalizeProduct>; isDark: boolean }> = ({ product, isDark }) => {
+const HomeProductCard: React.FC<{ product: ReturnType<typeof normalizeProduct> }> = ({ product }) => {
   const { addItem } = useCart();
+  const { isDark } = useTheme();
   const [added, setAdded] = useState(false);
 
   const handleAdd = (e: React.MouseEvent) => {
@@ -107,7 +105,8 @@ const HomeProductCard: React.FC<{ product: ReturnType<typeof normalizeProduct>; 
 };
 
 // ── Category row with horizontal scroll ───────────────────────────────────────
-const HomeCategoryRow: React.FC<{ title: string; slug: string; products: BackendProduct[]; isDark: boolean }> = ({ title, slug, products, isDark }) => {
+const HomeCategoryRow: React.FC<{ title: string; slug: string; products: BackendProduct[] }> = ({ title, slug, products }) => {
+  const { isDark } = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (products.length === 0) return null;
@@ -133,7 +132,7 @@ const HomeCategoryRow: React.FC<{ title: string; slug: string; products: Backend
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {products.map(p => (
-            <HomeProductCard key={p._id} product={normalizeProduct(p)} isDark={isDark} />
+            <HomeProductCard key={p._id} product={normalizeProduct(p)} />
           ))}
           {/* "See all" end card */}
           <Link
@@ -152,7 +151,8 @@ const HomeCategoryRow: React.FC<{ title: string; slug: string; products: Backend
   );
 };
 
-export const Landing: React.FC<LandingProps> = ({ isDark }) => {
+export const Landing: React.FC = () => {
+  const { isDark } = useTheme();
   const [allProducts, setAllProducts] = useState<BackendProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -172,9 +172,9 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
 
   return (
     <>
-      <Hero isDark={isDark} />
+      <Hero />
 
-      <CategoryGrid isDark={isDark} />
+      <CategoryGrid />
 
       <div className={`border-t my-2 ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
 
@@ -195,23 +195,23 @@ export const Landing: React.FC<LandingProps> = ({ isDark }) => {
                 title={cat.name}
                 slug={cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-')}
                 products={catProducts}
-                isDark={isDark}
               />
             );
           })}
         </div>
       )}
 
-      <TrustSignals isDark={isDark} />
+      <TrustSignals />
 
-      <BumperSlider isDark={isDark} />
+      <BumperSlider />
     </>
   );
 };
 
 const OFFER_DURATION_SECS = 6 * 60 * 60; // 6h per offer slot, resets each slide
 
-const BumperSlider: React.FC<{ isDark: boolean }> = ({ isDark }) => {
+const BumperSlider: React.FC = () => {
+  const { isDark } = useTheme();
   const [activeSlide, setActiveSlide] = React.useState(0);
   const [progress, setProgress] = React.useState(0);
   const [remaining, setRemaining] = React.useState(OFFER_DURATION_SECS);

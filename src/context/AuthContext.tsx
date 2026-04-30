@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { authApi, userApi } from '../api';
+import { parseNameFromEmail, decodeTokenRole, isTokenExpired } from '../utils/authUtils';
 
 interface User {
   email: string;
@@ -14,38 +15,13 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (name: string, email: string, password: string, phone: string) => Promise<{ success: boolean; error?: string }>;
-  forgotPassword: (email: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  requestReset: (email: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string, otp: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   updateUser: (patch: Partial<Pick<User, 'name'>>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
-
-function parseNameFromEmail(email: string) {
-  return email
-    .split('@')[0]
-    .replace(/[._]/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase());
-}
-
-function decodeTokenRole(token: string): 'USER' | 'ADMIN' {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload?.role?.toUpperCase() === 'ADMIN' ? 'ADMIN' : 'USER';
-  } catch {
-    return 'USER';
-  }
-}
-
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    if (!payload?.exp) return false;
-    return Date.now() / 1000 > payload.exp;
-  } catch {
-    return false;
-  }
-}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
@@ -97,17 +73,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await authApi.signup({ name, email, password, phone });
       const role = decodeTokenRole(res.token!);
-      const newUser: User = { email, name, role };
-      persistAuth(newUser, res.token!);
+      persistAuth({ email, name, role }, res.token!);
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Signup failed.' };
     }
   };
 
-  const forgotPassword = async (email: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+  const requestReset = async (email: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      await authApi.forgotPassword({ email, password: newPassword });
+      await authApi.requestReset({ email });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Request failed.' };
+    }
+  };
+
+  const resetPassword = async (email: string, otp: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await authApi.forgotPassword({ email, resetCode: otp, password: newPassword });
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Password reset failed.' };
@@ -131,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, isAdmin: user?.role === 'ADMIN', login, signup, forgotPassword, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, isAdmin: user?.role === 'ADMIN', login, signup, requestReset, resetPassword, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,12 +5,10 @@ import { productApi, BackendProduct } from '../api';
 import { normalizeProduct } from '../utils/normalizeProduct';
 import { formatPrice } from '../utils/currency';
 import { useCart } from '../context/CartContext';
+import { useTheme } from '../context/ThemeContext';
 
-interface WishlistProps {
-  isDark: boolean;
-}
-
-export const Wishlist: React.FC<WishlistProps> = ({ isDark }) => {
+export const Wishlist: React.FC = () => {
+  const { isDark } = useTheme();
   const { addItem } = useCart();
   const [products, setProducts] = useState<BackendProduct[]>([]);
   const [loading, setLoading] = useState(true);

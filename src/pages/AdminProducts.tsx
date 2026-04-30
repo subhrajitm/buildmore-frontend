@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminApi, BackendProduct } from '../api';
+import { useTheme } from '../context/ThemeContext';
 import {
   Plus, Pencil, Trash2, Package, ToggleLeft, ToggleRight, Check, X,
   Upload, AlertCircle, ChevronDown, Loader2, Search, Filter, Grid3X3,
@@ -9,11 +10,6 @@ import {
   ChevronLeft, ChevronRight, Image as ImageIcon, FileText, Tag, Layers,
 } from 'lucide-react';
 import { formatPrice } from '../utils/currency';
-
-interface AdminProductsProps {
-  isDark: boolean;
-}
-
 
 // ── Edit Product Modal ───────────────────────────────────────────────────────────
 const MAX_EDIT_IMAGES = 5;
@@ -36,9 +32,9 @@ const EditProductModal: React.FC<{
   onSaved: (updated: BackendProduct) => void;
   product: BackendProduct | null;
   categoriesList: any[];
-  isDark: boolean;
   adminToken: string;
-}> = ({ isOpen, onClose, onSaved, product, categoriesList, isDark, adminToken }) => {
+}> = ({ isOpen, onClose, onSaved, product, categoriesList, adminToken }) => {
+  const { isDark } = useTheme();
   const [form, setForm] = useState<EditModalForm>({ productName: '', desc: '', category: '', subcategory: '', price: '', stock: '', materialSpecifications: '' });
   const [newPreviews, setNewPreviews] = useState<{ file: File; url: string }[]>([]);
   const [keptImages, setKeptImages] = useState<string[]>([]);
@@ -407,7 +403,8 @@ const EditProductModal: React.FC<{
 
 const ITEMS_PER_PAGE = 10;
 
-export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
+export const AdminProducts: React.FC = () => {
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const { adminToken } = useAdminAuth();
   
@@ -791,7 +788,6 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ isDark }) => {
         }}
         product={editingProduct}
         categoriesList={categoriesList}
-        isDark={isDark}
         adminToken={adminToken ?? ''}
       />
     </div>

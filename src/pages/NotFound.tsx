@@ -1,12 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
-interface NotFoundProps {
-  isDark: boolean;
-}
-
-export const NotFound: React.FC<NotFoundProps> = ({ isDark }) => (
+export const NotFound: React.FC = () => {
+  const { isDark } = useTheme();
+  return (
   <div className="flex flex-col items-center justify-center py-48 gap-6 text-center">
     <AlertCircle className="w-12 h-12 text-slate-500 opacity-40" />
     <div className="space-y-2">
@@ -21,4 +20,5 @@ export const NotFound: React.FC<NotFoundProps> = ({ isDark }) => (
       Back to Home
     </Link>
   </div>
-);
+  );
+};

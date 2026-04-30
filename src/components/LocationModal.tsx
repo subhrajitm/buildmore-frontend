@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Search, MapPin, Crosshair, Loader2, CheckCircle, Clock } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const STORAGE_KEY = 'buildmore_location';
 
@@ -13,12 +14,12 @@ export function getStoredLocation(): string {
 }
 
 interface LocationModalProps {
-  isDark: boolean;
   onClose: () => void;
   onSelect: (location: string) => void;
 }
 
-export const LocationModal: React.FC<LocationModalProps> = ({ isDark, onClose, onSelect }) => {
+export const LocationModal: React.FC<LocationModalProps> = ({ onClose, onSelect }) => {
+  const { isDark } = useTheme();
   const [query, setQuery] = useState('');
   const [detecting, setDetecting] = useState(false);
   const [detected, setDetected] = useState('');

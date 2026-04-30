@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BarChart3, Mail, Lock, ArrowRight, AlertCircle, User, Phone, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-interface AuthProps {
-  isDark: boolean;
-}
+import { useTheme } from '../context/ThemeContext';
 
 type Mode = 'login' | 'signup' | 'forgot';
 
-export const Auth: React.FC<AuthProps> = ({ isDark }) => {
-  const { login, signup, forgotPassword, isAuthenticated } = useAuth();
+export const Auth: React.FC = () => {
+  const { isDark } = useTheme();
+  const { login, signup, requestReset, resetPassword, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || '/profile';
@@ -22,6 +20,8 @@ export const Auth: React.FC<AuthProps> = ({ isDark }) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotStep, setForgotStep] = useState<1 | 2>(1);
+  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -69,7 +69,21 @@ export const Auth: React.FC<AuthProps> = ({ isDark }) => {
     if (!result.success) setError(result.error || 'Signup failed.');
   };
 
-  const handleForgot = async (e: React.FormEvent) => {
+  const handleForgotStep1 = async (e: React.FormEvent) => {
+    e.preventDefault();
+    resetState();
+    setLoading(true);
+    const result = await requestReset(forgotEmail);
+    setLoading(false);
+    if (result.success) {
+      setSuccessMsg('OTP sent to your email. Check your inbox.');
+      setForgotStep(2);
+    } else {
+      setError(result.error || 'Failed to send OTP.');
+    }
+  };
+
+  const handleForgotStep2 = async (e: React.FormEvent) => {
     e.preventDefault();
     resetState();
     if (newPassword !== confirmPassword) {
@@ -81,7 +95,7 @@ export const Auth: React.FC<AuthProps> = ({ isDark }) => {
       return;
     }
     setLoading(true);
-    const result = await forgotPassword(forgotEmail, newPassword);
+    const result = await resetPassword(forgotEmail, otp, newPassword);
     setLoading(false);
     if (result.success) {
       setSuccessMsg('Password updated successfully. Redirecting to sign in…');
@@ -203,13 +217,35 @@ export const Auth: React.FC<AuthProps> = ({ isDark }) => {
           </form>
         )}
 
-        {mode === 'forgot' && (
-          <form onSubmit={handleForgot} className="space-y-4">
+        {mode === 'forgot' && forgotStep === 1 && (
+          <form onSubmit={handleForgotStep1} className="space-y-4">
             <div className="space-y-1">
               <label className={labelClass}>Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="email@company.com" required className={`${inputClass} pl-10`} />
+              </div>
+            </div>
+
+            {error && <ErrorBanner msg={error} />}
+            {successMsg && <SuccessBanner msg={successMsg} />}
+
+            <button type="submit" disabled={loading} className="w-full bg-yellow-400 text-black py-3 rounded-lg font-black text-xs uppercase tracking-widest hover:bg-yellow-300 transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+              {loading ? 'Sending OTP...' : 'Send OTP'}
+            </button>
+            <p className="text-center text-[9px] font-black uppercase tracking-widest text-slate-500">
+              <button type="button" onClick={() => switchMode('login')} className="text-yellow-400 hover:underline">Back to Sign In</button>
+            </p>
+          </form>
+        )}
+
+        {mode === 'forgot' && forgotStep === 2 && (
+          <form onSubmit={handleForgotStep2} className="space-y-4">
+            <div className="space-y-1">
+              <label className={labelClass}>OTP Code</label>
+              <div className="relative">
+                <CheckCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input type="text" value={otp} onChange={e => setOtp(e.target.value)} placeholder="Enter OTP from email" required className={`${inputClass} pl-10`} />
               </div>
             </div>
             <div className="space-y-1">
@@ -234,7 +270,7 @@ export const Auth: React.FC<AuthProps> = ({ isDark }) => {
               {loading ? 'Updating...' : 'Update Password'}
             </button>
             <p className="text-center text-[9px] font-black uppercase tracking-widest text-slate-500">
-              <button type="button" onClick={() => switchMode('login')} className="text-yellow-400 hover:underline">Back to Sign In</button>
+              <button type="button" onClick={() => { setForgotStep(1); resetState(); }} className="text-yellow-400 hover:underline">Resend OTP</button>
             </p>
           </form>
         )}

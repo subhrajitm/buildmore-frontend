@@ -1,19 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck, User, Package, FileText, Settings, Heart } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck, User, Package, FileText, Heart } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { formatPrice } from '../utils/currency';
 import { LocationModal, getStoredLocation } from './LocationModal';
 
-interface HeaderProps {
-  isDark: boolean;
-  setIsDark: (d: boolean) => void;
-}
-
-export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
+export const Header: React.FC = () => {
   const { totalItems, totalValue } = useCart();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { isDark, toggleDark } = useTheme();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,12 +83,8 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
 
         <div className="flex items-center gap-6 text-sm font-bold">
           <div className="hidden xl:flex items-center gap-6 text-slate-400">
-            {/* <a href="#" className={`hover:text-yellow-400 transition-colors flex items-center gap-2 text-[10px] uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              <Award className="w-3.5 h-3.5" />
-              Certifications
-            </a> */}
             <button
-              onClick={() => setIsDark(!isDark)}
+              onClick={toggleDark}
               className={`p-2 rounded-lg transition-all ${isDark ? 'bg-zinc-800 text-yellow-400 hover:bg-zinc-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -126,7 +119,6 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
 
                 {profileOpen && (
                   <div className={`absolute right-0 top-full mt-2 w-56 rounded-2xl border shadow-2xl overflow-hidden z-50 ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-slate-200'}`}>
-                    {/* User info */}
                     <div className={`px-4 py-3 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
                       <div className="flex items-center gap-2.5">
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm ${isDark ? 'bg-zinc-700 text-white' : 'bg-slate-100 text-slate-700'}`}>
@@ -144,14 +136,12 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
                       )}
                     </div>
 
-                    {/* Menu items */}
                     <div className="py-1.5">
                       {[
                         { to: '/profile', icon: User, label: 'My Profile' },
                         { to: '/profile?tab=orders', icon: Package, label: 'My Orders' },
                         { to: '/wishlist', icon: Heart, label: 'My Wishlist' },
                         { to: '/rfqs', icon: FileText, label: 'Quote Requests' },
-                        ...(isAdmin ? [{ to: '/admin', icon: Settings, label: 'Admin Panel' }] : []),
                       ].map(({ to, icon: Icon, label }) => (
                         <Link
                           key={to}
@@ -165,7 +155,6 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
                       ))}
                     </div>
 
-                    {/* Logout */}
                     <div className={`border-t py-1.5 ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
                       <button
                         onClick={() => { setProfileOpen(false); logout(); }}
@@ -211,7 +200,6 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
 
     {locationOpen && (
       <LocationModal
-        isDark={isDark}
         onClose={() => setLocationOpen(false)}
         onSelect={loc => setLocation(loc)}
       />

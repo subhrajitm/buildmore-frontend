@@ -1,9 +1,10 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { 
-  LayoutDashboard, Package, ShoppingCart, FileText, Truck, 
-  LogOut, Settings, ChevronRight, Building2, Layers
+import { useTheme } from '../context/ThemeContext';
+import {
+  LayoutDashboard, Package, ShoppingCart, FileText, Truck,
+  LogOut, Building2, Layers
 } from 'lucide-react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
@@ -16,12 +17,9 @@ const navItems = [
   { path: '/admin/shipments', icon: Truck, label: 'Shipments' },
 ];
 
-interface AdminLayoutProps {
-  isDark: boolean;
-}
-
-export const AdminLayout: React.FC<AdminLayoutProps> = ({ isDark }) => {
+export const AdminLayout: React.FC = () => {
   const { adminUser, adminLogout, isAdminAuthenticated } = useAdminAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -65,8 +63,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ isDark }) => {
               to={item.path}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
-                  isActive 
-                    ? 'bg-yellow-400 text-black' 
+                  isActive
+                    ? 'bg-yellow-400 text-black'
                     : `${isDark ? 'text-slate-400 hover:bg-white/5 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`
                 }`
               }
@@ -98,7 +96,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ isDark }) => {
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         <div className="p-8">
-          <ErrorBoundary isDark={isDark}>
+          <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
         </div>

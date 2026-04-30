@@ -8,12 +8,10 @@ import { productApi, specsApi, BackendProduct, SpecSheet } from '../api';
 import { normalizeProduct } from '../utils/normalizeProduct';
 import { useCart } from '../context/CartContext';
 import { formatPrice } from '../utils/currency';
+import { useTheme } from '../context/ThemeContext';
 
-interface ProductDetailProps {
-  isDark: boolean;
-}
-
-export const ProductDetail: React.FC<ProductDetailProps> = ({ isDark }) => {
+export const ProductDetail: React.FC = () => {
+  const { isDark } = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [raw, setRaw] = useState<BackendProduct | null>(null);

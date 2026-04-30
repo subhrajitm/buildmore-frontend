@@ -2,12 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCategoryMeta } from '../utils/categoryMeta';
 import { categoryApi, Category } from '../api';
+import { useTheme } from '../context/ThemeContext';
 
-interface CategoryGridProps {
-  isDark: boolean;
-}
-
-export const CategoryGrid: React.FC<CategoryGridProps> = ({ isDark }) => {
+export const CategoryGrid: React.FC = () => {
+  const { isDark } = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -3,10 +3,7 @@ import { Plus, ArrowRight, Clock, CheckCircle, XCircle, FileText, Search, Chevro
 import { useAuth } from '../context/AuthContext';
 import { rfqApi, RFQ } from '../api';
 import { useLocation } from 'react-router-dom';
-
-interface RFQsProps {
-  isDark: boolean;
-}
+import { useTheme } from '../context/ThemeContext';
 
 const STATUS_MAP: Record<string, { label: string; icon: React.FC<{ className?: string }>; color: string; bg: string }> = {
   DRAFT:        { label: 'Draft',        icon: FileText,    color: 'text-slate-400',  bg: 'bg-slate-400/10 border-slate-400/20' },
@@ -20,7 +17,8 @@ const STATUS_MAP: Record<string, { label: string; icon: React.FC<{ className?: s
 
 const STATUS_OPTIONS = ['All', 'DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'QUOTED', 'ACCEPTED', 'REJECTED', 'EXPIRED'];
 
-export const RFQs: React.FC<RFQsProps> = ({ isDark }) => {
+export const RFQs: React.FC = () => {
+  const { isDark } = useTheme();
   const { token, user } = useAuth();
   const location = useLocation();
 

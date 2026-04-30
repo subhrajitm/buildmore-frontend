@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Package, TrendingDown, TrendingUp, AlertTriangle, Search, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { productApi, BackendProduct } from '../api';
-
-interface InventoryProps {
-  isDark: boolean;
-}
+import { useTheme } from '../context/ThemeContext';
 
 type SortField = 'name' | 'stock' | 'price';
 type SortDir = 'asc' | 'desc';
 
-export const Inventory: React.FC<InventoryProps> = ({ isDark }) => {
+export const Inventory: React.FC = () => {
+  const { isDark } = useTheme();
   const [products, setProducts] = useState<BackendProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

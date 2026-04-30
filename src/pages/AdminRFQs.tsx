@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { rfqApi, RFQ } from '../api';
+import { useTheme } from '../context/ThemeContext';
 import { 
   ChevronDown, ChevronUp, Loader2, Check, ChevronLeft, ChevronRight, 
   Clock, CheckCircle, XCircle, FileText, Search, AlertCircle, Package, 
@@ -8,10 +9,6 @@ import {
 } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 10;
-
-interface AdminRFQsProps {
-  isDark: boolean;
-}
 
 const RFQ_ADMIN_STATUSES = ['UNDER_REVIEW', 'QUOTED', 'ACCEPTED', 'REJECTED'] as const;
 const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -24,7 +21,8 @@ const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string; b
   EXPIRED: { label: 'Expired', icon: XCircle, color: 'text-slate-500', bg: 'bg-slate-500/10' },
 };
 
-export const AdminRFQs: React.FC<AdminRFQsProps> = ({ isDark }) => {
+export const AdminRFQs: React.FC = () => {
+  const { isDark } = useTheme();
   const { adminToken } = useAdminAuth();
   const [rfqs, setRfqs] = useState<RFQ[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,11 +1,10 @@
 import React from 'react';
 import { ShieldCheck, Truck, Headphones } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
-interface TrustSignalsProps {
-  isDark: boolean;
-}
-
-export const TrustSignals: React.FC<TrustSignalsProps> = ({ isDark }) => (
+export const TrustSignals: React.FC = () => {
+  const { isDark } = useTheme();
+  return (
   <section className={`grid grid-cols-1 md:grid-cols-3 gap-8 py-10 border-y ${isDark ? 'border-white/5' : 'border-slate-100'} transition-colors duration-300`}>
     <div className="flex gap-4">
       <div className={`${isDark ? 'bg-white/5' : 'bg-slate-50'} p-4 rounded-lg h-fit text-yellow-400 shadow-sm`}>
@@ -35,4 +34,5 @@ export const TrustSignals: React.FC<TrustSignalsProps> = ({ isDark }) => (
       </div>
     </div>
   </section>
-);
+  );
+};
