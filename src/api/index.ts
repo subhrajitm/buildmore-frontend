@@ -383,6 +383,39 @@ export const shipmentApi = {
     request<{ success: boolean; shipment: Shipment }>(`/api/shipments/admin/${id}`, { method: 'PATCH', body, token }),
 };
 
+// ── Fee API ───────────────────────────────────────────────────────────────────
+
+export interface Fee {
+  _id: string;
+  name: string;
+  amount: number;
+  enabled: boolean;
+  condition: 'always' | 'min_items' | 'min_amount';
+  conditionValue?: number;
+}
+
+export const feesApi = {
+  // Public — used by Cart & Checkout (no auth)
+  getEnabled: () =>
+    request<{ success: boolean; fees: Fee[] }>('/api/fees'),
+
+  // Admin
+  adminGetAll: (token: string) =>
+    request<{ success: boolean; fees: Fee[] }>('/api/admin/fees', { token }),
+
+  adminCreate: (body: Omit<Fee, '_id'>, token: string) =>
+    request<{ success: boolean; fee: Fee }>('/api/admin/fees', { method: 'POST', body, token }),
+
+  adminUpdate: (id: string, body: Partial<Omit<Fee, '_id'>>, token: string) =>
+    request<{ success: boolean; fee: Fee }>(`/api/admin/fees/${id}`, { method: 'PUT', body, token }),
+
+  adminToggle: (id: string, token: string) =>
+    request<{ success: boolean; fee: Fee }>(`/api/admin/fees/${id}/toggle`, { method: 'PATCH', token }),
+
+  adminDelete: (id: string, token: string) =>
+    request<{ success: boolean; message: string }>(`/api/admin/fees/${id}`, { method: 'DELETE', token }),
+};
+
 // ── Compliance API ────────────────────────────────────────────────────────────
 
 export interface ComplianceDoc {

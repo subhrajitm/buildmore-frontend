@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ShieldCheck, CheckCircle, MapPin, CreditCard, Banknote, FileText, ArrowLeft, Loader2, Check, ChevronDown, ChevronUp, Home, Building2, Pencil, Trash2, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { orderApi, userApi, Address } from '../api';
+import { orderApi, userApi, Address, feesApi, Fee } from '../api';
 import { formatPrice } from '../utils/currency';
 import { useTheme } from '../context/ThemeContext';
-import { getFees, getApplicableFees } from '../utils/fees';
+import { getApplicableFees } from '../utils/fees';
 
 const EMPTY_ADDR: Omit<Address, '_id'> = {
   area: '', city: '', state: '', pincode: '', country: 'India',
@@ -18,7 +18,12 @@ export const Checkout: React.FC = () => {
   const { items, removeItem, updateQuantity, totalValue, clearCart } = useCart();
   const { token, user } = useAuth();
   const navigate = useNavigate();
-  const fees = getFees();
+  const [fees, setFees] = useState<Fee[]>([]);
+
+  useEffect(() => {
+    feesApi.getEnabled().then(r => setFees(r.fees)).catch(() => {});
+  }, []);
+
   const applicableFees = getApplicableFees(fees, items.length, totalValue);
   const grandTotal = totalValue + applicableFees.reduce((s, f) => s + f.amount, 0);
 
