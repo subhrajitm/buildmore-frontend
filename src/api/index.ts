@@ -20,7 +20,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   });
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.message || data.err || 'Request failed');
+    throw new Error(data.message || data.error || data.err || 'Request failed');
   }
   return data as T;
 }
@@ -33,7 +33,7 @@ async function requestFormData<T>(path: string, formData: FormData, token: strin
   });
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.message || data.err || 'Request failed');
+    throw new Error(data.message || data.error || data.err || 'Request failed');
   }
   return data as T;
 }
@@ -237,7 +237,7 @@ export interface Order {
 }
 
 export const orderApi = {
-  create: (body: { items: { product: string; quantity: number }[]; shippingAddress: Omit<Address, '_id'>; paymentMethod?: 'ONLINE' | 'COD'; notes?: string }, token: string) =>
+  create: (body: { items: { product: string; quantity: number; productName: string; price: number }[]; totalAmount: number; shippingAddress: Omit<Address, '_id'>; paymentMethod?: 'ONLINE' | 'COD'; notes?: string }, token: string) =>
     request<{ success: boolean; order: Order }>('/api/orders', { method: 'POST', body, token }),
 
   getAll: (token: string) =>

@@ -77,10 +77,11 @@ export const Checkout: React.FC = () => {
     setError('');
     setPlacing(true);
     try {
-      const orderItems = items.map(i => ({ product: String(i.id), quantity: i.quantity }));
-      const res = await orderApi.create({ 
-        items: orderItems, 
-        shippingAddress: addr, 
+      const orderItems = items.map(i => ({ product: String(i.id), quantity: i.quantity, productName: i.name, price: i.price }));
+      const res = await orderApi.create({
+        items: orderItems,
+        totalAmount: grandTotal,
+        shippingAddress: addr,
         paymentMethod,
         notes: orderNotes.trim() || undefined,
       }, token!);
