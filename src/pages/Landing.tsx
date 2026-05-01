@@ -159,7 +159,7 @@ export const Landing: React.FC = () => {
 
   useEffect(() => {
     Promise.all([
-      productApi.getAll().then(res => res.products || []),
+      productApi.getAll({ limit: 500 }).then(res => res.products || []),
       categoryApi.getAll().then(res => res.categories || []),
     ])
       .then(([prods, cats]) => {
