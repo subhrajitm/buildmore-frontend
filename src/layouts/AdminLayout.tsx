@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
   LayoutDashboard, Package, ShoppingCart, FileText, Truck,
-  LogOut, Building2, Layers
+  LogOut, Building2, Layers, Menu, X
 } from 'lucide-react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
@@ -21,6 +21,7 @@ export const AdminLayout: React.FC = () => {
   const { adminUser, adminLogout, isAdminAuthenticated } = useAdminAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     adminLogout();
@@ -42,8 +43,16 @@ export const AdminLayout: React.FC = () => {
 
   return (
     <div className={`flex h-screen ${bgClass}`}>
+      {/* Mobile menu button */}
+      <button 
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden absolute top-4 left-4 z-50 p-2 rounded-lg bg-yellow-400"
+      >
+        {sidebarOpen ? <X className="w-5 h-5 text-black" /> : <Menu className="w-5 h-5 text-black" />}
+      </button>
+
       {/* Sidebar */}
-      <aside className={`w-64 flex-shrink-0 ${sidebarBg} flex flex-col`}>
+      <aside className={`w-64 flex-shrink-0 ${sidebarBg} flex flex-col fixed lg:relative inset-y-0 left-0 z-40 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="p-6 border-b border-dashed">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-yellow-400 flex items-center justify-center">
@@ -94,8 +103,12 @@ export const AdminLayout: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">
+      <main className="flex-1 overflow-auto lg:ml-0 ml-0">
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setSidebarOpen(false)} />
+        )}
+        <div className="p-4 lg:p-8">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

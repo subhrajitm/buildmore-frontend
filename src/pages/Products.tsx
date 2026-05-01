@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, ChevronLeft, ChevronRight, X, Star, ChevronDown, Heart, Layers, Package, ArrowRight, Loader2, Filter, Grid3X3, List, Box, Info } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, X, Star, ChevronDown, Heart, Layers, Package, ArrowRight, Loader2, Filter, Grid3X3, List, Box, Info, Menu } from 'lucide-react';
 import { useSearchParams, Link, useParams } from 'react-router-dom';
 import { productApi, categoryApi, BackendProduct, Category } from '../api';
 import { normalizeProduct } from '../utils/normalizeProduct';
@@ -120,6 +120,7 @@ export const Products: React.FC = () => {
   
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -215,11 +216,15 @@ export const Products: React.FC = () => {
   }
 
   return (
-    <div className={`max-w-[1920px] mx-auto flex flex-col h-[calc(100vh-80px)] overflow-hidden border ${borderClass} ${bgClass} shadow-2xl relative`}>
+    <div className={`max-w-[1920px] mx-auto flex flex-col min-h-[calc(100vh-80px)] lg:max-h-[calc(100vh-80px)] overflow-hidden border ${borderClass} ${bgClass} shadow-2xl relative`}>
       {/* ── Control Bar ── */}
-      <div className={`px-6 py-2 border-b ${borderClass} ${isDark ? 'bg-[#050505]' : 'bg-white'} flex items-center justify-between z-30`}>
-        {/* Left: Breadcrumbs */}
-        <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">
+      <div className={`px-3 lg:px-6 py-2 border-b ${borderClass} ${isDark ? 'bg-[#050505]' : 'bg-white'} flex items-center justify-between z-30`}>
+        {/* Left: Menu & Breadcrumbs */}
+        <div className="flex items-center gap-2">
+          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-1">
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">
           <Link to="/" className="hover:text-yellow-400 transition-colors">InfraMart</Link>
           <ChevronRight className="w-2.5 h-2.5" />
           <span className="text-yellow-400">Products</span>
@@ -230,7 +235,8 @@ export const Products: React.FC = () => {
             </>
           )}
         </div>
-        
+        </div>
+
         {/* Right: Controls */}
         <div className="flex items-center gap-2">
           {/* Top Bar Search */}
@@ -305,7 +311,10 @@ export const Products: React.FC = () => {
 
       <div className="flex flex-1 overflow-hidden">
         {/* ── Compact Sidebar ── */}
-        <aside className={`w-[200px] flex-shrink-0 border-r ${borderClass} ${sidebarBg} overflow-y-auto hidden lg:flex flex-col`}>
+        <aside className={`w-52 lg:w-[200px] flex-shrink-0 border-r ${borderClass} ${sidebarBg} overflow-y-auto hidden lg:flex flex-col fixed lg:relative inset-y-0 left-0 z-30 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden absolute top-4 right-4 p-2 z-40">
+            <X className="w-5 h-5" />
+          </button>
           <nav className="p-3 pt-5 flex-1 space-y-1">
             <button
               onClick={() => setSelectedCategory(null)}
@@ -351,12 +360,17 @@ className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all t
           </nav>
         </aside>
 
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div className="lg:hidden fixed inset-0 bg-black/50 z-20" onClick={() => setSidebarOpen(false)} />
+        )}
+
         {/* ── Main Catalog Area ── */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-hidden relative">
           {/* Dynamic Product Grid - Increased Density */}
           <div className={`flex-1 overflow-y-auto p-4 custom-scrollbar ${isDark ? 'bg-[#0a0a0a]' : 'bg-slate-50/30'}`}>
             {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 3xl:grid-cols-8 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 lg:gap-3">
                 {filteredProducts.map(p => (
                   <ProductCard key={p._id} product={normalizeProduct(p)} />
                 ))}

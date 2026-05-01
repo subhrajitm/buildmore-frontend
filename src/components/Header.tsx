@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck, User, Package, FileText, Heart } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck, User, Package, FileText, Heart, Menu, X } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +17,7 @@ export const Header: React.FC = () => {
   const [locationOpen, setLocationOpen] = useState(false);
   const [location, setLocation] = useState(() => getStoredLocation());
   const [profileOpen, setProfileOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setProfileOpen(false); }, [pathname]);
@@ -41,14 +42,22 @@ export const Header: React.FC = () => {
   return (
   <>
     <header className={`${isDark ? 'bg-zinc-900/95 border-yellow-400/10' : 'bg-white/95 border-slate-200'} backdrop-blur-xl shadow-sm sticky top-0 z-50 border-b transition-colors duration-300`}>
-      <div className="max-w-[1920px] mx-auto px-6 py-2 flex items-center justify-between gap-6">
-        <div className="flex items-center gap-8">
+      <div className="max-w-[1920px] mx-auto px-4 lg:px-6 py-2 flex items-center justify-between gap-4">
+        {/* Mobile Menu Button */}
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="lg:hidden p-2 rounded-lg"
+        >
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+
+        <div className="flex items-center gap-4 lg:gap-8">
           <Link to="/" className="flex items-center gap-2">
             <div className="w-7 h-7 bg-yellow-400 rounded-sm flex items-center justify-center">
               <BarChart3 className="w-4 h-4 text-black" />
             </div>
             <div className="flex flex-col leading-none">
-              <span className={`text-xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'} uppercase leading-none`}>Build<span className="text-yellow-400">More</span></span>
+              <span className={`text-lg lg:text-xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'} uppercase leading-none`}>Build<span className="text-yellow-400">More</span></span>
               <span className="text-[9px] font-black tracking-widest text-yellow-400 uppercase leading-none">Infra Mart</span>
             </div>
           </Link>
@@ -194,9 +203,31 @@ export const Header: React.FC = () => {
               </div>
             </Link>
           </div>
+          </div>
         </div>
-      </div>
-    </header>
+
+      {/* Mobile Menu Drawer */}
+      {mobileMenuOpen && (
+        <div className={`lg:hidden fixed inset-0 z-40 top-[57px]`}>
+          <div className={`absolute inset-0 bg-black/50`} onClick={() => setMobileMenuOpen(false)} />
+          <div className={`absolute top-0 left-0 w-72 max-h-[calc(100vh-57px)] overflow-y-auto ${isDark ? 'bg-zinc-900' : 'bg-white'} border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+            <div className="p-4 space-y-2">
+              <Link to="/products" onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold ${isDark ? 'text-slate-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'}`}>
+                <Package className="w-5 h-5" /> Products
+              </Link>
+              <Link to="/cart" onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold ${isDark ? 'text-slate-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'}`}>
+                <ShoppingCart className="w-5 h-5" /> Cart ({totalItems})
+              </Link>
+              <Link to="/wishlist" onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold ${isDark ? 'text-slate-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'}`}>
+                <Heart className="w-5 h-5" /> Wishlist
+              </Link>
+              <Link to="/rfqs" onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold ${isDark ? 'text-slate-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'}`}>
+                <FileText className="w-5 h-5" /> Quotes
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
     {locationOpen && (
       <LocationModal
@@ -204,6 +235,7 @@ export const Header: React.FC = () => {
         onSelect={loc => setLocation(loc)}
       />
     )}
+    </header>
   </>
   );
 };
