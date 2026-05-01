@@ -199,10 +199,24 @@ export const Header: React.FC = () => {
                         )}
                       </div>
 
+                      {isAdmin && (
+                        <div className={`px-3 pt-2 pb-1 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                          <Link
+                            to="/admin/dashboard"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg bg-yellow-400/10 hover:bg-yellow-400/20 transition-colors"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+                            <span className="text-xs font-black uppercase tracking-widest text-yellow-500">Admin Panel</span>
+                          </Link>
+                        </div>
+                      )}
+
                       <div className="py-1.5">
                         {[
                           { to: '/profile', icon: User, label: 'My Profile' },
                           { to: '/profile?tab=orders', icon: Package, label: 'My Orders' },
+                          { to: '/profile?tab=addresses', icon: MapPin, label: 'My Addresses' },
                           { to: '/wishlist', icon: Heart, label: 'My Wishlist' },
                           { to: '/rfqs', icon: FileText, label: 'Quote Requests' },
                         ].map(({ to, icon: Icon, label }) => (

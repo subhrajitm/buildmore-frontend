@@ -34,12 +34,12 @@ export const Checkout: React.FC = () => {
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Omit<Address, '_id'>>({ ...EMPTY_ADDR });
   const [editSaving, setEditSaving] = useState(false);
+  const [savingNewAddr, setSavingNewAddr] = useState(false);
   const [addrFetchWarn, setAddrFetchWarn] = useState('');
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'ONLINE' | 'COD'>('COD');
-  const [saveAddress, setSaveAddress] = useState(false);
   const [orderNotes, setOrderNotes] = useState('');
 
   const field = isDark
@@ -85,12 +85,6 @@ export const Checkout: React.FC = () => {
         notes: orderNotes.trim() || undefined,
       }, token!);
       
-      if (saveAddress && user?._id) {
-        try {
-          await userApi.addAddress({ ...addr, _id: '' }, token!);
-        } catch { /* ignore save errors */ }
-      }
-      
       setSuccess(`Order ${res.order.orderNumber} placed successfully!`);
       clearCart();
       setTimeout(() => navigate('/profile'), 2500);
@@ -107,6 +101,26 @@ export const Checkout: React.FC = () => {
   };
 
   const cancelEdit = () => { setEditingAddressId(null); };
+
+  const handleSaveNewAddress = async () => {
+    if (!token || !addr.area || !addr.city || !addr.state || !addr.pincode) return;
+    setSavingNewAddr(true);
+    try {
+      const res = await userApi.addAddress({ ...addr, _id: '' }, token);
+      const updated: Address[] = res.address ?? res.user?.address ?? [];
+      setSavedAddresses(updated);
+      const newest = updated[updated.length - 1];
+      if (newest) {
+        setSelectedAddressId(newest._id);
+      }
+      setShowNewForm(false);
+      setAddr({ ...EMPTY_ADDR });
+    } catch {
+      // keep form open so user can retry
+    } finally {
+      setSavingNewAddr(false);
+    }
+  };
 
   const saveEdit = async (id: string) => {
     if (!token) return;
@@ -396,19 +410,22 @@ export const Checkout: React.FC = () => {
                     ))}
                   </div>
 
-                  <label className="flex items-center gap-2 pt-1 cursor-pointer">
-                    <div
-                      onClick={() => setSaveAddress(v => !v)}
-                      className={`w-4 h-4 rounded flex items-center justify-center border transition-all cursor-pointer ${
-                        saveAddress ? 'bg-yellow-400 border-yellow-400' : isDark ? 'border-white/20' : 'border-slate-300'
-                      }`}
-                    >
-                      {saveAddress && <Check className="w-2.5 h-2.5 text-black" />}
+                  {token && (
+                    <div className="flex items-center gap-3 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleSaveNewAddress}
+                        disabled={savingNewAddr || !addr.area || !addr.city || !addr.state || !addr.pincode}
+                        className="flex items-center gap-1.5 bg-yellow-400 text-black px-4 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-yellow-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {savingNewAddr ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                        Save Address
+                      </button>
+                      <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Saves to your account & selects it
+                      </span>
                     </div>
-                    <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Save this address for future orders
-                    </span>
-                  </label>
+                  )}
                 </div>
               )}
             </div>
