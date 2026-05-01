@@ -8,6 +8,7 @@ export const CategoryGrid: React.FC = () => {
   const { isDark } = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     categoryApi.getAll()
@@ -15,6 +16,10 @@ export const CategoryGrid: React.FC = () => {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  const onImgError = (url: string) => {
+    setFailedImages(prev => new Set(prev).add(url));
+  };
 
   const skeletonClass = isDark ? 'bg-zinc-800 animate-pulse' : 'bg-slate-200 animate-pulse';
 
@@ -30,36 +35,25 @@ export const CategoryGrid: React.FC = () => {
             ))
           : categories.map((cat) => {
               const meta = getCategoryMeta(cat.name);
+              const hasImage = cat.image && !failedImages.has(cat.image);
               return (
-                <Link
-                  key={cat._id}
-                  to={`/products/${cat.slug}`}
-                  className="flex flex-col items-center gap-2 group"
-                >
+                <Link key={cat._id} to={`/products/${cat.slug}`} className="flex flex-col items-center gap-2 group">
                   <div className={`relative w-full aspect-square rounded-2xl flex items-center justify-center transition-all duration-200 border-2 overflow-hidden ${
-                    isDark
-                      ? 'bg-zinc-800 border-transparent group-hover:border-yellow-400/50 group-hover:bg-zinc-700'
-                      : 'bg-slate-100 border-transparent group-hover:border-yellow-300 group-hover:bg-yellow-50'
+                    isDark ? 'bg-zinc-800 border-transparent group-hover:border-yellow-400/50 group-hover:bg-zinc-700' : 'bg-slate-100 border-transparent group-hover:border-yellow-300 group-hover:bg-yellow-50'
                   }`}>
-                    {cat.image
-                      ? (
-                        <>
-                          <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                        </>
-                      )
-                      : <meta.icon className={`w-8 h-8 transition-colors ${isDark ? 'text-slate-300 group-hover:text-yellow-400' : 'text-slate-600 group-hover:text-yellow-500'}`} />
-                    }
+                    {hasImage ? (
+                      <>
+                        <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" loading="lazy" onError={() => cat.image && onImgError(cat.image)} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                      </>
+                    ) : <meta.icon className={`w-8 h-8 transition-colors ${isDark ? 'text-slate-300 group-hover:text-yellow-400' : 'text-slate-600 group-hover:text-yellow-500'}`} />}
                   </div>
                   <span className={`text-[11px] font-semibold text-center leading-tight px-1 transition-colors ${
                     isDark ? 'text-slate-400 group-hover:text-white' : 'text-slate-600 group-hover:text-slate-900'
-                  }`}>
-                    {cat.name}
-                  </span>
+                  }`}>{cat.name}</span>
                 </Link>
               );
-            })
-        }
+            })}
       </div>
     </section>
   );
