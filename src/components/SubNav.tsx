@@ -43,10 +43,10 @@ export const SubNav: React.FC = () => {
 
   return (
     <div className="relative font-primary" ref={menuRef}>
-      <nav className={`${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-300'} border-b py-2 px-3 sm:px-6 overflow-x-auto transition-colors duration-300 relative z-[45]`}>
-        <div className="max-w-[1920px] mx-auto flex items-center gap-4 sm:gap-6 whitespace-nowrap">
+      <nav className={`${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-300'} border-b py-2 px-3 sm:px-6 transition-colors duration-300 relative z-[45]`}>
+        <div className="max-w-[1920px] mx-auto flex items-center">
 
-          {/* Explore toggle */}
+          {/* Explore toggle — always visible, never scrolls */}
           <button
             onClick={() => setIsMenuOpen(o => !o)}
             className="flex items-center gap-1.5 font-bold text-xs text-yellow-400 shrink-0"
@@ -55,35 +55,37 @@ export const SubNav: React.FC = () => {
             Explore
           </button>
 
-          <div className={`w-px h-4 shrink-0 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
+          <div className={`w-px h-4 shrink-0 mx-4 sm:mx-6 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
 
-          {/* Top department links */}
-          <div className={`flex items-center gap-1 text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            {categories.slice(0, 5).map(cat => {
-              const meta = getCategoryMeta(cat.name);
-              return (
-                <Link
-                  key={cat._id}
-                  to={`/products?category=${encodeURIComponent(cat.name)}`}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
-                    isDark ? 'hover:bg-white/5 hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                  }`}
-                >
-                  <meta.icon className="w-3 h-3" />
-                  {cat.name}
-                </Link>
-              );
-            })}
+          {/* Scrollable section: category links + All Products */}
+          <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap scrollbar-none min-w-0">
+            <div className={`flex items-center gap-1 text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              {categories.slice(0, 5).map(cat => {
+                const meta = getCategoryMeta(cat.name);
+                return (
+                  <Link
+                    key={cat._id}
+                    to={`/products?category=${encodeURIComponent(cat.name)}`}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                      isDark ? 'hover:bg-white/5 hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    <meta.icon className="w-3 h-3" />
+                    {cat.name}
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className={`w-px h-4 shrink-0 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
+
+            <Link
+              to="/products"
+              className={`text-xs font-semibold shrink-0 transition-colors ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-slate-900'}`}
+            >
+              All Products
+            </Link>
           </div>
-
-          <div className={`w-px h-4 shrink-0 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
-
-          <Link
-            to="/products"
-            className={`text-xs font-semibold transition-colors ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-slate-900'}`}
-          >
-            All Products
-          </Link>
         </div>
       </nav>
 
