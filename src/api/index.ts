@@ -508,3 +508,34 @@ export const specsApi = {
   adminDelete: (id: string, token: string) =>
     request<{ success: boolean; message: string }>(`/api/specs/admin/${id}`, { method: 'DELETE', token }),
 };
+
+// ── Marketing API ─────────────────────────────────────────────────────────────
+
+export interface Banner {
+  _id: string;
+  image: string;
+  tag?: string;
+  headline: string;
+  headlineAccent?: string;
+  sub?: string;
+  cta: string;
+  ctaTo: string;
+}
+
+export interface Offer {
+  _id: string;
+  title: string;
+  tag?: string;
+  discount: string;
+  desc?: string;
+  color: string;
+  image: string;
+}
+
+export const marketingApi = {
+  getBanners: () =>
+    request<{ success: boolean; banners: Banner[] }>('/api/marketing/banners'),
+
+  getOffers: () =>
+    request<{ success: boolean; offers: Offer[] }>('/api/marketing/offers'),
+};

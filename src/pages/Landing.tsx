@@ -4,42 +4,14 @@ import { Link } from 'react-router-dom';
 import { Hero } from '../components/Hero';
 import { CategoryGrid } from '../components/CategoryGrid';
 import { TrustSignals } from '../components/TrustSignals';
-import { productApi, BackendProduct, categoryApi, Category } from '../api';
+import { productApi, BackendProduct, categoryApi, Category, marketingApi, Banner, Offer } from '../api';
 import { normalizeProduct } from '../utils/normalizeProduct';
 import { TOP_CATEGORIES } from '../utils/categoryMeta';
 import { formatPrice } from '../utils/currency';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 
-const FLASH_OFFERS = [
-  {
-    id: 1,
-    title: 'Weekend Construction Bumper',
-    tag: 'Limited Time',
-    discount: 'Extra 15% OFF',
-    desc: 'Get an additional discount on all structural steel and power tools over ₹40,000.',
-    color: 'from-orange-600 to-red-700',
-    image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=2000&auto=format&fit=crop',
-  },
-  {
-    id: 2,
-    title: 'Bulk Infrastructure Blowout',
-    tag: 'Bumper Offer',
-    discount: 'Buy 5, Get 1 FREE',
-    desc: 'On all safety equipment and sitewide hardware kits. Stock up for your next project.',
-    color: 'from-blue-700 to-indigo-900',
-    image: 'https://images.unsplash.com/photo-1581094120973-10d9be8a1290?q=80&w=2000&auto=format&fit=crop',
-  },
-  {
-    id: 3,
-    title: 'Premium Project Pack',
-    tag: 'Flash Deal',
-    discount: 'Flat ₹40,000 Cashback',
-    desc: 'When you finalize your first procurement order over ₹400,000 this month.',
-    color: 'from-emerald-700 to-teal-900',
-    image: 'https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=2000&auto=format&fit=crop',
-  },
-];
+// Removed hardcoded FLASH_OFFERS
 
 // ── Blinkit-style compact product card ────────────────────────────────────────
 const HomeProductCard: React.FC<{ product: ReturnType<typeof normalizeProduct> }> = ({ product }) => {
@@ -155,16 +127,22 @@ export const Landing: React.FC = () => {
   const { isDark } = useTheme();
   const [allProducts, setAllProducts] = useState<BackendProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       productApi.getAll({ limit: 500 }).then(res => res.products || []),
       categoryApi.getAll().then(res => res.categories || []),
+      marketingApi.getBanners().then(res => res.banners || []),
+      marketingApi.getOffers().then(res => res.offers || []),
     ])
-      .then(([prods, cats]) => {
+      .then(([prods, cats, bans, offs]) => {
         setAllProducts(prods);
         setCategories(cats);
+        setBanners(bans);
+        setOffers(offs);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -172,7 +150,7 @@ export const Landing: React.FC = () => {
 
   return (
     <>
-      <Hero />
+      <Hero banners={banners} />
 
       <CategoryGrid />
 
@@ -203,14 +181,14 @@ export const Landing: React.FC = () => {
 
       <TrustSignals />
 
-      <BumperSlider />
+      <BumperSlider offers={offers} />
     </>
   );
 };
 
 const OFFER_DURATION_SECS = 6 * 60 * 60; // 6h per offer slot, resets each slide
 
-const BumperSlider: React.FC = () => {
+const BumperSlider: React.FC<{ offers: Offer[] }> = ({ offers }) => {
   const { isDark } = useTheme();
   const [activeSlide, setActiveSlide] = React.useState(0);
   const [progress, setProgress] = React.useState(0);
@@ -224,7 +202,7 @@ const BumperSlider: React.FC = () => {
 
   React.useEffect(() => {
     const slideTimer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % FLASH_OFFERS.length);
+      setActiveSlide((prev) => (prev + 1) % (offers.length || 1));
       setProgress(0);
     }, 6000);
 
@@ -259,7 +237,7 @@ const BumperSlider: React.FC = () => {
           <h2 className={`text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>Bumper <span className="text-yellow-400 italic">Offers</span></h2>
         </div>
         <div className="flex items-center gap-3 mb-1">
-          {FLASH_OFFERS.map((_, idx) => (
+          {offers.map((_, idx) => (
             <button 
               key={idx}
               onClick={() => { setActiveSlide(idx); setProgress(0); }}
@@ -281,9 +259,9 @@ const BumperSlider: React.FC = () => {
           />
         </div>
 
-        {FLASH_OFFERS.map((offer, idx) => (
+        {offers.map((offer, idx) => (
           <div 
-            key={offer.id}
+            key={offer._id}
             className={`absolute inset-0 transition-all duration-[1000ms] ${activeSlide === idx ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'}`}
           >
             {/* Background elements */}
@@ -338,13 +316,13 @@ const BumperSlider: React.FC = () => {
         {/* Navigation buttons */}
         <div className="absolute inset-y-0 left-4 right-4 z-40 flex items-center justify-between pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
           <button 
-            onClick={() => { setActiveSlide((v) => (v - 1 + FLASH_OFFERS.length) % FLASH_OFFERS.length); setProgress(0); }}
+            onClick={() => { setActiveSlide((v) => (v - 1 + (offers.length || 1)) % (offers.length || 1)); setProgress(0); }}
             className="w-10 h-10 bg-black/30 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center text-white pointer-events-auto hover:bg-yellow-400 hover:text-black transition-all hover:scale-110"
           >
             <ArrowRight className="w-4 h-4 rotate-180" />
           </button>
           <button 
-            onClick={() => { setActiveSlide((v) => (v + 1) % FLASH_OFFERS.length); setProgress(0); }}
+            onClick={() => { setActiveSlide((v) => (v + 1) % (offers.length || 1)); setProgress(0); }}
             className="w-10 h-10 bg-black/30 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center text-white pointer-events-auto hover:bg-yellow-400 hover:text-black transition-all hover:scale-110"
           >
             <ArrowRight className="w-4 h-4" />

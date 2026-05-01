@@ -3,46 +3,9 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
-const SLIDES = [
-  {
-    image: '/images/buildhero.jpg',
-    tag: 'Enterprise Procurement',
-    headline: 'Build Better.',
-    headlineAccent: 'Buy Smarter.',
-    sub: 'Your one-stop destination for high-quality construction materials — reliable delivery and competitive pricing for any project size.',
-    cta: 'Shop Now',
-    ctaTo: '/products',
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1581094120973-10d9be8a1290?q=80&w=2000&auto=format&fit=crop',
-    tag: 'Bulk Orders',
-    headline: 'More Volume.',
-    headlineAccent: 'Better Pricing.',
-    sub: 'Submit RFQs for bulk procurement and get competitive quotes from verified suppliers across 15+ material categories.',
-    cta: 'Request Quote',
-    ctaTo: '/rfqs',
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=2000&auto=format&fit=crop',
-    tag: '15+ Categories',
-    headline: 'Everything',
-    headlineAccent: 'On One Platform.',
-    sub: 'From cement and tiles to electrical and plumbing — source all your construction materials from a single trusted marketplace.',
-    cta: 'Browse Categories',
-    ctaTo: '/products/categories',
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=2000&auto=format&fit=crop',
-    tag: 'Fast Delivery',
-    headline: 'Order Today.',
-    headlineAccent: 'Deliver Tomorrow.',
-    sub: 'Real-time shipment tracking and priority logistics ensure your materials arrive on time, every time.',
-    cta: 'View Products',
-    ctaTo: '/products',
-  },
-];
+import { Banner } from '../api';
 
-export const Hero: React.FC = () => {
+export const Hero: React.FC<{ banners: Banner[] }> = ({ banners }) => {
   const { isDark } = useTheme();
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
@@ -54,21 +17,24 @@ export const Hero: React.FC = () => {
     setTimeout(() => setAnimating(false), 600);
   }, [animating]);
 
-  const prev = useCallback(() => goTo((current - 1 + SLIDES.length) % SLIDES.length), [current, goTo]);
-  const next = useCallback(() => goTo((current + 1) % SLIDES.length), [current, goTo]);
+  const prev = useCallback(() => goTo((current - 1 + (banners.length || 1)) % (banners.length || 1)), [current, goTo, banners.length]);
+  const next = useCallback(() => goTo((current + 1) % (banners.length || 1)), [current, goTo, banners.length]);
 
   useEffect(() => {
+    if (banners.length <= 1) return;
     const timer = setInterval(next, 5000);
     return () => clearInterval(timer);
-  }, [next]);
+  }, [next, banners.length]);
+
+  if (banners.length === 0) return null;
 
   return (
     <section className={`relative h-[180px] sm:h-[230px] md:h-[260px] w-full rounded-2xl overflow-hidden border ${isDark ? 'border-white/5' : 'border-slate-200'} shadow-xl`}>
 
       {/* ── Slides ── */}
-      {SLIDES.map((slide, i) => (
+      {banners.map((slide, i) => (
         <div
-          key={i}
+          key={slide._id}
           className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === current ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
         >
           {/* BG image */}
@@ -83,10 +49,12 @@ export const Hero: React.FC = () => {
 
           {/* Content */}
           <div className="relative z-10 flex flex-col justify-center h-full px-5 sm:px-8 md:px-12 max-w-2xl space-y-1.5 sm:space-y-2.5">
-            <span className="inline-flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-yellow-400/90">
-              <span className="w-4 h-px bg-yellow-400" />
-              {slide.tag}
-            </span>
+            {slide.tag && (
+              <span className="inline-flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-yellow-400/90">
+                <span className="w-4 h-px bg-yellow-400" />
+                {slide.tag}
+              </span>
+            )}
             <h1 className="text-xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
               {slide.headline}{' '}
               <span className="text-yellow-400">{slide.headlineAccent}</span>
@@ -122,7 +90,7 @@ export const Hero: React.FC = () => {
 
       {/* ── Dot indicators ── */}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
-        {SLIDES.map((_, i) => (
+        {banners.map((_, i) => (
           <button
             key={i}
             onClick={() => goTo(i)}
@@ -137,7 +105,7 @@ export const Hero: React.FC = () => {
 
       {/* ── Slide counter ── */}
       <div className="absolute top-3 right-3 z-20 text-[9px] font-black text-white/40 tabular-nums">
-        {String(current + 1).padStart(2, '0')} / {String(SLIDES.length).padStart(2, '0')}
+        {String(current + 1).padStart(2, '0')} / {String(banners.length).padStart(2, '0')}
       </div>
     </section>
   );
