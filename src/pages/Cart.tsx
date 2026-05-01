@@ -6,8 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { orderApi, userApi, Address } from '../api';
 import { formatPrice } from '../utils/currency';
 import { useTheme } from '../context/ThemeContext';
-
-const LOGISTICS_FEE = 450;
+import { getFees, getApplicableFees } from '../utils/fees';
 
 const EMPTY_ADDR: Omit<Address, '_id'> = {
   area: '', city: '', state: '', pincode: '', country: 'India',
@@ -19,7 +18,9 @@ export const Cart: React.FC = () => {
   const { items, removeItem, updateQuantity, totalValue, clearCart } = useCart();
   const { token, user } = useAuth();
   const navigate = useNavigate();
-  const grandTotal = totalValue + (items.length > 0 ? LOGISTICS_FEE : 0);
+  const fees = getFees();
+  const applicableFees = getApplicableFees(fees, items.length, totalValue);
+  const grandTotal = totalValue + applicableFees.reduce((s, f) => s + f.amount, 0);
 
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [addr, setAddr] = useState({ ...EMPTY_ADDR });
@@ -177,10 +178,12 @@ export const Cart: React.FC = () => {
                 <span className="text-slate-500">Items Total</span>
                 <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatPrice(totalValue)}</span>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">Logistics Fee</span>
-                <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatPrice(LOGISTICS_FEE)}</span>
-              </div>
+              {applicableFees.map(fee => (
+                <div key={fee.id} className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500">{fee.name}</span>
+                  <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatPrice(fee.amount)}</span>
+                </div>
+              ))}
               <div className={`flex items-center justify-between pt-3 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
                 <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Grand Total</span>
                 <p className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatPrice(grandTotal)}</p>

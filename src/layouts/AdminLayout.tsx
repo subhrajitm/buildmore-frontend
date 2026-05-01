@@ -4,7 +4,7 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
   LayoutDashboard, Package, ShoppingCart, FileText, Truck,
-  LogOut, Building2, Layers
+  LogOut, Building2, Layers, Settings
 } from 'lucide-react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
@@ -15,6 +15,7 @@ const navItems = [
   { path: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
   { path: '/admin/rfqs', icon: FileText, label: 'RFQs' },
   { path: '/admin/shipments', icon: Truck, label: 'Shipments' },
+  { path: '/admin/settings', icon: Settings, label: 'Other Fees' },
 ];
 
 export const AdminLayout: React.FC = () => {
@@ -75,7 +76,7 @@ export const AdminLayout: React.FC = () => {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-dashed">
+        <div className="border-t border-dashed mt-auto p-4">
           <div className={`p-4 rounded-xl mb-4 ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
             <p className={`text-[9px] font-black uppercase tracking-widest ${mutedClass} mb-1`}>Logged in as</p>
             <p className={`text-xs font-bold truncate ${textClass}`}>{adminUser?.name || 'Admin'}</p>
