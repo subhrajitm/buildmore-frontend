@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, ChevronRight, Package, ArrowRight, Loader2, Search } from 'lucide-react';
+import { Layers, ChevronRight, Package, ArrowRight, Loader2, Search, Menu, X } from 'lucide-react';
 import { categoryApi, Category, productApi, BackendProduct } from '../api';
 import { getCategoryMeta } from '../utils/categoryMeta';
 import { normalizeProduct } from '../utils/normalizeProduct';
@@ -15,6 +15,7 @@ export const AllCategories: React.FC = () => {
   const [products, setProducts] = useState<BackendProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [categorySearch, setCategorySearch] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -58,14 +59,37 @@ export const AllCategories: React.FC = () => {
   });
 
   return (
-    <div className={`max-w-[1920px] mx-auto flex h-[calc(100vh-120px)] overflow-hidden rounded-3xl border ${borderClass} ${cardBg}`}>
+    <div className={`max-w-[1920px] mx-auto flex h-[calc(100vh-120px)] overflow-hidden rounded-3xl border ${borderClass} ${cardBg} relative`}>
+
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className={`w-72 flex-shrink-0 border-r ${borderClass} ${sidebarBg} overflow-y-auto`}>
+      <aside className={`
+        fixed inset-y-0 left-0 z-40 w-72 flex-shrink-0 border-r flex flex-col
+        transform transition-transform duration-200 ease-in-out
+        md:relative md:translate-x-0 md:z-auto
+        ${sidebarBg} ${borderClass}
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
         <div className="p-6 space-y-4 border-b border-dashed border-white/5">
-          <h2 className={`text-sm font-black uppercase tracking-widest flex items-center gap-2 ${textClass}`}>
-            <Layers className="w-4 h-4 text-yellow-400" />
-            Categories
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className={`text-sm font-black uppercase tracking-widest flex items-center gap-2 ${textClass}`}>
+              <Layers className="w-4 h-4 text-yellow-400" />
+              Categories
+            </h2>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className={`md:hidden p-1.5 rounded-lg ${isDark ? 'text-slate-400 hover:bg-white/5 hover:text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900'}`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
             <input 
@@ -86,7 +110,7 @@ export const AllCategories: React.FC = () => {
             return (
               <button
                 key={cat._id}
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => { setActiveCategory(cat); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all text-left group ${
                   isActive 
                     ? 'bg-yellow-400 text-black shadow-lg shadow-yellow-400/20' 
@@ -116,39 +140,44 @@ export const AllCategories: React.FC = () => {
         {activeCategory && (
           <>
             {/* Category Header */}
-            <header className={`p-8 border-b ${borderClass} flex items-center justify-between bg-zinc-50/50 dark:bg-white/[0.02]`}>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-yellow-400 flex items-center justify-center shadow-xl shadow-yellow-400/20">
+            <header className={`p-4 sm:p-6 md:p-8 border-b ${borderClass} flex items-center justify-between gap-3 bg-zinc-50/50 dark:bg-white/[0.02]`}>
+              <div className="flex items-center gap-3">
+                {/* Mobile sidebar toggle */}
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className={`md:hidden p-2 rounded-xl shrink-0 ${isDark ? 'bg-white/5 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}
+                >
+                  <Menu className="w-4 h-4" />
+                </button>
+                <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-yellow-400 flex items-center justify-center shadow-lg shadow-yellow-400/20 shrink-0">
                   {(() => {
                     const meta = getCategoryMeta(activeCategory.name);
-                    return <meta.icon className="w-7 h-7 text-black" />;
+                    return <meta.icon className="w-5 h-5 md:w-7 md:h-7 text-black" />;
                   })()}
                 </div>
-                <div>
-                  <nav className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">
+                <div className="min-w-0">
+                  <nav className="hidden sm:flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">
                     <Link to="/" className="hover:text-yellow-400">Home</Link>
                     <ChevronRight className="w-2.5 h-2.5" />
                     <span>Categories</span>
                     <ChevronRight className="w-2.5 h-2.5" />
-                    <span className="text-yellow-400">{activeCategory.name}</span>
+                    <span className="text-yellow-400 truncate">{activeCategory.name}</span>
                   </nav>
-                  <h1 className={`text-2xl font-black uppercase tracking-tighter ${textClass}`}>
+                  <h1 className={`text-lg sm:text-xl md:text-2xl font-black uppercase tracking-tighter truncate ${textClass}`}>
                     {activeCategory.name} <span className="text-yellow-400">Products</span>
                   </h1>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Link
-                  to={`/products/${activeCategory.slug}`}
-                  className="flex items-center gap-2 bg-yellow-400 text-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-400/20"
-                >
-                  Explore All <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
+              <Link
+                to={`/products/${activeCategory.slug}`}
+                className="flex items-center gap-2 bg-yellow-400 text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-400/20 shrink-0"
+              >
+                <span className="hidden sm:inline">Explore All</span> <ArrowRight className="w-4 h-4" />
+              </Link>
             </header>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 custom-scrollbar">
               {/* Subcategories horizontal scroll */}
               <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-hide">
                 <button className="px-6 py-2 rounded-full bg-yellow-400 text-black text-[10px] font-black uppercase tracking-widest whitespace-nowrap shadow-lg shadow-yellow-400/10">

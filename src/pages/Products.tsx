@@ -217,24 +217,24 @@ export const Products: React.FC = () => {
   return (
     <div className={`max-w-[1920px] mx-auto flex flex-col h-[calc(100vh-80px)] overflow-hidden border ${borderClass} ${bgClass} shadow-2xl relative`}>
       {/* ── Control Bar ── */}
-      <div className={`px-6 py-2 border-b ${borderClass} ${isDark ? 'bg-[#050505]' : 'bg-white'} flex items-center justify-between z-30`}>
-        {/* Left: Breadcrumbs */}
-        <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">
+      <div className={`px-3 sm:px-6 py-2 border-b ${borderClass} ${isDark ? 'bg-[#050505]' : 'bg-white'} flex items-center justify-between gap-2 z-30`}>
+        {/* Left: Breadcrumbs — hidden on mobile */}
+        <div className="hidden sm:flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.2em] text-slate-500 shrink-0">
           <Link to="/" className="hover:text-yellow-400 transition-colors">InfraMart</Link>
           <ChevronRight className="w-2.5 h-2.5" />
           <span className="text-yellow-400">Products</span>
           {selectedCategory && (
             <>
               <ChevronRight className="w-2.5 h-2.5" />
-              <span className="text-yellow-500">{selectedCategory}</span>
+              <span className="text-yellow-500 truncate max-w-[100px]">{selectedCategory}</span>
             </>
           )}
         </div>
-        
+
         {/* Right: Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           {/* Top Bar Search */}
-          <div className={`relative w-48 flex items-center px-3 py-1.5 rounded-xl border ${isDark ? 'bg-zinc-900 border-white/10 focus-within:border-yellow-400/50' : 'bg-slate-50 border-slate-200 focus-within:border-yellow-400'} transition-all`}>
+          <div className={`relative w-28 sm:w-48 flex items-center px-3 py-1.5 rounded-xl border ${isDark ? 'bg-zinc-900 border-white/10 focus-within:border-yellow-400/50' : 'bg-slate-50 border-slate-200 focus-within:border-yellow-400'} transition-all`}>
             <Search className="w-3 h-3 text-slate-500 shrink-0" />
             <input
               type="text"
@@ -356,7 +356,7 @@ className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all t
           {/* Dynamic Product Grid - Increased Density */}
           <div className={`flex-1 overflow-y-auto p-4 custom-scrollbar ${isDark ? 'bg-[#0a0a0a]' : 'bg-slate-50/30'}`}>
             {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 3xl:grid-cols-8 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3">
                 {filteredProducts.map(p => (
                   <ProductCard key={p._id} product={normalizeProduct(p)} />
                 ))}
@@ -382,7 +382,7 @@ className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all t
       </div>
 
       {/* Global Status Overlay */}
-      <div className="absolute bottom-4 left-52 flex items-center gap-4 z-40 opacity-50 hover:opacity-100 transition-opacity">
+      <div className="absolute bottom-4 left-4 lg:left-52 flex items-center gap-4 z-40 opacity-50 hover:opacity-100 transition-opacity">
         <div className="flex items-center gap-1.5">
           <span className={`text-[9px] font-black ${textClass}`}>{filteredProducts.length}</span>
           <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">SKUs</span>

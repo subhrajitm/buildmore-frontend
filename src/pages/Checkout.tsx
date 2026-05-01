@@ -485,7 +485,7 @@ export const Checkout: React.FC = () => {
                 <span className={isDark ? 'text-white' : 'text-slate-900'}>{formatPrice(totalValue)}</span>
               </div>
               {applicableFees.map(fee => (
-                <div key={fee.id} className="flex justify-between text-xs">
+                <div key={fee._id} className="flex justify-between text-xs">
                   <span className="text-slate-500">{fee.name}</span>
                   <span className={isDark ? 'text-white' : 'text-slate-900'}>{formatPrice(fee.amount)}</span>
                 </div>

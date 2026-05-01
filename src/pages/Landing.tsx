@@ -256,7 +256,7 @@ const BumperSlider: React.FC = () => {
             <span className="w-10 h-[2.5px] bg-yellow-400 rounded-full"></span>
             <span className="text-[10px] font-black text-yellow-400 uppercase tracking-[0.4em]">Exclusive Deals</span>
           </div>
-          <h2 className={`text-4xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>Bumper <span className="text-yellow-400 italic">Offers</span></h2>
+          <h2 className={`text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>Bumper <span className="text-yellow-400 italic">Offers</span></h2>
         </div>
         <div className="flex items-center gap-3 mb-1">
           {FLASH_OFFERS.map((_, idx) => (
@@ -272,7 +272,7 @@ const BumperSlider: React.FC = () => {
         </div>
       </div>
 
-      <div className="relative h-[430px] w-full rounded-[32px] overflow-hidden shadow-2xl group">
+      <div className="relative h-[280px] sm:h-[360px] md:h-[430px] w-full rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl group">
         {/* Progress bar */}
         <div className="absolute top-0 left-0 right-0 h-1 z-40 bg-white/10">
           <div 
@@ -295,7 +295,7 @@ const BumperSlider: React.FC = () => {
               alt={offer.title}
             />
             
-            <div className="relative z-30 h-full flex flex-col justify-center px-10 md:px-16 max-w-4xl text-white">
+            <div className="relative z-30 h-full flex flex-col justify-center px-5 sm:px-10 md:px-16 max-w-4xl text-white">
               <div className="flex items-center gap-3 mb-3">
                 <span className="bg-yellow-400 text-black px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-md">
                   {offer.tag}
@@ -303,31 +303,31 @@ const BumperSlider: React.FC = () => {
                 <span className="text-[9px] font-bold uppercase tracking-widest text-white/70">Flash active</span>
               </div>
 
-              <h3 className="text-3xl md:text-4xl font-black mb-2 leading-[1.1] tracking-tighter">
+              <h3 className="text-xl sm:text-3xl md:text-4xl font-black mb-1 sm:mb-2 leading-[1.1] tracking-tighter">
                 {offer.title.split(' ').map((word, i) => (
                   <span key={i} className={i === 1 ? 'text-yellow-400 italic' : ''}>{word}{' '}</span>
                 ))}
               </h3>
 
               <div className="relative mb-3">
-                <p className="text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-100 to-yellow-400 drop-shadow-xl italic -ml-1">
+                <p className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-100 to-yellow-400 drop-shadow-xl italic -ml-1">
                   {offer.discount}
                 </p>
               </div>
 
-              <p className="text-sm md:text-base font-medium text-white/90 mb-6 max-w-xl leading-relaxed border-l-2 border-yellow-400/50 pl-4">
+              <p className="hidden sm:block text-sm md:text-base font-medium text-white/90 mb-4 sm:mb-6 max-w-xl leading-relaxed border-l-2 border-yellow-400/50 pl-4">
                 {offer.desc}
               </p>
 
-              <div className="flex items-center gap-6">
-                <Link to="/products" className="bg-white text-black px-8 py-3.5 rounded-xl font-black text-[11px] transition-all shadow-xl hover:bg-yellow-400 hover:scale-105 active:scale-95">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-6 mt-2 sm:mt-0">
+                <Link to="/products" className="bg-white text-black px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-xl font-black text-[11px] transition-all shadow-xl hover:bg-yellow-400 hover:scale-105 active:scale-95">
                   Claim Offer
                 </Link>
 
-                <div className="flex items-center gap-3 px-5 py-2.5 bg-white/5 backdrop-blur-xl rounded-xl border border-white/10">
+                <div className="flex items-center gap-3 px-3 sm:px-5 py-2 sm:py-2.5 bg-white/5 backdrop-blur-xl rounded-xl border border-white/10">
                   <div className="flex flex-col">
                     <span className="text-[8px] text-white/50 uppercase font-black tracking-widest">Time left</span>
-                    <span className="text-lg font-mono font-black text-yellow-400">{hh}:{mm}:{ss}</span>
+                    <span className="text-base sm:text-lg font-mono font-black text-yellow-400">{hh}:{mm}:{ss}</span>
                   </div>
                 </div>
               </div>

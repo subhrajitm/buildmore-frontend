@@ -120,7 +120,7 @@ export const Compliance: React.FC = () => {
             <span className="w-8 h-[1.5px] bg-yellow-400"></span>
             <span className="text-[9px] font-black uppercase tracking-[0.4em] text-yellow-400">Regulatory Management</span>
           </div>
-          <h1 className={`text-5xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>Compliance Hub</h1>
+          <h1 className={`text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>Compliance Hub</h1>
         </div>
         <button
           onClick={() => setShowUpload(!showUpload)}
