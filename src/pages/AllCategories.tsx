@@ -22,7 +22,7 @@ export const AllCategories: React.FC = () => {
     setLoading(true);
     Promise.all([
       categoryApi.getAll(),
-      productApi.getAll()
+      productApi.getAll({ limit: 500 })
     ]).then(([catRes, prodRes]) => {
       setCategories(catRes.categories || []);
       setProducts(prodRes.products || []);

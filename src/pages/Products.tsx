@@ -117,6 +117,8 @@ export const Products: React.FC = () => {
   const [sortBy, setSortBy] = useState('featured');
   const [sortOpen, setSortOpen] = useState(false);
   const [subCatOpen, setSubCatOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+  const subCatRef = useRef<HTMLDivElement>(null);
   
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
@@ -125,14 +127,11 @@ export const Products: React.FC = () => {
     setLoading(true);
     setError('');
     Promise.all([
-      productApi.getAll(),
+      productApi.getAll({ limit: 500 }),
       categoryApi.getAll()
     ]).then(([prodRes, catRes]) => {
       setProducts(prodRes.products || []);
       setCategories(catRes.categories || []);
-      if (!prodRes.products?.length) {
-        console.log('No products returned from API');
-      }
     })
     .catch((err) => {
       console.error('Failed to load products:', err);
@@ -160,6 +159,19 @@ export const Products: React.FC = () => {
     return () => clearTimeout(t);
   }, [search]);
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (sortOpen && sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setSortOpen(false);
+      }
+      if (subCatOpen && subCatRef.current && !subCatRef.current.contains(e.target as Node)) {
+        setSubCatOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [sortOpen, subCatOpen]);
+
   const filteredProducts = useMemo(() => {
     let result = [...products];
     if (debouncedSearch.trim()) {
@@ -170,9 +182,14 @@ export const Products: React.FC = () => {
       });
     }
     if (selectedCategory) {
+      const catObj = categories.find(c => c.name.trim().toLowerCase() === selectedCategory.trim().toLowerCase());
       result = result.filter(p => {
-        const pCat = typeof p.category === 'object' && p.category ? (p.category as any).name : p.category;
-        return pCat?.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
+        if (typeof p.category === 'object' && p.category) {
+          return (p.category as any).name?.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
+        }
+        // p.category is a string — could be ObjectId or category name
+        if (catObj && p.category === catObj._id) return true;
+        return p.category?.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
       });
     }
     if (selectedSubcategory) {
@@ -185,7 +202,7 @@ export const Products: React.FC = () => {
       case 'rating': result.sort((a, b) => ((b as any).rating || 0) - ((a as any).rating || 0)); break;
     }
     return result;
-  }, [debouncedSearch, selectedCategory, selectedSubcategory, sortBy, products]);
+  }, [debouncedSearch, selectedCategory, selectedSubcategory, sortBy, products, categories]);
 
   const activeCategoryObj = categories.find(c => c.name === selectedCategory);
   const currentSort = SORT_OPTIONS.find(o => o.value === sortBy)!;
@@ -248,7 +265,7 @@ export const Products: React.FC = () => {
 
           {/* Sub Category Dropdown */}
           {activeCategoryObj && activeCategoryObj.subcategories.length > 0 && (
-            <div className="relative">
+            <div className="relative" ref={subCatRef}>
               <button
                 onClick={() => setSubCatOpen(!subCatOpen)}
                 className={`flex items-center gap-2 px-3 py-1.5 border ${borderClass} text-[9px] font-black uppercase tracking-widest transition-all ${isDark ? 'bg-white/[0.03] text-slate-300 hover:bg-white/10' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
@@ -279,7 +296,7 @@ export const Products: React.FC = () => {
           )}
 
           {/* Sort Icon Button */}
-          <div className="relative">
+          <div className="relative" ref={sortRef}>
             <button
               onClick={() => setSortOpen(!sortOpen)}
               className={`w-8 h-7.5 flex items-center justify-center border ${borderClass} transition-all ${isDark ? 'bg-white/[0.03] text-slate-300 hover:bg-white/10' : 'bg-yellow-400 text-black hover:bg-yellow-300'}`}
