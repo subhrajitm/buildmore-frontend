@@ -177,16 +177,16 @@ export const Profile: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex gap-1 p-1 rounded-xl bg-slate-100 dark:bg-white/5 w-fit">
+      <div className="flex gap-1 p-1 rounded-xl bg-slate-100 dark:bg-white/5 w-full sm:w-fit overflow-x-auto">
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex-1 sm:flex-none justify-center sm:justify-start whitespace-nowrap ${
               activeTab === tab.id ? 'bg-yellow-400 text-black' : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            <tab.icon className="w-4 h-4" /> {tab.label}
+            <tab.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="hidden xs:inline sm:inline">{tab.label}</span>
           </button>
         ))}
       </div>

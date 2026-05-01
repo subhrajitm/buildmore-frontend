@@ -299,13 +299,13 @@ export const ProductDetail: React.FC = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-8 py-4 text-sm font-bold uppercase tracking-wider transition-colors relative ${
-                activeTab === tab 
+              className={`px-4 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-bold uppercase tracking-wider transition-colors relative flex-1 sm:flex-none ${
+                activeTab === tab
                   ? isDark ? 'text-white' : 'text-slate-900'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              {tab === 'description' ? 'Description' : tab === 'specs' ? 'Specifications' : 'Shipping'}
+              {tab === 'description' ? 'Description' : tab === 'specs' ? <><span className="hidden sm:inline">Specifications</span><span className="sm:hidden">Specs</span></> : 'Shipping'}
               {activeTab === tab && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-400" />
               )}
