@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck, User, Package, FileText, Heart, ArrowLeft } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck, User, Package, FileText, Heart, ArrowLeft, Maximize2, Minimize2 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -10,7 +10,7 @@ import { LocationModal, getStoredLocation } from './LocationModal';
 export const Header: React.FC = () => {
   const { totalItems, totalValue } = useCart();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
-  const { isDark, toggleDark } = useTheme();
+  const { isDark, toggleDark, isBoxed, toggleBoxed } = useTheme();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,7 +56,7 @@ export const Header: React.FC = () => {
   return (
     <>
       <header className={`${isDark ? 'bg-zinc-900/95 border-yellow-400/10' : 'bg-white/95 border-slate-200'} backdrop-blur-xl shadow-sm sticky top-0 z-50 border-b transition-colors duration-300`}>
-        <div className="max-w-[1920px] mx-auto px-3 sm:px-6 py-2">
+        <div className={`${isBoxed ? 'max-w-7xl' : 'max-w-[1920px]'} mx-auto px-3 sm:px-6 py-2`}>
 
           {/* ── Mobile search mode ─────────────────────────────────────── */}
           {mobileSearchOpen && (
@@ -142,13 +142,21 @@ export const Header: React.FC = () => {
                 <Search className="w-5 h-5" />
               </button>
 
-              {/* Theme toggle (xl+) */}
-              <div className="hidden xl:block">
+              {/* Theme + layout toggles (xl+) */}
+              <div className="hidden xl:flex items-center gap-1.5">
                 <button
                   onClick={toggleDark}
+                  title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
                   className={`p-2 rounded-lg transition-all ${isDark ? 'bg-zinc-800 text-yellow-400 hover:bg-zinc-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
                   {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={toggleBoxed}
+                  title={isBoxed ? 'Switch to full-width layout' : 'Switch to boxed layout'}
+                  className={`p-2 rounded-lg transition-all ${isDark ? 'bg-zinc-800 hover:bg-zinc-700' : 'bg-slate-100 hover:bg-slate-200'} ${isBoxed ? 'text-yellow-400' : isDark ? 'text-slate-400' : 'text-slate-600'}`}
+                >
+                  {isBoxed ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
                 </button>
               </div>
 

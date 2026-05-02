@@ -8,14 +8,15 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ isHome }) => {
-  const { isDark } = useTheme();
+  const { isDark, isBoxed } = useTheme();
+  const maxW = isBoxed ? 'max-w-7xl' : '${maxW}';
   return (
     <footer className={`${isDark ? 'bg-zinc-950 text-slate-400 border-white/5' : 'bg-white text-slate-500 border-slate-200'} border-t transition-colors duration-300`}>
 
       {/* Top Brand Bar — home only */}
       {isHome && (
         <div className={`border-b py-6 md:py-12 ${isDark ? 'border-white/5' : 'border-slate-200'}`}>
-          <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10">
+          <div className={`${maxW} mx-auto px-4 sm:px-6 lg:px-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10`}>
             <div className="space-y-3 w-full md:w-auto">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 md:w-10 md:h-10 bg-yellow-400 rounded-lg flex items-center justify-center shadow-xl shadow-yellow-400/10">
@@ -54,7 +55,7 @@ export const Footer: React.FC<FooterProps> = ({ isHome }) => {
       )}
 
       {/* Middle Section: Navigation */}
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-10 py-8 md:py-20">
+      <div className={`${maxW} mx-auto px-4 sm:px-6 lg:px-10 py-8 md:py-20`}>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-y-8 md:gap-y-16 gap-x-6 md:gap-x-10">
 
           <div className="space-y-4 md:space-y-6">
@@ -115,7 +116,7 @@ export const Footer: React.FC<FooterProps> = ({ isHome }) => {
 
       {/* Bottom Bar */}
       <div className={`border-t py-5 md:py-10 ${isDark ? 'bg-black border-white/5' : 'bg-slate-100 border-slate-200'}`}>
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-10 flex flex-col sm:flex-row items-center justify-between gap-4 md:gap-8">
+        <div className={`${maxW} mx-auto px-4 sm:px-6 lg:px-10 flex flex-col sm:flex-row items-center justify-between gap-4 md:gap-8`}>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-8 text-center sm:text-left">
             <p className="text-[10px] font-black tracking-widest uppercase text-slate-500">
