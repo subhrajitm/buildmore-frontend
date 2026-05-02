@@ -537,12 +537,39 @@ export interface Offer {
   image: string;
 }
 
+export interface AdminOffer extends Offer {
+  active: boolean;
+  order: number;
+}
+
 export const marketingApi = {
   getBanners: () =>
     request<{ success: boolean; banners: Banner[] }>('/api/marketing/banners'),
 
   getOffers: () =>
     request<{ success: boolean; offers: Offer[] }>('/api/marketing/offers'),
+};
+
+// ── Admin Offer API ───────────────────────────────────────────────────────────
+
+export const adminOfferApi = {
+  getAll: (token: string) =>
+    request<{ success: boolean; offers: AdminOffer[] }>('/api/admin/offers', { token }),
+
+  create: (formData: FormData, token: string) =>
+    requestFormData<{ success: boolean; offer: AdminOffer }>('/api/admin/offers', formData, token, 'POST'),
+
+  update: (id: string, formData: FormData, token: string) =>
+    requestFormData<{ success: boolean; offer: AdminOffer }>(`/api/admin/offers/${id}`, formData, token, 'PUT'),
+
+  delete: (id: string, token: string) =>
+    request<{ success: boolean; message: string }>(`/api/admin/offers/${id}`, { method: 'DELETE', token }),
+
+  toggle: (id: string, token: string) =>
+    request<{ success: boolean; offer: AdminOffer }>(`/api/admin/offers/${id}/toggle`, { method: 'PATCH', token }),
+
+  reorder: (order: { id: string; order: number }[], token: string) =>
+    request<{ success: boolean; message: string }>('/api/admin/offers/reorder', { method: 'PATCH', body: { order }, token }),
 };
 
 // ── Admin Banner API ──────────────────────────────────────────────────────────

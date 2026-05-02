@@ -21,6 +21,7 @@ const AdminShipments  = lazy(() => import('./pages/AdminShipments').then(m => ({
 const AdminCategories = lazy(() => import('./pages/AdminCategories').then(m => ({ default: m.AdminCategories })));
 const AdminSettings   = lazy(() => import('./pages/AdminSettings').then(m => ({ default: m.AdminSettings })));
 const AdminBanners    = lazy(() => import('./pages/AdminBanners').then(m => ({ default: m.AdminBanners })));
+const AdminOffers     = lazy(() => import('./pages/AdminOffers').then(m => ({ default: m.AdminOffers })));
 
 const Landing         = lazy(() => import('./pages/Landing').then(m => ({ default: m.Landing })));
 const Products        = lazy(() => import('./pages/Products').then(m => ({ default: m.Products })));
@@ -84,6 +85,7 @@ export default function App() {
                       <Route path="rfqs" element={<AdminProtectedRoute><AdminRFQs /></AdminProtectedRoute>} />
                       <Route path="shipments" element={<AdminProtectedRoute><AdminShipments /></AdminProtectedRoute>} />
                       <Route path="banners" element={<AdminProtectedRoute><AdminBanners /></AdminProtectedRoute>} />
+                      <Route path="offers" element={<AdminProtectedRoute><AdminOffers /></AdminProtectedRoute>} />
                       <Route path="settings" element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
                     </Route>
 
