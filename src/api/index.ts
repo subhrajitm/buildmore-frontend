@@ -522,6 +522,11 @@ export interface Banner {
   ctaTo: string;
 }
 
+export interface AdminBanner extends Banner {
+  active: boolean;
+  order: number;
+}
+
 export interface Offer {
   _id: string;
   title: string;
@@ -538,4 +543,26 @@ export const marketingApi = {
 
   getOffers: () =>
     request<{ success: boolean; offers: Offer[] }>('/api/marketing/offers'),
+};
+
+// ── Admin Banner API ──────────────────────────────────────────────────────────
+
+export const adminBannerApi = {
+  getAll: (token: string) =>
+    request<{ success: boolean; banners: AdminBanner[] }>('/api/admin/banners', { token }),
+
+  create: (formData: FormData, token: string) =>
+    requestFormData<{ success: boolean; banner: AdminBanner }>('/api/admin/banners', formData, token, 'POST'),
+
+  update: (id: string, formData: FormData, token: string) =>
+    requestFormData<{ success: boolean; banner: AdminBanner }>(`/api/admin/banners/${id}`, formData, token, 'PUT'),
+
+  delete: (id: string, token: string) =>
+    request<{ success: boolean; message: string }>(`/api/admin/banners/${id}`, { method: 'DELETE', token }),
+
+  toggle: (id: string, token: string) =>
+    request<{ success: boolean; banner: AdminBanner }>(`/api/admin/banners/${id}/toggle`, { method: 'PATCH', token }),
+
+  reorder: (order: { id: string; order: number }[], token: string) =>
+    request<{ success: boolean; message: string }>('/api/admin/banners/reorder', { method: 'PATCH', body: { order }, token }),
 };

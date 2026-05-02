@@ -4,7 +4,7 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
   LayoutDashboard, Package, ShoppingCart, FileText, Truck,
-  LogOut, Building2, Layers, Settings, Menu, X
+  LogOut, Building2, Layers, Settings, Menu, X, Image as ImageIcon
 } from 'lucide-react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
@@ -15,6 +15,7 @@ const navItems = [
   { path: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
   { path: '/admin/rfqs', icon: FileText, label: 'RFQs' },
   { path: '/admin/shipments', icon: Truck, label: 'Shipments' },
+  { path: '/admin/banners', icon: ImageIcon, label: 'Banners' },
   { path: '/admin/settings', icon: Settings, label: 'Other Fees' },
 ];
 
