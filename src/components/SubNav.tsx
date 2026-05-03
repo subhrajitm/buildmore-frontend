@@ -6,7 +6,8 @@ import { categoryApi, Category } from '../api';
 import { useTheme } from '../context/ThemeContext';
 
 export const SubNav: React.FC = () => {
-  const { isDark } = useTheme();
+  const { isDark, isBoxed } = useTheme();
+  const maxW = isBoxed ? 'max-w-7xl' : 'max-w-[1920px]';
   const { pathname, search } = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -43,8 +44,8 @@ export const SubNav: React.FC = () => {
 
   return (
     <div className="relative font-primary" ref={menuRef}>
-      <nav className={`${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-300'} border-b py-2 px-3 sm:px-6 transition-colors duration-300 relative z-[45]`}>
-        <div className="max-w-[1920px] mx-auto flex items-center">
+      <nav className={`${isDark ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-300'} border-b py-2 transition-colors duration-300 relative z-[45]`}>
+        <div className={`${maxW} mx-auto px-3 sm:px-6 flex items-center`}>
 
           {/* Explore toggle — always visible, never scrolls */}
           <button
@@ -183,7 +184,7 @@ export const SubNav: React.FC = () => {
             </div>
 
             {/* ── Desktop layout (≥ md) ────────────────────────────── */}
-            <div className="hidden md:flex max-w-[1920px] mx-auto" style={{ minHeight: 340 }}>
+            <div className={`hidden md:flex ${maxW} mx-auto px-3 sm:px-6`} style={{ minHeight: 340 }}>
 
               {/* Left — category list */}
               <div className={`w-[168px] shrink-0 border-r flex flex-col ${isDark ? 'bg-black/30 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
