@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, ShoppingCart, ChevronDown, BarChart3, Sun, Moon, LogOut, ShieldCheck, User, Package, FileText, Heart, ArrowLeft, Maximize2, Minimize2 } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ChevronDown, Sun, Moon, LogOut, ShieldCheck, User, Package, FileText, Heart, ArrowLeft, Maximize2, Minimize2 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { formatPrice } from '../utils/currency';
 import { LocationModal, getStoredLocation } from './LocationModal';
+import { BuildMoreLogo } from './BuildMoreLogo';
 
 export const Header: React.FC = () => {
   const { totalItems, totalValue } = useCart();
@@ -88,16 +89,8 @@ export const Header: React.FC = () => {
 
             {/* Left: Logo + Location */}
             <div className="flex items-center gap-4 lg:gap-8 shrink-0">
-              <Link to="/" className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-yellow-400 rounded-sm flex items-center justify-center">
-                  <BarChart3 className="w-4 h-4 text-black" />
-                </div>
-                <div className="flex flex-col leading-none">
-                  <span className={`text-xl font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'} uppercase leading-none`}>
-                    Build<span className="text-yellow-400">More</span>
-                  </span>
-                  <span className="text-[9px] font-black tracking-widest text-yellow-400 uppercase leading-none">Infra Mart</span>
-                </div>
+              <Link to="/" className="flex items-center">
+                <BuildMoreLogo height={48} isDark={isDark} />
               </Link>
 
               <button
