@@ -30,16 +30,16 @@ const HomeProductCard: React.FC<{ product: ReturnType<typeof normalizeProduct> }
     <Link to={`/product/${product.id}`} className="shrink-0 w-[148px] group">
       <div className={`rounded-xl border overflow-hidden transition-all duration-200 hover:shadow-md ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-slate-200'}`}>
         {/* Image */}
-        <div className={`relative h-[130px] flex items-center justify-center p-3 ${isDark ? 'bg-zinc-800' : 'bg-slate-50'}`}>
+        <div className={`relative h-[130px] ${isDark ? 'bg-zinc-800' : 'bg-slate-50'}`}>
           {product.discount && (
-            <span className="absolute top-2 left-2 bg-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded">
+            <span className="absolute top-2 left-2 bg-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded z-10">
               {product.discount}% OFF
             </span>
           )}
           <img
             src={product.image}
             alt={product.name}
-            className="h-full w-full object-contain"
+            className="h-full w-full object-cover"
             referrerPolicy="no-referrer"
             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
