@@ -88,8 +88,8 @@ export const Wishlist: React.FC = () => {
             const norm = normalizeProduct(p);
             return (
               <div key={p._id} className={`group flex flex-col rounded-2xl border overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 ${cardBg}`}>
-                <Link to={`/product/${p._id}`} className="relative aspect-square overflow-hidden bg-slate-100 dark:bg-zinc-800">
-                  <img src={norm.image} alt={norm.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <Link to={`/product/${p._id}`} className="relative aspect-square overflow-hidden bg-slate-100 dark:bg-zinc-800 flex items-center justify-center p-3">
+                  <img src={norm.image} alt={norm.name} className="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-500" />
                   <button
                     onClick={e => { e.preventDefault(); removeFromWishlist(p._id); }}
                     className="absolute top-3 right-3 w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"

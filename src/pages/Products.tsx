@@ -51,11 +51,11 @@ const ProductCard: React.FC<{ product: any; className?: string }> = ({ product, 
     <Link to={`/product/${product.id}`} className={`group relative flex flex-col ${className}`}>
       <div className={`relative rounded-xl overflow-hidden border transition-all duration-300 ${isDark ? 'bg-[#0a0a0a] border-white/10 hover:border-yellow-400/50' : 'bg-white border-slate-200 hover:border-yellow-400'}`}>
         {/* Compact Image Container */}
-        <div className="relative aspect-square overflow-hidden bg-slate-50 dark:bg-zinc-950">
+        <div className="relative aspect-square overflow-hidden bg-slate-50 dark:bg-zinc-950 flex items-center justify-center p-3">
           <img
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-700"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
