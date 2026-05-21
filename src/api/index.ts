@@ -1,4 +1,4 @@
-const BASE_URL: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5050';
+const BASE_URL: string = process.env.NEXT_PUBLIC_API_URL || 'https://www.buildmoreinframart.com';
 
 type RequestOptions = {
   method?: string;
