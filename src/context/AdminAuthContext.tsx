@@ -26,15 +26,27 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     try {
-      const tok = localStorage.getItem('buildmore_admin_token');
-      if (!tok || isTokenExpired(tok)) {
-        localStorage.removeItem('buildmore_admin_token');
-        localStorage.removeItem('buildmore_admin_user');
+      // Check dedicated admin token first
+      const adminTok = localStorage.getItem('buildmore_admin_token');
+      if (adminTok && !isTokenExpired(adminTok)) {
+        const stored = localStorage.getItem('buildmore_admin_user');
+        if (stored) setAdminUser(JSON.parse(stored));
+        setAdminToken(adminTok);
         return;
       }
-      const stored = localStorage.getItem('buildmore_admin_user');
-      if (stored) setAdminUser(JSON.parse(stored));
-      setAdminToken(tok);
+      localStorage.removeItem('buildmore_admin_token');
+      localStorage.removeItem('buildmore_admin_user');
+
+      // Fall back to regular user token if they have ADMIN role
+      const userTok = localStorage.getItem('buildmore_token');
+      if (userTok && !isTokenExpired(userTok) && decodeTokenRole(userTok) === 'ADMIN') {
+        const stored = localStorage.getItem('buildmore_user');
+        if (stored) {
+          const u = JSON.parse(stored);
+          setAdminUser({ email: u.email, name: u.name, role: 'ADMIN' });
+          setAdminToken(userTok);
+        }
+      }
     } catch { /* ignore */ }
   }, []);
 
@@ -68,6 +80,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setAdminToken(null);
     localStorage.removeItem('buildmore_admin_user');
     localStorage.removeItem('buildmore_admin_token');
+    localStorage.removeItem('buildmore_user');
+    localStorage.removeItem('buildmore_token');
   };
 
   return (
